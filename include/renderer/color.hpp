@@ -1,7 +1,7 @@
 #ifndef _RENDERER_COLOR_HPP_
 #define _RENDERER_COLOR_HPP_
 
-#include "easing.hpp"
+#include "util/easing.hpp"
 
 #include <algorithm>
 
@@ -19,7 +19,7 @@ namespace renderer {
 
     class color_rgba {
     public:
-        color_rgba(uint8_t _r = 255, uint8_t _g = 255, uint8_t _b = 255, uint8_t _a = 255);
+        color_rgba(uint8_t _r = 255, uint8_t _g = 255, uint8_t _b = 255, uint8_t _a = 255); // NOLINT(google-explicit-constructor)
 
         [[nodiscard]] color_hsv get_hsv() const;
         [[nodiscard]] operator uint32_t() const;

@@ -8,7 +8,7 @@
 namespace renderer {
     class texture : std::enable_shared_from_this<texture> {
     public:
-        ID3D11Texture1D* data;
+        ID3D11Texture2D* data;
     };
 }
 

@@ -1,6 +1,6 @@
 #include "renderer/color.hpp"
 
-#include "renderer/easing.hpp"
+#include "renderer/util/easing.hpp"
 
 renderer::color_hsv::color_hsv(float _h, float _s, float _v) : h(_h), s(_s), v(_v) {}
 
