@@ -72,6 +72,7 @@ namespace renderer {
         void create_frame_buffer_view();
         bool create_shaders();
         void create_vertex_buffer(size_t vertices);
+        void release_vertex_buffer();
 
         std::shared_ptr<win32_window> window_;
 

@@ -18,7 +18,7 @@ function(build_shader SHADER)
     get_source_file_property(SHADER_ENTRYPOINT ${SHADER} VS_SHADER_ENTRYPOINT)
     add_custom_command(
             TARGET shaders
-            COMMAND fxc.exe /nologo /E${SHADER_ENTRYPOINT} /T${SHADER_TYPE}_${SHADER_MODEL} $<$<CONFIG:DEBUG>:/Od> /Zi /Fo ${CMAKE_BINARY_DIR}/${SHADER_NAME}.cso /Fd ${CMAKE_BINARY_DIR}/${SHADER_NAME}.pdb ${SHADER}
+            COMMAND fxc.exe /nologo /E${SHADER_ENTRYPOINT} /T${SHADER_TYPE}_${SHADER_MODEL} /Zi /Fo ${CMAKE_BINARY_DIR}/${SHADER_NAME}.cso /Fd ${CMAKE_BINARY_DIR}/${SHADER_NAME}.pdb ${SHADER}
             MAIN_DEPENDENCY ${SHADER}
             COMMENT "HLSL ${SHADER}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

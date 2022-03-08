@@ -14,11 +14,12 @@ namespace renderer {
     class renderer : std::enable_shared_from_this<renderer> {
     public:
         virtual void begin() = 0;
-        virtual void end() = 0;
-
         virtual void populate() = 0;
+        virtual void end() = 0;
+        virtual void reset() = 0;
 
         void draw();
+        void set_vsync(bool vsync);
 
         // TODO: Setup unregister buffer but tbh that would never be used
         size_t register_buffer(size_t priority = 0);
@@ -29,6 +30,9 @@ namespace renderer {
     protected:
         std::shared_mutex buffer_list_mutex_;
         std::vector<buffer_node> buffers_;
+
+        // Misc settings
+        bool vsync_ = false;
     };
 }
 

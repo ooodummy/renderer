@@ -39,6 +39,10 @@ namespace renderer {
         // TODO: I don't think textures should be shared_ptrs since then they may never get freed
         void add_vertices(vertex* vertices, size_t size, D3D_PRIMITIVE_TOPOLOGY type, std::shared_ptr<texture> texture = nullptr, color_rgba col = { 255, 255, 255, 255 });
 
+        const std::vector<vertex>& get_vertices();
+        const std::vector<batch>& get_batches();
+
+        size_t vertex_count_ = 0; // This is unneeded IDK why I use it.
         std::deque<RECT> clip_rects;
 
     private:
@@ -46,8 +50,6 @@ namespace renderer {
 
         std::vector<vertex> vertices_;
         std::vector<batch> batches_;
-
-        size_t vertex_count_; // This is unneeded IDK why I use it.
     };
 }
 

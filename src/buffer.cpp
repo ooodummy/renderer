@@ -31,3 +31,10 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t size, D3D_PRIMITIVE
 
     memcpy(&vertices_[vertex_count_ - size], vertices, size * sizeof(vertex));
 }
+
+const std::vector<renderer::vertex>& renderer::buffer::get_vertices() {
+    return vertices_;
+}
+const std::vector<renderer::batch>& renderer::buffer::get_batches() {
+    return batches_;
+}

@@ -13,10 +13,14 @@ namespace renderer {
         explicit dx11_renderer(std::shared_ptr<dx11_device> device) : device_(std::move(device)) {}
 
         void begin() override;
-        void end() override;
         void populate() override;
+        void end() override;
+        void reset() override;
 
     private:
+        void update_buffers();
+        void render_buffers();
+
         std::shared_ptr<dx11_device> device_;
     };
 }

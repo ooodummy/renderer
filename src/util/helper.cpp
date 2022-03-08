@@ -226,33 +226,28 @@ void renderer::dx11_device::create_frame_buffer_view() {
     frame_buffer->Release();
 }
 
-bool renderer::dx11_device::create_shaders() {
-    ID3DBlob* vertex_shader_blob;
+#include "renderer/shaders/compiled/pixel.h"
+#include "renderer/shaders/compiled/vertex.h"
 
+// https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
+bool renderer::dx11_device::create_shaders() {
     HRESULT hr;
     ID3DBlob* compile_error_blob;
 
     {
-        hr = D3DReadFileToBlob(L"vertex.cso", &vertex_shader_blob);
-        if (FAILED(hr))
-            return false;
-
-        hr = device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(),
-                                         vertex_shader_blob->GetBufferSize(),
+        hr = device_->CreateVertexShader(vertex_shader_data,
+                                         sizeof(vertex_shader_data),
                                          nullptr,
                                          &vertex_shader_);
         assert(SUCCEEDED(hr));
     }
 
     {
-        ID3DBlob* pixel_shader_blob;
-        hr = D3DReadFileToBlob(L"pixel.cso", &pixel_shader_blob);
-        if (FAILED(hr))
-            return false;
-
-        hr = device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
+        hr = device_->CreatePixelShader(pixel_shader_data,
+                                         sizeof(pixel_shader_data),
+                                         nullptr,
+                                         &pixel_shader_);
         assert(SUCCEEDED(hr));
-        pixel_shader_blob->Release();
     }
 
     {
@@ -262,12 +257,11 @@ bool renderer::dx11_device::create_shaders() {
         };
 
         hr = device_->CreateInputLayout(input_element_desc,
-                                                     ARRAYSIZE(input_element_desc),
-                                                     vertex_shader_blob->GetBufferPointer(),
-                                                     vertex_shader_blob->GetBufferSize(),
-                                                     &input_layout_);
+                                        ARRAYSIZE(input_element_desc),
+                                        vertex_shader_data,
+                                        sizeof(vertex_shader_data),
+                                        &input_layout_);
         assert(SUCCEEDED(hr));
-        vertex_shader_blob->Release();
     }
 
     return true;
@@ -277,10 +271,7 @@ bool renderer::dx11_device::create_shaders() {
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
 void renderer::dx11_device::create_vertex_buffer(size_t vertices) {
     if (vertices <= 0) {
-        if (vertex_buffer_) {
-            vertex_buffer_->Release();
-            vertex_buffer_ = nullptr;
-        }
+        release_vertex_buffer();
         return;
     }
 
@@ -288,8 +279,9 @@ void renderer::dx11_device::create_vertex_buffer(size_t vertices) {
     vertex_buffer_desc.ByteWidth        = sizeof(vertex) * vertices;
     vertex_buffer_desc.Usage            = D3D11_USAGE_DYNAMIC;
     vertex_buffer_desc.BindFlags        = D3D11_BIND_VERTEX_BUFFER;
-    vertex_buffer_desc.CPUAccessFlags   = 0;
+    vertex_buffer_desc.CPUAccessFlags   = D3D11_CPU_ACCESS_WRITE;
     vertex_buffer_desc.MiscFlags        = 0;
+    vertex_buffer_desc.StructureByteStride = 0;
 
     D3D11_SUBRESOURCE_DATA subresource_data;
     subresource_data.pSysMem = nullptr;
@@ -301,6 +293,14 @@ void renderer::dx11_device::create_vertex_buffer(size_t vertices) {
                                             &vertex_buffer_);
     assert(SUCCEEDED(hr));
 }
+
+void renderer::dx11_device::release_vertex_buffer() {
+    if (vertex_buffer_) {
+        vertex_buffer_->Release();
+        vertex_buffer_ = nullptr;
+    }
+}
+
 void renderer::dx11_device::resize() {
     context_->OMSetRenderTargets(0, nullptr, nullptr);
     frame_buffer_view_->Release();

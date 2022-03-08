@@ -6,6 +6,10 @@ void renderer::renderer::draw() {
     end();
 }
 
+void renderer::renderer::set_vsync(bool vsync) {
+    vsync_ = vsync;
+}
+
 size_t renderer::renderer::register_buffer(size_t priority) {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
