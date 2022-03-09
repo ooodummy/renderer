@@ -9,6 +9,8 @@
 #include <vector>
 #include <deque>
 
+#include <glm/vec4.hpp>
+
 namespace renderer {
     class batch {
     public:
@@ -38,6 +40,8 @@ namespace renderer {
 
         // TODO: I don't think textures should be shared_ptrs since then they may never get freed
         void add_vertices(vertex* vertices, size_t size, D3D_PRIMITIVE_TOPOLOGY type, std::shared_ptr<texture> texture = nullptr, color_rgba col = { 255, 255, 255, 255 });
+
+        void draw_rect(glm::vec4 rect, color_rgba col);
 
         const std::vector<vertex>& get_vertices();
         const std::vector<batch>& get_batches();

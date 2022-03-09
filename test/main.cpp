@@ -32,6 +32,8 @@ void draw_thread() {
     while (msg.message != WM_QUIT) {
         const auto buf = renderer::renderer->get_buffer_node(id).working;
 
+        //buf->draw_rect({10, 10, 50, 50}, {255, 0, 0, 255});
+
         renderer::renderer->swap_buffers(id);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -74,6 +76,7 @@ int main() {
     }
 
     renderer::renderer = std::make_unique<renderer::dx11_renderer>(device);
+    renderer::renderer->set_vsync(true);
 
     std::thread draw(draw_thread);
 

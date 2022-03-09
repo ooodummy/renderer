@@ -71,8 +71,8 @@ namespace renderer {
         bool create_swap_chain();
         void create_frame_buffer_view();
         bool create_shaders();
-        void create_vertex_buffer(size_t vertices);
-        void release_vertex_buffer();
+        void create_buffers(size_t vertex_count);
+        void release_buffers();
 
         std::shared_ptr<win32_window> window_;
 
@@ -88,6 +88,7 @@ namespace renderer {
 
         ID3D11InputLayout* input_layout_;
         ID3D11Buffer* vertex_buffer_{};
+        ID3D11Buffer* index_buffer_{};
     };
 }
 

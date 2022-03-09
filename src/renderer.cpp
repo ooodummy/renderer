@@ -37,6 +37,7 @@ void renderer::renderer::swap_buffers(size_t id) {
     assert(id < buffers_.size());
 
     auto& buf = buffers_[id];
+
     buf.active.swap(buf.working);
     buf.working->clear();
 }

@@ -33,16 +33,18 @@ bool renderer::win32_window::create() {
     wc_.style = CS_DBLCLKS;
     wc_.lpfnWndProc = proc_;
     wc_.hInstance = ::GetModuleHandleA(nullptr);
-    wc_.lpszClassName = "test";
+    wc_.lpszClassName = title_.data();
     wc_.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc_.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+
+    const auto style = CS_HREDRAW | CS_VREDRAW;
 
     ::RegisterClassA(&wc_);
 
     RECT rect = { pos_.x, pos_.y, pos_.x + size_.x, pos_.y + size_.y };
-    ::AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0);
+    ::AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, style);
 
-    hwnd_ = ::CreateWindowExA(0, wc_.lpszClassName, "test",
+    hwnd_ = ::CreateWindowExA(style, wc_.lpszClassName, title_.data(),
                             WS_OVERLAPPEDWINDOW, rect.left, rect.top,
                             rect.right - rect.left, rect.bottom - rect.top,
                             nullptr, nullptr, wc_.hInstance, nullptr);
@@ -93,8 +95,6 @@ bool renderer::dx11_device::init() {
     // TODO: I think you can go without vertex/pixel shaders and event the input layout
     if (!create_shaders())
         return false;
-
-    create_vertex_buffer(0);
 
     return true;
 }
@@ -269,35 +269,76 @@ bool renderer::dx11_device::create_shaders() {
 
 // Read about USAGE_DYNAMIC
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
-void renderer::dx11_device::create_vertex_buffer(size_t vertices) {
-    if (vertices <= 0) {
-        release_vertex_buffer();
+void renderer::dx11_device::create_buffers(size_t vertex_count) {
+    if (vertex_count <= 0) {
+        release_buffers();
         return;
     }
 
-    D3D11_BUFFER_DESC vertex_buffer_desc = {};
-    vertex_buffer_desc.ByteWidth        = sizeof(vertex) * vertices;
-    vertex_buffer_desc.Usage            = D3D11_USAGE_DYNAMIC;
-    vertex_buffer_desc.BindFlags        = D3D11_BIND_VERTEX_BUFFER;
-    vertex_buffer_desc.CPUAccessFlags   = D3D11_CPU_ACCESS_WRITE;
-    vertex_buffer_desc.MiscFlags        = 0;
-    vertex_buffer_desc.StructureByteStride = 0;
+    {
+        auto* vertices = new vertex[vertex_count];
+        memset(vertices, 0, (sizeof(vertex) * vertex_count));
 
-    D3D11_SUBRESOURCE_DATA subresource_data;
-    subresource_data.pSysMem = nullptr;
-    subresource_data.SysMemPitch = 0;
-    subresource_data.SysMemSlicePitch = 0;
+        D3D11_BUFFER_DESC vertex_buffer_desc = {};
+        vertex_buffer_desc.ByteWidth = sizeof(vertex) * vertex_count;
+        vertex_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+        vertex_buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        vertex_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        vertex_buffer_desc.MiscFlags = 0;
+        vertex_buffer_desc.StructureByteStride = 0;
 
-    HRESULT hr = device_->CreateBuffer(&vertex_buffer_desc,
-                                            &subresource_data,
-                                            &vertex_buffer_);
-    assert(SUCCEEDED(hr));
+        D3D11_SUBRESOURCE_DATA vertex_data;
+        vertex_data.pSysMem = vertices;
+        vertex_data.SysMemPitch = 0;
+        vertex_data.SysMemSlicePitch = 0;
+
+        auto hr = device_->CreateBuffer(&vertex_buffer_desc,
+                                        &vertex_data,
+                                        &vertex_buffer_);
+        assert(SUCCEEDED(hr));
+
+        delete[] vertices;
+    }
+
+    {
+        auto index_count = vertex_count;
+        auto* indices = new uint32_t[vertex_count];
+
+        for (size_t i = 0; i < index_count; i++) {
+            indices[i] = i;
+        }
+
+        D3D11_BUFFER_DESC index_buffer_desc = {};
+        index_buffer_desc.ByteWidth = sizeof(uint32_t) * index_count;
+        index_buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+        index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        index_buffer_desc.CPUAccessFlags = 0;
+        index_buffer_desc.MiscFlags = 0;
+        index_buffer_desc.StructureByteStride = 0;
+
+        D3D11_SUBRESOURCE_DATA index_data;
+        index_data.pSysMem = indices;
+        index_data.SysMemPitch = 0;
+        index_data.SysMemSlicePitch = 0;
+
+        auto hr = device_->CreateBuffer(&index_buffer_desc,
+                                   &index_data,
+                                   &index_buffer_);
+        assert(SUCCEEDED(hr));
+
+        delete[] indices;
+    }
 }
 
-void renderer::dx11_device::release_vertex_buffer() {
+void renderer::dx11_device::release_buffers() {
     if (vertex_buffer_) {
         vertex_buffer_->Release();
         vertex_buffer_ = nullptr;
+    }
+
+    if (index_buffer_) {
+        index_buffer_->Release();
+        index_buffer_ = nullptr;
     }
 }
 
