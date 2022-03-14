@@ -78,7 +78,7 @@ int main() {
     }
 
     renderer::renderer = std::make_unique<renderer::dx11_renderer>(device);
-    renderer::renderer->set_vsync(true);
+    renderer::renderer->set_vsync(false);
 
     std::thread draw(draw_thread);
 
