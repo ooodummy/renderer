@@ -61,8 +61,8 @@ namespace renderer {
 
             // Used to break strips
             switch (type) {
-                case D3D11_PRIMITIVE_TOPOLOGY_LINELIST:
-                case D3D11_PRIMITIVE_TOPOLOGY_LINELIST_ADJ:
+                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
+                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
                 case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
                 case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ: {
                     batches_.emplace_back(0, D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
