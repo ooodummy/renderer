@@ -70,12 +70,14 @@ namespace renderer {
         bool setup_debug_layer();
         bool create_swap_chain();
         void create_frame_buffer_view();
-        bool create_shaders();
+        void create_shaders();
+        void create_states();
         void create_buffers(size_t vertex_count);
         void release_buffers();
 
         std::shared_ptr<win32_window> window_;
 
+    public:
         ID3D11Device1* device_;
         ID3D11DeviceContext1* context_;
 
@@ -85,6 +87,8 @@ namespace renderer {
 
         ID3D11VertexShader* vertex_shader_;
         ID3D11PixelShader* pixel_shader_;
+
+        ID3D11BlendState* blend_state_;
 
         ID3D11InputLayout* input_layout_;
         ID3D11Buffer* vertex_buffer_{};

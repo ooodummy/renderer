@@ -91,10 +91,10 @@ bool renderer::dx11_device::init() {
         return false;
 
     create_frame_buffer_view();
+    create_states();
 
-    // TODO: I think you can go without vertex/pixel shaders and event the input layout
-    if (!create_shaders())
-        return false;
+    create_shaders();
+    create_buffers(1024 * 4 * 3); // TODO: Should not make with max vertex size and instead remake to resize no?
 
     return true;
 }
@@ -230,7 +230,7 @@ void renderer::dx11_device::create_frame_buffer_view() {
 #include "renderer/shaders/compiled/vertex.h"
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
-bool renderer::dx11_device::create_shaders() {
+void renderer::dx11_device::create_shaders() {
     HRESULT hr;
     ID3DBlob* compile_error_blob;
 
@@ -263,8 +263,22 @@ bool renderer::dx11_device::create_shaders() {
                                         &input_layout_);
         assert(SUCCEEDED(hr));
     }
+}
 
-    return true;
+void renderer::dx11_device::create_states() {
+    D3D11_BLEND_DESC blend_state_desc{};
+
+    blend_state_desc.RenderTarget->BlendEnable = TRUE;
+    blend_state_desc.RenderTarget->SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    blend_state_desc.RenderTarget->DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blend_state_desc.RenderTarget->SrcBlendAlpha = D3D11_BLEND_ONE;
+    blend_state_desc.RenderTarget->DestBlendAlpha = D3D11_BLEND_ZERO;
+    blend_state_desc.RenderTarget->BlendOp = D3D11_BLEND_OP_ADD;
+    blend_state_desc.RenderTarget->BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blend_state_desc.RenderTarget->RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+    const auto hr = device_->CreateBlendState(&blend_state_desc, &blend_state_);
+    assert(SUCCEEDED(hr));
 }
 
 // Read about USAGE_DYNAMIC
@@ -287,13 +301,8 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
         vertex_buffer_desc.MiscFlags = 0;
         vertex_buffer_desc.StructureByteStride = 0;
 
-        D3D11_SUBRESOURCE_DATA vertex_data;
-        vertex_data.pSysMem = vertices;
-        vertex_data.SysMemPitch = 0;
-        vertex_data.SysMemSlicePitch = 0;
-
         auto hr = device_->CreateBuffer(&vertex_buffer_desc,
-                                        &vertex_data,
+                                        nullptr,
                                         &vertex_buffer_);
         assert(SUCCEEDED(hr));
 

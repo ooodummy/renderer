@@ -30,39 +30,8 @@ void renderer::dx11_renderer::populate() {
     // God bless http://www.rastertek.com/dx11tut11.html
     for (const auto& [active, working] : buffers_) {
         for (auto& batch : active->get_batches()) {
-            auto is_type_list = [](D3D_PRIMITIVE_TOPOLOGY type) -> bool {
-                return type == D3D_PRIMITIVE_TOPOLOGY_POINTLIST ||
-                        type == D3D_PRIMITIVE_TOPOLOGY_LINELIST ||
-                        type == D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-            };
-
-            auto get_primitive_size = [](D3D_PRIMITIVE_TOPOLOGY type) -> UINT {
-                switch (type) {
-                    case D3D_PRIMITIVE_TOPOLOGY_POINTLIST:
-                        return 1;
-                    case D3D_PRIMITIVE_TOPOLOGY_LINELIST:
-                    case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP:
-                        return 2;
-                    case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
-                    case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
-                        return 3;
-                    default:
-                        return 0;
-                }
-            };
-
-            // TODO: Handle clipping
-
-            size_t vertices = batch.size;
-
-            if (is_type_list(batch.type)) {
-                vertices /= get_primitive_size(batch.type);
-            } else {
-                vertices -= static_cast<size_t>(get_primitive_size(batch.type) - 1);
-            }
-
             device_->context_->IASetPrimitiveTopology(batch.type);
-            device_->context_->Draw(vertices, offset);
+            device_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
 
             if (batch.texture)
                 device_->context_->PSSetShaderResources(0, 1, nullptr);
@@ -100,18 +69,18 @@ void renderer::dx11_renderer::update_buffers() {
     size_t vertex_count = 0;
 
     for (const auto& [active, working] : buffers_) {
-        vertex_count += active->vertex_count_;
+        vertex_count += active->get_vertices().size();
     }
 
     if (vertex_count > 0) {
-        static size_t vertex_buffer_size = 0;
+        /*static size_t vertex_buffer_size = 0;
 
         if (!device_->vertex_buffer_ || vertex_buffer_size < vertex_count) {
             vertex_buffer_size = vertex_count;// + 500;
 
             device_->release_buffers();
             device_->create_buffers(vertex_buffer_size);
-        }
+        }*/
 
         if (device_->vertex_buffer_) {
             D3D11_MAPPED_SUBRESOURCE mapped_subresource;
@@ -120,8 +89,10 @@ void renderer::dx11_renderer::update_buffers() {
             assert(SUCCEEDED(hr));
 
             for (const auto& [active, working] : buffers_) {
-                memcpy(mapped_subresource.pData, active->get_vertices().data(), active->vertex_count_ * sizeof(vertex));
-                mapped_subresource.pData = static_cast<char*>(mapped_subresource.pData) + active->vertex_count_;
+                auto& vertices = active->get_vertices();
+
+                memcpy(mapped_subresource.pData, vertices.data(), vertices.size() * sizeof(vertex));
+                mapped_subresource.pData = static_cast<char*>(mapped_subresource.pData) + vertices.size();
             }
 
             device_->context_->Unmap(device_->vertex_buffer_, 0);
@@ -134,7 +105,7 @@ void renderer::dx11_renderer::render_buffers() {
     UINT offset = 0;
     device_->context_->IASetVertexBuffers(0, 1, &device_->vertex_buffer_, &stride, &offset);
 
-    device_->context_->IASetIndexBuffer(device_->index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+    //device_->context_->IASetIndexBuffer(device_->index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 
     device_->context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     device_->context_->IASetInputLayout(device_->input_layout_);

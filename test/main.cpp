@@ -32,7 +32,9 @@ void draw_thread() {
     while (msg.message != WM_QUIT) {
         const auto buf = renderer::renderer->get_buffer_node(id).working;
 
-        //buf->draw_rect({10, 10, 50, 50}, {255, 0, 0, 255});
+        buf->draw_point({10, 10}, {255, 255, 255, 255});
+        buf->draw_line({10, 10}, {50, 50}, {255, 0, 0, 255});
+        buf->draw_rect({10, 10, 50, 50}, {255, 0, 0, 255});
 
         renderer::renderer->swap_buffers(id);
 
@@ -43,7 +45,7 @@ void draw_thread() {
 int main() {
     auto window = std::make_shared<renderer::win32_window>();
     window->set_title("DX11 Renderer");
-    window->set_size({200, 100});
+    window->set_size({1920, 1080});
 
     // Center window position
     {

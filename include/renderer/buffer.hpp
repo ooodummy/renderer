@@ -14,20 +14,20 @@
 namespace renderer {
     class batch {
     public:
-        batch(D3D_PRIMITIVE_TOPOLOGY _type) : type(_type) {}
+        batch(size_t _size, D3D_PRIMITIVE_TOPOLOGY _type) : size(_size), type(_type) {}
 
         // Basic geometry
-        size_t size;
+        size_t size = 0;
         D3D_PRIMITIVE_TOPOLOGY type;
 
         // 2D Textures
         std::shared_ptr<texture> texture = nullptr;
-        color_rgba color;
+        color_rgba color{};
 
         // Clipping
-        RECT clip_rect;
-        bool clip_push;
-        bool clip_pop;
+        RECT clip_rect{};
+        bool clip_push = false;
+        bool clip_pop = false;
     };
 
     class renderer;
@@ -38,15 +38,50 @@ namespace renderer {
 
         void clear();
 
-        // TODO: I don't think textures should be shared_ptrs since then they may never get freed
-        void add_vertices(vertex* vertices, size_t size, D3D_PRIMITIVE_TOPOLOGY type, std::shared_ptr<texture> texture = nullptr, color_rgba col = { 255, 255, 255, 255 });
+        template <std::size_t N>
+        void add_vertices(vertex(&vertices)[N]) {
+            auto& active_batch = batches_.back();
+            active_batch.size += N;
 
+            vertices_.resize(vertices_.size() + N);
+            memcpy(&vertices_[vertices_.size() - N], vertices, N * sizeof(vertex));
+        }
+
+        template <std::size_t N>
+        void add_vertices(vertex(&vertices)[N], D3D_PRIMITIVE_TOPOLOGY type, std::shared_ptr<texture> texture = nullptr, color_rgba col = { 255, 255, 255, 255 }) {
+            if (batches_.empty() || batches_.back().type != type)
+                batches_.emplace_back(0, type);
+
+            batch& new_batch = batches_.back();
+
+            new_batch.texture = std::move(texture);
+            new_batch.color = col;
+
+            add_vertices(vertices);
+
+            // Used to break strips
+            switch (type) {
+                case D3D11_PRIMITIVE_TOPOLOGY_LINELIST:
+                case D3D11_PRIMITIVE_TOPOLOGY_LINELIST_ADJ:
+                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
+                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ: {
+                    batches_.emplace_back(0, D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
+                    vertex seperator[1]{};
+                    add_vertices(seperator);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
+        void draw_point(glm::vec2 pos, color_rgba col);
+        void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col);
         void draw_rect(glm::vec4 rect, color_rgba col);
 
         const std::vector<vertex>& get_vertices();
         const std::vector<batch>& get_batches();
 
-        size_t vertex_count_ = 0; // This is unneeded IDK why I use it.
         std::deque<RECT> clip_rects;
 
     private:
