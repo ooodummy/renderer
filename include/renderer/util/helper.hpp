@@ -7,6 +7,7 @@
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 
 #include <utility>
 #include <glm/vec2.hpp>
@@ -72,6 +73,7 @@ namespace renderer {
         void create_frame_buffer_view();
         void create_shaders();
         void create_states();
+        void create_projection();
         void create_buffers(size_t vertex_count);
         void release_buffers();
 
@@ -93,6 +95,9 @@ namespace renderer {
         ID3D11InputLayout* input_layout_;
         ID3D11Buffer* vertex_buffer_{};
         ID3D11Buffer* index_buffer_{};
+
+        DirectX::XMMATRIX projection;
+        ID3D11Buffer* projection_buffer_;
     };
 }
 

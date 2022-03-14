@@ -92,6 +92,7 @@ bool renderer::dx11_device::init() {
 
     create_frame_buffer_view();
     create_states();
+    create_projection();
 
     create_shaders();
     create_buffers(1024 * 4 * 3); // TODO: Should not make with max vertex size and instead remake to resize no?
@@ -278,6 +279,19 @@ void renderer::dx11_device::create_states() {
     blend_state_desc.RenderTarget->RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
     const auto hr = device_->CreateBlendState(&blend_state_desc, &blend_state_);
+    assert(SUCCEEDED(hr));
+}
+
+void renderer::dx11_device::create_projection() {
+    D3D11_BUFFER_DESC projection_buffer_desc{};
+
+    projection_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+    projection_buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
+    projection_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    projection_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    projection_buffer_desc.MiscFlags = 0;
+
+    const auto hr = device_->CreateBuffer(&projection_buffer_desc, nullptr, &projection_buffer_);
     assert(SUCCEEDED(hr));
 }
 

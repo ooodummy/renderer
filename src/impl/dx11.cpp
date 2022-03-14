@@ -1,5 +1,8 @@
 #include "renderer/impl/dx11.hpp"
 
+#include <DirectXMath.h>
+#include <DirectXPackedVector.h>
+
 void renderer::dx11_renderer::begin() {
     FLOAT background_color[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
     device_->context_->ClearRenderTargetView(device_->frame_buffer_view_, background_color);
@@ -8,7 +11,22 @@ void renderer::dx11_renderer::begin() {
         const auto size = device_->window_->get_size();
         D3D11_VIEWPORT viewport = {0.0f, 0.0f, (FLOAT) (size.x), (FLOAT) (size.y), 0.0f, 1.0f};
         device_->context_->RSSetViewports(1, &viewport);
+
+        device_->projection = DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX, viewport.Width, viewport.Height, viewport.TopLeftY,
+                                                     viewport.MinDepth, viewport.MaxDepth);
+
+        D3D11_MAPPED_SUBRESOURCE mapped_resource;
+        const auto hr = device_->context_->Map(device_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+        assert(SUCCEEDED(hr));
+        {
+            std::memcpy(mapped_resource.pData, &device_->projection, sizeof(DirectX::XMMATRIX));
+        }
+        device_->context_->Unmap(device_->projection_buffer_, 0);
+
+        device_->context_->VSSetConstantBuffers(0, 1, &device_->projection_buffer_);
     }
+
+    device_->context_->OMSetBlendState(device_->blend_state_, nullptr, 0xffffffff);
 
     device_->context_->OMSetRenderTargets(1, &device_->frame_buffer_view_, nullptr);
 
