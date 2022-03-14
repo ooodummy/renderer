@@ -49,8 +49,29 @@ namespace renderer {
 
         template <std::size_t N>
         void add_vertices(vertex(&vertices)[N], D3D_PRIMITIVE_TOPOLOGY type, std::shared_ptr<texture> texture = nullptr, color_rgba col = { 255, 255, 255, 255 }) {
-            if (batches_.empty() || batches_.back().type != type)
+            if (batches_.empty()) {
                 batches_.emplace_back(0, type);
+            }
+            else {
+                auto& previous = batches_.back();
+
+                if (previous.type != type) {
+                    batches_.emplace_back(0, type);
+                }
+                else {
+                    // If the previous type is a strip don't batch because then that will cause issues
+                    switch (previous.type) {
+                        case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
+                        case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
+                        case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
+                        case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
+                            batches_.emplace_back(0, type);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
 
             batch& new_batch = batches_.back();
 
@@ -58,21 +79,6 @@ namespace renderer {
             new_batch.color = col;
 
             add_vertices(vertices);
-
-            // Used to break strips
-            switch (type) {
-                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
-                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
-                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
-                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ: {
-                    batches_.emplace_back(0, D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
-                    vertex seperator[1]{};
-                    add_vertices(seperator);
-                    break;
-                }
-                default:
-                    break;
-            }
         }
 
         void draw_point(glm::vec2 pos, color_rgba col);
