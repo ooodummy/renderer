@@ -95,7 +95,7 @@ bool renderer::dx11_device::init() {
     create_states();
 
     create_shaders();
-    create_buffers(1024 * 4 * 3); // TODO: Should not make with max vertex size and instead remake to resize no?
+    create_buffers(500); // TODO: Should not make with max vertex size and instead remake to resize no?
 
     return true;
 }
@@ -348,7 +348,7 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
         projection_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         projection_buffer_desc.MiscFlags = 0;
 
-        const auto hr = device_->CreateBuffer(&projection_buffer_desc, nullptr, &projection_buffer_);
+        auto hr = device_->CreateBuffer(&projection_buffer_desc, nullptr, &projection_buffer_);
         assert(SUCCEEDED(hr));
     }
 
@@ -361,8 +361,8 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
         command_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         command_buffer_desc.MiscFlags = 0;
 
-        const auto hr = device_->CreateBuffer(&command_buffer_desc, nullptr, &command_buffer_);
-        assert(SUCCEEDED(hr));
+        //const auto hr = device_->CreateBuffer(&command_buffer_desc, nullptr, &command_buffer_);
+        //assert(SUCCEEDED(hr));
     }
 }
 

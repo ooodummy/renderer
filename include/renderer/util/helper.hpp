@@ -96,8 +96,8 @@ namespace renderer {
         ID3D11Buffer* index_buffer_{};
 
         DirectX::XMMATRIX projection;
-        ID3D11Buffer* projection_buffer_;
-        ID3D11Buffer* command_buffer_;
+        ID3D11Buffer* projection_buffer_{};
+        ID3D11Buffer* command_buffer_{};
     };
 }
 

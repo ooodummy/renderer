@@ -40,10 +40,12 @@ void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col) {
         {rect.x, rect.y, col},
         {rect.x + rect.z, rect.y, col},
         {rect.x, rect.y + rect.w, col},
-        {rect.x + rect.z, rect.y + rect.w, col}
+        {rect.x + rect.z, rect.y, col},
+        {rect.x + rect.z, rect.y + rect.w, col},
+        {rect.x, rect.y + rect.w, col}
     };
 
-    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool circle) {
@@ -75,7 +77,7 @@ void renderer::buffer::update_scissor() {
     }
 }
 
-void renderer::buffer::set_key(color_rgba color) {
+void renderer::buffer::push_key(color_rgba color) {
     key_commands_.emplace_back(color);
     update_key();
 }
@@ -96,7 +98,7 @@ void renderer::buffer::update_key() {
     }
 }
 
-void renderer::buffer::set_blur(float strength) {
+void renderer::buffer::push_blur(float strength) {
     blur_commands_.emplace_back(strength);
     update_blur();
 }

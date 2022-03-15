@@ -46,17 +46,18 @@ void renderer::dx11_renderer::populate() {
     // IDK if any of this code here is correct at all
     // God bless http://www.rastertek.com/dx11tut11.html
     for (const auto& [active, working] : buffers_) {
-        for (auto& batch : active->get_batches()) {
+        auto& batches = active->get_batches();
+        for (auto& batch : batches) {
             {
-                D3D11_MAPPED_SUBRESOURCE mapped_resource;
+                /*D3D11_MAPPED_SUBRESOURCE mapped_resource;
                 const auto hr = device_->context_->Map(device_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
                 assert(SUCCEEDED(hr));
                 {
-                    std::memcpy(mapped_resource.pData, &batch.command, sizeof(DirectX::XMMATRIX));
+                    std::memcpy(mapped_resource.pData, &batch.command, sizeof(command));
                 }
                 device_->context_->Unmap(device_->command_buffer_, 0);
 
-                device_->context_->PSSetConstantBuffers(0, 1, &device_->command_buffer_);
+                device_->context_->PSSetConstantBuffers(0, 1, &device_->command_buffer_);*/
             }
 
             device_->context_->IASetPrimitiveTopology(batch.type);
@@ -102,14 +103,14 @@ void renderer::dx11_renderer::update_buffers() {
     }
 
     if (vertex_count > 0) {
-        /*static size_t vertex_buffer_size = 0;
+        static size_t vertex_buffer_size = 0;
 
         if (!device_->vertex_buffer_ || vertex_buffer_size < vertex_count) {
-            vertex_buffer_size = vertex_count;// + 500;
+            vertex_buffer_size = vertex_count + 500;
 
             device_->release_buffers();
             device_->create_buffers(vertex_buffer_size);
-        }*/
+        }
 
         if (device_->vertex_buffer_) {
             D3D11_MAPPED_SUBRESOURCE mapped_subresource;

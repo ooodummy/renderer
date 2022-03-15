@@ -94,10 +94,10 @@ namespace renderer {
         void push_scissor(glm::vec4 bounds, bool circle = false);
         void pop_scissor();
 
-        void set_key(color_rgba color);
+        void push_key(color_rgba color);
         void pop_key();
 
-        void set_blur(float strength);
+        void push_blur(float strength);
         void pop_blur();
 
         const std::vector<vertex>& get_vertices();
