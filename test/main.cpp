@@ -34,19 +34,25 @@ void draw_thread() {
     while (msg.message != WM_QUIT) {
         const auto buf = renderer::renderer->get_buffer_node(id).working;
 
-        /*buf->draw_point({25, 25}, {255, 255, 255, 255});
+        /*buf->push_key({255, 0, 0, 255});
+        buf->draw_point({25, 25}, {255, 255, 255, 255});
         buf->draw_line({810, 110}, {350, 650}, {255, 255, 0, 255});
         buf->draw_rect({40, 10, 50, 20}, {255, 0, 0, 255});
-        buf->draw_rect({40, 40, 50, 20}, {0, 0, 255, 255});*/
+        buf->draw_rect({40, 40, 50, 20}, {0, 0, 255, 255});
+        buf->pop_key();*/
 
-        renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
+        static renderer::color_hsv offset = {0.0f, 1.0f, 1.0f};
+        renderer::color_hsv hsv = offset;
+        offset.h += 45.0f;
+        if (offset.h >= 360.0f)
+            offset.h = 0.0f;
 
         const auto& size = window->get_size();
-        for (size_t i = 0; i < size.x; i += 25) {
-            for (size_t j = 0; j < size.y; j += 25) {
+        for (size_t i = 0; i < size.x; i += 5) {
+            for (size_t j = 0; j < size.y; j += 5) {
                 //buf->draw_point({static_cast<float>(i), static_cast<float>(j)}, hsv.get_rgb());
-                buf->draw_rect({static_cast<float>(i), static_cast<float>(j), 20.0f, 20.0f}, hsv.get_rgb());
-                hsv.h += 3.0f;
+                buf->draw_rect({static_cast<float>(i), static_cast<float>(j), 5.0f, 5.0f}, hsv.get_rgb());
+                hsv.h += 0.1f;
                 if (hsv.h >= 360.0f)
                     hsv.h = 0.0f;
             }

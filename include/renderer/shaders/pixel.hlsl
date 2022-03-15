@@ -1,6 +1,6 @@
 #include "types.hlsl"
 
-cbuffer command : register(b1)
+cbuffer command : register(b0)
 {
     float4 dimensions;
     bool scissor_enable;

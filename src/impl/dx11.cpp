@@ -49,7 +49,7 @@ void renderer::dx11_renderer::populate() {
         auto& batches = active->get_batches();
         for (auto& batch : batches) {
             {
-                /*D3D11_MAPPED_SUBRESOURCE mapped_resource;
+                D3D11_MAPPED_SUBRESOURCE mapped_resource;
                 const auto hr = device_->context_->Map(device_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
                 assert(SUCCEEDED(hr));
                 {
@@ -57,7 +57,7 @@ void renderer::dx11_renderer::populate() {
                 }
                 device_->context_->Unmap(device_->command_buffer_, 0);
 
-                device_->context_->PSSetConstantBuffers(0, 1, &device_->command_buffer_);*/
+                device_->context_->PSSetConstantBuffers(0, 1, &device_->command_buffer_);
             }
 
             device_->context_->IASetPrimitiveTopology(batch.type);

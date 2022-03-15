@@ -355,14 +355,18 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
     {
         D3D11_BUFFER_DESC command_buffer_desc {};
 
+        auto size = sizeof(renderer::command);
+        auto remainder = size % 16;
+        size += 16 - remainder;
+
         command_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-        command_buffer_desc.ByteWidth = sizeof(renderer::command);
+        command_buffer_desc.ByteWidth = size;
         command_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         command_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         command_buffer_desc.MiscFlags = 0;
 
-        //const auto hr = device_->CreateBuffer(&command_buffer_desc, nullptr, &command_buffer_);
-        //assert(SUCCEEDED(hr));
+        const auto hr = device_->CreateBuffer(&command_buffer_desc, nullptr, &command_buffer_);
+        assert(SUCCEEDED(hr));
     }
 }
 
