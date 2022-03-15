@@ -1,6 +1,5 @@
 #include "renderer/impl/dx11.hpp"
 
-#include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 
 void renderer::dx11_renderer::begin() {
@@ -48,6 +47,18 @@ void renderer::dx11_renderer::populate() {
     // God bless http://www.rastertek.com/dx11tut11.html
     for (const auto& [active, working] : buffers_) {
         for (auto& batch : active->get_batches()) {
+            {
+                D3D11_MAPPED_SUBRESOURCE mapped_resource;
+                const auto hr = device_->context_->Map(device_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+                assert(SUCCEEDED(hr));
+                {
+                    std::memcpy(mapped_resource.pData, &batch.command, sizeof(DirectX::XMMATRIX));
+                }
+                device_->context_->Unmap(device_->command_buffer_, 0);
+
+                device_->context_->PSSetConstantBuffers(0, 1, &device_->command_buffer_);
+            }
+
             device_->context_->IASetPrimitiveTopology(batch.type);
             device_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
 

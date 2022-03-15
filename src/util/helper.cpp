@@ -1,5 +1,6 @@
 #include "renderer/util/helper.hpp"
 
+#include "renderer/command.hpp"
 #include "renderer/vertex.hpp"
 
 #include <cassert>
@@ -92,7 +93,6 @@ bool renderer::dx11_device::init() {
 
     create_frame_buffer_view();
     create_states();
-    create_projection();
 
     create_shaders();
     create_buffers(1024 * 4 * 3); // TODO: Should not make with max vertex size and instead remake to resize no?
@@ -282,19 +282,6 @@ void renderer::dx11_device::create_states() {
     assert(SUCCEEDED(hr));
 }
 
-void renderer::dx11_device::create_projection() {
-    D3D11_BUFFER_DESC projection_buffer_desc{};
-
-    projection_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-    projection_buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
-    projection_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    projection_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    projection_buffer_desc.MiscFlags = 0;
-
-    const auto hr = device_->CreateBuffer(&projection_buffer_desc, nullptr, &projection_buffer_);
-    assert(SUCCEEDED(hr));
-}
-
 // Read about USAGE_DYNAMIC
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
 void renderer::dx11_device::create_buffers(size_t vertex_count) {
@@ -351,6 +338,32 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
 
         delete[] indices;
     }
+
+    {
+        D3D11_BUFFER_DESC projection_buffer_desc {};
+
+        projection_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+        projection_buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
+        projection_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        projection_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        projection_buffer_desc.MiscFlags = 0;
+
+        const auto hr = device_->CreateBuffer(&projection_buffer_desc, nullptr, &projection_buffer_);
+        assert(SUCCEEDED(hr));
+    }
+
+    {
+        D3D11_BUFFER_DESC command_buffer_desc {};
+
+        command_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+        command_buffer_desc.ByteWidth = sizeof(renderer::command);
+        command_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        command_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        command_buffer_desc.MiscFlags = 0;
+
+        const auto hr = device_->CreateBuffer(&command_buffer_desc, nullptr, &command_buffer_);
+        assert(SUCCEEDED(hr));
+    }
 }
 
 void renderer::dx11_device::release_buffers() {
@@ -362,6 +375,16 @@ void renderer::dx11_device::release_buffers() {
     if (index_buffer_) {
         index_buffer_->Release();
         index_buffer_ = nullptr;
+    }
+
+    if (projection_buffer_) {
+        projection_buffer_->Release();
+        projection_buffer_ = nullptr;
+    }
+
+    if (command_buffer_) {
+        command_buffer_->Release();
+        command_buffer_ = nullptr;
     }
 }
 

@@ -2,6 +2,7 @@
 #define _RENDERER_BUFFER_HPP_
 
 #include "color.hpp"
+#include "command.hpp"
 #include "texture.hpp"
 #include "vertex.hpp"
 
@@ -9,6 +10,7 @@
 #include <vector>
 #include <deque>
 
+#include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
 namespace renderer {
@@ -28,13 +30,16 @@ namespace renderer {
         RECT clip_rect{};
         bool clip_push = false;
         bool clip_pop = false;
+
+        command command;
     };
 
     class renderer;
 
     class buffer {
     public:
-        explicit buffer(renderer* renderer);
+        buffer() = default;
+        ~buffer() = default;
 
         void clear();
 
@@ -77,6 +82,7 @@ namespace renderer {
 
             new_batch.texture = std::move(texture);
             new_batch.color = col;
+            new_batch.command = active_command;
 
             add_vertices(vertices);
         }
@@ -85,16 +91,31 @@ namespace renderer {
         void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col);
         void draw_rect(glm::vec4 rect, color_rgba col);
 
+        void push_scissor(glm::vec4 bounds, bool circle = false);
+        void pop_scissor();
+
+        void set_key(color_rgba color);
+        void pop_key();
+
+        void set_blur(float strength);
+        void pop_blur();
+
         const std::vector<vertex>& get_vertices();
         const std::vector<batch>& get_batches();
 
-        std::deque<RECT> clip_rects;
-
     private:
-        renderer* renderer_;
-
         std::vector<vertex> vertices_;
         std::vector<batch> batches_;
+
+        std::vector<std::pair<DirectX::XMFLOAT4, bool>> scissor_commands_;
+        std::vector<DirectX::XMFLOAT4> key_commands_;
+        std::vector<float> blur_commands_;
+
+        void update_scissor();
+        void update_key();
+        void update_blur();
+
+        command active_command{};
     };
 }
 

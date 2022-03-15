@@ -1,9 +1,6 @@
 #include "types.hlsl"
 
-cbuffer screen_projection_buffer : register(b0)
-{
-	matrix projection;
-};
+matrix projection : register(b0);
 
 VS_Output vs_main(VS_Input input)
 {

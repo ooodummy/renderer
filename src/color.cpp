@@ -92,6 +92,15 @@ renderer::color_rgba::operator uint32_t() const {
                                  ((b) & 0xff));
 }
 
+[[nodiscard]] renderer::color_rgba::operator DirectX::XMFLOAT4() const {
+    return {
+        static_cast<float>(r) / 255.0f,
+        static_cast<float>(g) / 255.0f,
+        static_cast<float>(b) / 255.0f,
+        static_cast<float>(a) / 255.0f
+    };
+}
+
 renderer::color_rgba renderer::color_rgba::ease(renderer::color_rgba& o, float p, util::ease_type type) const {
     if (p > 1.0f)
         p = 1.0f;

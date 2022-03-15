@@ -32,9 +32,10 @@ void draw_thread() {
     while (msg.message != WM_QUIT) {
         const auto buf = renderer::renderer->get_buffer_node(id).working;
 
-        buf->draw_point({10, 10}, {255, 255, 255, 255});
-        buf->draw_line({10, 10}, {50, 50}, {255, 0, 0, 255});
-        buf->draw_rect({10, 10, 50, 50}, {255, 0, 0, 255});
+        buf->draw_point({25, 25}, {255, 255, 255, 255});
+        buf->draw_line({810, 110}, {350, 650}, {255, 255, 0, 255});
+        buf->draw_rect({40, 10, 50, 20}, {255, 0, 0, 255});
+        buf->draw_rect({40, 40, 50, 20}, {0, 0, 255, 255});
 
         renderer::renderer->swap_buffers(id);
 

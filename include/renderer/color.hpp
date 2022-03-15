@@ -3,6 +3,8 @@
 
 #include "util/easing.hpp"
 
+#include <DirectXMath.h>
+
 #include <algorithm>
 
 namespace renderer {
@@ -23,6 +25,7 @@ namespace renderer {
 
         [[nodiscard]] color_hsv get_hsv() const;
         [[nodiscard]] operator uint32_t() const;
+        [[nodiscard]] operator DirectX::XMFLOAT4() const;
 
         [[nodiscard]] color_rgba ease(color_rgba& o, float p, util::ease_type type = util::linear) const;
 

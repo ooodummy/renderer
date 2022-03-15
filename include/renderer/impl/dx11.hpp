@@ -5,6 +5,8 @@
 
 #include "../renderer.hpp"
 
+#include <DirectXMath.h>
+
 #include <utility>
 
 namespace renderer {

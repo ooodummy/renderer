@@ -73,7 +73,6 @@ namespace renderer {
         void create_frame_buffer_view();
         void create_shaders();
         void create_states();
-        void create_projection();
         void create_buffers(size_t vertex_count);
         void release_buffers();
 
@@ -98,6 +97,7 @@ namespace renderer {
 
         DirectX::XMMATRIX projection;
         ID3D11Buffer* projection_buffer_;
+        ID3D11Buffer* command_buffer_;
     };
 }
 

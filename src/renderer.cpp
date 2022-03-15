@@ -17,8 +17,8 @@ size_t renderer::renderer::register_buffer(size_t priority) {
     buffers_.emplace_back(buffer_node{});
 
     auto &[active, working] = buffers_[id];
-    active = std::make_shared<buffer>(this);
-    working = std::make_shared<buffer>(this);
+    active = std::make_shared<buffer>();
+    working = std::make_shared<buffer>();
 
     return id;
 }
