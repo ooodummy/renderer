@@ -4,6 +4,8 @@
 
 #include <dwmapi.h>
 #include <thread>
+#include <thread>
+#include <future>
 
 std::shared_ptr<renderer::win32_window> window;
 
@@ -21,6 +23,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_MOVE:
             break;
         case WM_SIZE: {
+            window->set_size({LOWORD(lParam), HIWORD(lParam)});
             update_size = true;
         }
     }
@@ -34,29 +37,25 @@ void draw_thread() {
     while (msg.message != WM_QUIT) {
         const auto buf = renderer::renderer->get_buffer_node(id).working;
 
-        /*buf->push_key({255, 0, 0, 255});
-        buf->draw_point({25, 25}, {255, 255, 255, 255});
-        buf->draw_line({810, 110}, {350, 650}, {255, 255, 0, 255});
-        buf->draw_rect({40, 10, 50, 20}, {255, 0, 0, 255});
-        buf->draw_rect({40, 40, 50, 20}, {0, 0, 255, 255});
-        buf->pop_key();*/
+        const auto size = window->get_size();
+        buf->push_key(renderer::color_hsv(30.0f, 1.0f, 1.0f).get_rgb());
 
-        static renderer::color_hsv offset = {0.0f, 1.0f, 1.0f};
-        renderer::color_hsv hsv = offset;
-        offset.h += 45.0f;
-        if (offset.h >= 360.0f)
-            offset.h = 0.0f;
+        {
+            constexpr auto scale = 80.0f;
+            renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
 
-        const auto& size = window->get_size();
-        for (size_t i = 0; i < size.x; i += 5) {
-            for (size_t j = 0; j < size.y; j += 5) {
-                //buf->draw_point({static_cast<float>(i), static_cast<float>(j)}, hsv.get_rgb());
-                buf->draw_rect({static_cast<float>(i), static_cast<float>(j), 5.0f, 5.0f}, hsv.get_rgb());
-                hsv.h += 0.1f;
+            for (size_t i = 0; i < size.x / scale; i += 1) {
+                buf->draw_rect({i * scale, 0, i * scale + scale, scale}, hsv.get_rgb());
+
+                hsv.h += 360.0f / (size.x / scale);
                 if (hsv.h >= 360.0f)
                     hsv.h = 0.0f;
             }
         }
+
+        buf->pop_key();
+
+        buf->draw_circle({100.0f, 100.0f}, 50.0f, {0, 255, 255, 255});
 
         renderer::renderer->swap_buffers(id);
 

@@ -31,7 +31,7 @@ namespace renderer {
         bool clip_push = false;
         bool clip_pop = false;
 
-        command command;
+        command command{};
     };
 
     class renderer;
@@ -90,6 +90,7 @@ namespace renderer {
         void draw_point(glm::vec2 pos, color_rgba col);
         void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col);
         void draw_rect(glm::vec4 rect, color_rgba col);
+        void draw_circle(glm::vec2 pos, float radius, color_rgba col);
 
         void push_scissor(glm::vec4 bounds, bool circle = false);
         void pop_scissor();

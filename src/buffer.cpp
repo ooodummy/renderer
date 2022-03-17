@@ -1,5 +1,10 @@
 #include "renderer/buffer.hpp"
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+#include <corecrt_math_defines.h>
+
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
@@ -46,6 +51,20 @@ void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col) {
     };
 
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col) {
+    const int segments = 24;
+
+    vertex vertices[segments + 1];
+
+    for (int i = 0; i <= segments; i++) {
+        const auto theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(segments);
+
+        vertices[i] = vertex(pos.x + radius * std::cos(theta), pos.y + radius * std::sin(theta), col);
+    }
+
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool circle) {

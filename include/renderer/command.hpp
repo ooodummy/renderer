@@ -4,8 +4,8 @@
 #include <DirectXMath.h>
 
 namespace renderer {
-//__pragma(pack(push, 1))
-    struct command {
+    __declspec(align(16))
+        struct command {
         DirectX::XMFLOAT4 dimensions;
         bool scissor_enable;
         DirectX::XMFLOAT4 scissor_bounds;
@@ -15,7 +15,6 @@ namespace renderer {
         DirectX::XMFLOAT4 key_color;
         float blur_strength;
     };
-//__pragma(pack(pop))
 }
 
 #endif
