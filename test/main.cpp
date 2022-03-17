@@ -38,9 +38,19 @@ void draw_thread() {
         const auto buf = renderer::renderer->get_buffer_node(id).working;
 
         const auto size = window->get_size();
-        buf->push_key(renderer::color_hsv(30.0f, 1.0f, 1.0f).get_rgb());
 
-        {
+        // Color key
+        buf->push_key({255, 0, 0, 255});
+
+        buf->draw_rect({0, 0, 100, 100}, {255, 0, 0, 255});
+        buf->draw_rect({100, 0, 100, 100}, {0, 0, 255, 255});
+        buf->draw_rect({0, 100, 100, 100}, {0, 255, 0, 255});
+        buf->draw_rect({100, 100, 100, 100}, {255, 255, 0, 255});
+
+        buf->pop_key();
+
+        // Draw rect
+        /*{
             constexpr auto scale = 80.0f;
             renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
 
@@ -51,11 +61,9 @@ void draw_thread() {
                 if (hsv.h >= 360.0f)
                     hsv.h = 0.0f;
             }
-        }
+        }*/
 
-        buf->pop_key();
-
-        buf->draw_circle({100.0f, 100.0f}, 50.0f, {0, 255, 255, 255});
+        //buf->draw_circle({100.0f, 100.0f}, 50.0f, {0, 255, 255, 255});
 
         renderer::renderer->swap_buffers(id);
 
@@ -66,7 +74,7 @@ void draw_thread() {
 int main() {
     window = std::make_shared<renderer::win32_window>();
     window->set_title("DX11 Renderer");
-    window->set_size({1920, 1080});
+    window->set_size({1280, 720});
 
     // Center window position
     {

@@ -4,15 +4,14 @@
 #include <DirectXMath.h>
 
 namespace renderer {
-    __declspec(align(16))
-        struct command {
-        DirectX::XMFLOAT4 dimensions;
-        bool scissor_enable;
-        DirectX::XMFLOAT4 scissor_bounds;
-        bool scissor_in;
-        bool scissor_circle;
-        bool key_enable;
-        DirectX::XMFLOAT4 key_color;
+    struct command {
+        alignas(16) DirectX::XMFLOAT4 dimensions;
+        alignas(4) bool scissor_enable;
+        alignas(16) DirectX::XMFLOAT4 scissor_bounds;
+        alignas(4) bool scissor_in;
+        alignas(4) bool scissor_circle;
+        alignas(4) bool key_enable;
+        alignas(16) DirectX::XMFLOAT4 key_color;
         float blur_strength;
     };
 }

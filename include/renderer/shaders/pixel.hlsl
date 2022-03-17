@@ -38,8 +38,6 @@ float4 ps_main(VS_Output input) : SV_TARGET
 
    if (key_enable)
    {
-        return float4(0.0f, 0.0f, 0.0f, 0.0f);
-
         if (input.color.x == key_color.x &&
             input.color.y == key_color.y &&
             input.color.z == key_color.z &&
