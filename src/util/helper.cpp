@@ -91,6 +91,7 @@ bool renderer::dx11_device::init() {
     if (!create_swap_chain())
         return false;
 
+    create_depth_stencil_view();
     create_frame_buffer_view();
     create_states();
 
@@ -195,8 +196,15 @@ bool renderer::dx11_device::create_swap_chain() {
     }
 
     swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+
     swap_chain_desc.SampleDesc.Count = 1;
     swap_chain_desc.SampleDesc.Quality = 0;
+
+    /*swap_chain_desc.SampleDesc.Count = 4;
+    UINT max_quality;
+    hr = device_->CheckMultisampleQualityLevels(swap_chain_desc.BufferDesc.Format, swap_chain_desc.SampleDesc.Count, &max_quality);
+    swap_chain_desc.SampleDesc.Quality = max_quality;*/
+
     swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swap_chain_desc.BufferCount = 2;
     swap_chain_desc.Scaling = DXGI_SCALING_STRETCH;
@@ -216,6 +224,36 @@ bool renderer::dx11_device::create_swap_chain() {
     return true;
 }
 
+// TODO: This does not work if resized
+void renderer::dx11_device::create_depth_stencil_view() {
+    const auto size = window_->get_size();
+
+    D3D11_TEXTURE2D_DESC depth_desc;
+    ID3D11Texture2D* depth_stencil = NULL;
+    depth_desc.Width = size.x;
+    depth_desc.Height = size.y;
+    depth_desc.MipLevels = 1;
+    depth_desc.ArraySize = 1;
+    depth_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    depth_desc.SampleDesc.Count = 1;
+    depth_desc.SampleDesc.Quality = 0;
+    depth_desc.Usage = D3D11_USAGE_DEFAULT;
+    depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+    depth_desc.CPUAccessFlags = 0;
+    depth_desc.MiscFlags = 0;
+
+    auto hr = device_->CreateTexture2D(&depth_desc, nullptr, &depth_stencil);
+    assert(SUCCEEDED(hr));
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc;
+    depth_stencil_view_desc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+    depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    depth_stencil_view_desc.Texture2D.MipSlice = 0;
+
+    hr = device_->CreateDepthStencilView(depth_stencil, &depth_stencil_view_desc, &depth_stencil_view_);
+    assert(SUCCEEDED(hr));
+}
+
 void renderer::dx11_device::create_frame_buffer_view() {
     ID3D11Texture2D* frame_buffer;
     auto hr = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&frame_buffer);
@@ -233,7 +271,6 @@ void renderer::dx11_device::create_frame_buffer_view() {
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
 void renderer::dx11_device::create_shaders() {
     HRESULT hr;
-    ID3DBlob* compile_error_blob;
 
     {
         hr = device_->CreateVertexShader(vertex_shader_data,

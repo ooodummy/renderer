@@ -27,7 +27,7 @@ void renderer::dx11_renderer::begin() {
 
     device_->context_->OMSetBlendState(device_->blend_state_, nullptr, 0xffffffff);
 
-    device_->context_->OMSetRenderTargets(1, &device_->frame_buffer_view_, nullptr);
+    device_->context_->OMSetRenderTargets(1, &device_->frame_buffer_view_, device_->depth_stencil_view_);
 
     device_->context_->VSSetShader(device_->vertex_shader_, nullptr, 0);
     device_->context_->PSSetShader(device_->pixel_shader_, nullptr, 0);

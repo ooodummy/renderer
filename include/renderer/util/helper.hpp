@@ -70,6 +70,7 @@ namespace renderer {
         bool create_device();
         bool setup_debug_layer();
         bool create_swap_chain();
+        void create_depth_stencil_view();
         void create_frame_buffer_view();
         void create_shaders();
         void create_states();
@@ -85,6 +86,7 @@ namespace renderer {
         IDXGISwapChain1* swap_chain_;
 
         ID3D11RenderTargetView* frame_buffer_view_;
+        ID3D11DepthStencilView* depth_stencil_view_;
 
         ID3D11VertexShader* vertex_shader_;
         ID3D11PixelShader* pixel_shader_;

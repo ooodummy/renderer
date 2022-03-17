@@ -63,7 +63,7 @@ void draw_thread() {
             }
         }*/
 
-        //buf->draw_circle({100.0f, 100.0f}, 50.0f, {0, 255, 255, 255});
+        buf->draw_circle({100.0f, 100.0f}, 50.0f, {0, 0, 0, 255});
 
         renderer::renderer->swap_buffers(id);
 

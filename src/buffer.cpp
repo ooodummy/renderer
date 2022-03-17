@@ -64,7 +64,7 @@ void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col) 
         vertices[i] = vertex(pos.x + radius * std::cos(theta), pos.y + radius * std::sin(theta), col);
     }
 
-    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 }
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool circle) {
