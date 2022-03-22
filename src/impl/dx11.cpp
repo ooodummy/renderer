@@ -1,5 +1,7 @@
 #include "renderer/impl/dx11.hpp"
 
+#include "renderer/shaders/command.hpp"
+
 #include <DirectXPackedVector.h>
 
 void renderer::dx11_renderer::begin() {
@@ -8,26 +10,43 @@ void renderer::dx11_renderer::begin() {
 
     {
         const auto size = device_->window_->get_size();
-        D3D11_VIEWPORT viewport = {0.0f, 0.0f, (FLOAT) (size.x), (FLOAT) (size.y), 0.0f, 1.0f};
-        device_->context_->RSSetViewports(1, &viewport);
 
-        device_->projection = DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX, viewport.Width, viewport.Height, viewport.TopLeftY,
-                                                     viewport.MinDepth, viewport.MaxDepth);
-
+        HRESULT hr;
         D3D11_MAPPED_SUBRESOURCE mapped_resource;
-        const auto hr = device_->context_->Map(device_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+
+        if (size != glm::i16vec2{}) {
+            D3D11_VIEWPORT viewport = {0.0f, 0.0f, (FLOAT) (size.x), (FLOAT) (size.y), 0.0f, 1.0f};
+            device_->context_->RSSetViewports(1, &viewport);
+
+            device_->projection = DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX, viewport.Width, viewport.Height, viewport.TopLeftY,
+                                                                           viewport.MinDepth, viewport.MaxDepth);
+
+            hr = device_->context_->Map(device_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+            assert(SUCCEEDED(hr));
+            {
+                std::memcpy(mapped_resource.pData, &device_->projection, sizeof(DirectX::XMMATRIX));
+            }
+            device_->context_->Unmap(device_->projection_buffer_, 0);
+
+            device_->context_->VSSetConstantBuffers(0, 1, &device_->projection_buffer_);
+        }
+
+        global_buffer global{};
+        global.dimensions = { static_cast<float>(size.x), static_cast<float>(size.y) };
+
+        hr = device_->context_->Map(device_->global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
         assert(SUCCEEDED(hr));
         {
-            std::memcpy(mapped_resource.pData, &device_->projection, sizeof(DirectX::XMMATRIX));
+            std::memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
         }
-        device_->context_->Unmap(device_->projection_buffer_, 0);
+        device_->context_->Unmap(device_->global_buffer_, 0);
 
-        device_->context_->VSSetConstantBuffers(0, 1, &device_->projection_buffer_);
+        device_->context_->PSSetConstantBuffers (1, 1, &device_->global_buffer_);
     }
 
     device_->context_->OMSetBlendState(device_->blend_state_, nullptr, 0xffffffff);
 
-    device_->context_->OMSetRenderTargets(1, &device_->frame_buffer_view_, device_->depth_stencil_view_);
+    device_->context_->OMSetRenderTargets(1, &device_->frame_buffer_view_, nullptr);//device_->depth_stencil_view_);
 
     device_->context_->VSSetShader(device_->vertex_shader_, nullptr, 0);
     device_->context_->PSSetShader(device_->pixel_shader_, nullptr, 0);
@@ -53,11 +72,11 @@ void renderer::dx11_renderer::populate() {
                 const auto hr = device_->context_->Map(device_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
                 assert(SUCCEEDED(hr));
                 {
-                    std::memcpy(mapped_resource.pData, &batch.command, sizeof(command));
+                    std::memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
                 }
                 device_->context_->Unmap(device_->command_buffer_, 0);
 
-                device_->context_->PSSetConstantBuffers(0, 1, &device_->command_buffer_);
+                device_->context_->PSSetConstantBuffers(1, 1, &device_->command_buffer_);
             }
 
             device_->context_->IASetPrimitiveTopology(batch.type);

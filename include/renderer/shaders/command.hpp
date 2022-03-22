@@ -4,7 +4,11 @@
 #include <DirectXMath.h>
 
 namespace renderer {
-    struct command {
+    struct global_buffer {
+        alignas(16) DirectX::XMFLOAT2 dimensions;
+    };
+
+    struct command_buffer {
         alignas(16) DirectX::XMFLOAT4 dimensions;
         alignas(4) bool scissor_enable;
         alignas(16) DirectX::XMFLOAT4 scissor_bounds;

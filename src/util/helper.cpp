@@ -1,6 +1,6 @@
 #include "renderer/util/helper.hpp"
 
-#include "renderer/command.hpp"
+#include "renderer/shaders/command.hpp"
 #include "renderer/vertex.hpp"
 
 #include <cassert>
@@ -250,8 +250,8 @@ void renderer::dx11_device::create_depth_stencil_view() {
     depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     depth_stencil_view_desc.Texture2D.MipSlice = 0;
 
-    hr = device_->CreateDepthStencilView(depth_stencil, &depth_stencil_view_desc, &depth_stencil_view_);
-    assert(SUCCEEDED(hr));
+    //hr = device_->CreateDepthStencilView(depth_stencil, &depth_stencil_view_desc, &depth_stencil_view_);
+    //assert(SUCCEEDED(hr));
 }
 
 void renderer::dx11_device::create_frame_buffer_view() {
@@ -272,35 +272,29 @@ void renderer::dx11_device::create_frame_buffer_view() {
 void renderer::dx11_device::create_shaders() {
     HRESULT hr;
 
-    {
-        hr = device_->CreateVertexShader(vertex_shader_data,
-                                         sizeof(vertex_shader_data),
-                                         nullptr,
-                                         &vertex_shader_);
-        assert(SUCCEEDED(hr));
-    }
+    hr = device_->CreateVertexShader(vertex_shader_data,
+                                     sizeof(vertex_shader_data),
+                                     nullptr,
+                                     &vertex_shader_);
+    assert(SUCCEEDED(hr));
 
-    {
-        hr = device_->CreatePixelShader(pixel_shader_data,
-                                         sizeof(pixel_shader_data),
-                                         nullptr,
-                                         &pixel_shader_);
-        assert(SUCCEEDED(hr));
-    }
+    hr = device_->CreatePixelShader(pixel_shader_data,
+                                    sizeof(pixel_shader_data),
+                                    nullptr,
+                                    &pixel_shader_);
+    assert(SUCCEEDED(hr));
 
-    {
-        D3D11_INPUT_ELEMENT_DESC input_element_desc[] = {
-            { "POS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-        };
+    D3D11_INPUT_ELEMENT_DESC input_element_desc[] = {
+        { "POS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
 
-        hr = device_->CreateInputLayout(input_element_desc,
-                                        ARRAYSIZE(input_element_desc),
-                                        vertex_shader_data,
-                                        sizeof(vertex_shader_data),
-                                        &input_layout_);
-        assert(SUCCEEDED(hr));
-    }
+    hr = device_->CreateInputLayout(input_element_desc,
+                                    ARRAYSIZE(input_element_desc),
+                                    vertex_shader_data,
+                                    sizeof(vertex_shader_data),
+                                    &input_layout_);
+    assert(SUCCEEDED(hr));
 }
 
 void renderer::dx11_device::create_states() {
@@ -315,11 +309,30 @@ void renderer::dx11_device::create_states() {
     blend_state_desc.RenderTarget->BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blend_state_desc.RenderTarget->RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-    const auto hr = device_->CreateBlendState(&blend_state_desc, &blend_state_);
+    auto hr = device_->CreateBlendState(&blend_state_desc, &blend_state_);
     assert(SUCCEEDED(hr));
+
+    D3D11_SAMPLER_DESC sampler_desc;
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 1;
+    sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sampler_desc.BorderColor[0] = 0;
+    sampler_desc.BorderColor[1] = 0;
+    sampler_desc.BorderColor[2] = 0;
+    sampler_desc.BorderColor[3] = 0;
+    sampler_desc.MinLOD = 0;
+    sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = device_->CreateSamplerState(&sampler_desc, &sampler_state_);
+    assert(SUCCEEDED(hr));
+
+    context_->PSSetSamplers(0, 1, &sampler_state_);
 }
 
-// Read about USAGE_DYNAMIC
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
 void renderer::dx11_device::create_buffers(size_t vertex_count) {
     if (vertex_count <= 0) {
@@ -376,35 +389,26 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
         delete[] indices;
     }
 
-    {
-        D3D11_BUFFER_DESC projection_buffer_desc {};
+    D3D11_BUFFER_DESC buffer_desc{};
 
-        projection_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-        projection_buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
-        projection_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        projection_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-        projection_buffer_desc.MiscFlags = 0;
+    buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+    buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    buffer_desc.MiscFlags = 0;
 
-        auto hr = device_->CreateBuffer(&projection_buffer_desc, nullptr, &projection_buffer_);
-        assert(SUCCEEDED(hr));
-    }
+    auto hr = device_->CreateBuffer(&buffer_desc, nullptr, &projection_buffer_);
+    assert(SUCCEEDED(hr));
 
-    {
-        D3D11_BUFFER_DESC command_buffer_desc {};
+    buffer_desc.ByteWidth = sizeof(renderer::global_buffer);
 
-        auto size = sizeof(renderer::command);
-        auto remainder = size % 16;
-        size += 16 - remainder;
+    hr = device_->CreateBuffer(&buffer_desc, nullptr, &global_buffer_);
+    assert(SUCCEEDED(hr));
 
-        command_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-        command_buffer_desc.ByteWidth = size;
-        command_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        command_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-        command_buffer_desc.MiscFlags = 0;
+    buffer_desc.ByteWidth = sizeof(renderer::command_buffer);
 
-        const auto hr = device_->CreateBuffer(&command_buffer_desc, nullptr, &command_buffer_);
-        assert(SUCCEEDED(hr));
-    }
+    hr = device_->CreateBuffer(&buffer_desc, nullptr, &command_buffer_);
+    assert(SUCCEEDED(hr));
 }
 
 void renderer::dx11_device::release_buffers() {

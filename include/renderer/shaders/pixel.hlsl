@@ -1,6 +1,13 @@
 #include "types.hlsl"
 
-cbuffer command : register(b0)
+sampler frame_view : register(s0);
+
+cbuffer global : register(b0)
+{
+    float2 size;
+}
+
+cbuffer command : register(b1)
 {
     float4 dimensions;
     bool scissor_enable;
@@ -14,13 +21,13 @@ cbuffer command : register(b0)
 
 struct matrix_holder
 {
-	float bmatrix[25];
+	float mm[25];
 };
 
-matrix_holder get2DMatrix(float filterVal, float strength)
+matrix_holder get_matrix_2d(float filter, float strength)
 {
-	float matrix1[25] = {0, 1, 2, 1, 0, 1, 3, 5, 3, 1, 2, 5, 16,
-	                     5, 2, 1, 3, 5, 3, 1, 0, 1, 2, 1, 0};
+	float matrix1[25] = {0.0f, 1.0f, 2.0f, 1.0f, 0.0f, 1.0f, 3.0f, 5.0f, 3.0f, 1.0f, 2.0f, 5.0f, 16.0f,
+	                     5.0f, 2.0f, 1.0f, 3.0f, 5.0f, 3.0f, 1.0f, 0.0f, 1.0f, 2.0f, 1.0f, 0.0f};
 
 	matrix_holder ret;
 
@@ -29,7 +36,7 @@ matrix_holder get2DMatrix(float filterVal, float strength)
 	for (int i = 0; i < 25; i++)
 	{
 		if (i == 12)
-			sum += filterVal;
+			sum += filter;
 		else
 			sum += matrix1[i];
 	}
@@ -37,44 +44,44 @@ matrix_holder get2DMatrix(float filterVal, float strength)
 	for (int j = 0; j < 25; j++)
 	{
 		if (j == 12)
-			ret.bmatrix[j] = filterVal / sum;
+			ret.mm[j] = filter / sum;
 		else
-			ret.bmatrix[j] = matrix1[j] / sum;
+			ret.mm[j] = matrix1[j] / sum;
 	}
 
 	return ret;
 }
 
-/*float3 blur2D(matrix_holder bmatrix, float4 pos)
+float3 blur_2d(matrix_holder holder, float4 pos)
 {
-	float rsum = 0;
-	float gsum = 0;
-	float bsum = 0;
+	float r = 0.0f;
+	float g = 0.0f;
+	float b = 0.0f;
 
 	float3 result;
-	float2 step = float2(1 / dimension.x, 1 / dimension.y);
+	float2 step = float2(1.0f / size.x, 1.0f / size.y);
 
 	for (int px = -2; px <= 2; px++)
 	{
 		for (int py = -2; py <= 2; py++)
 		{
-			float g = bmatrix.bmatrix[5 * (px + 2) + (py + 2)];
+			float g = holder.mm[5.0f * (px + 2.0f) + (py + 2.0f)];
 
 			float2 coord = float2(pos.z + px * step.x, pos.w + py * step.y);
 
-			float4 col = tex2D(backbuffer, coord);
-			rsum += col.r * g;
-			gsum += col.g * g;
-			bsum += col.b * g;
+			float4 col = tex2D(frame_view, coord);
+			r += col.r * g;
+			g += col.g * g;
+			b += col.b * g;
 		}
 	}
 
-	result.r = rsum;
-	result.g = gsum;
-	result.b = bsum;
+	result.r = r;
+	result.g = g;
+	result.b = b;
 
 	return result;
-}*/
+}
 
 float4 ps_main(VS_Output input) : SV_TARGET
 {
@@ -103,18 +110,27 @@ float4 ps_main(VS_Output input) : SV_TARGET
 
         if (scissor_in)
         {
-            return inside ? input.color : float4(0.0f, 0.0f, 0.0f, 0.0f);
-       }
-       else
-       {
-            return inside ? float4(0.0f, 0.0f, 0.0f, 0.0f) : input.color;
-       }
+            if (inside)
+                return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+        else
+        {
+            if (!inside)
+                return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
    }
 
-   if (blur_strength > 0.0f)
+   /*if (blur_strength > 0.0f)
    {
+        float2 tex_coord = float2((input.position.x + 1) / 2, (input.position.y - 1) / -2);
+        tex_coord.x += (1 / size.x);
+        tex_coord.y += (1 / size.y);
 
-   }
+        matrix_holder holder = get_matrix_2d(5.0f, 0.5f);
+
+        float3 result = blur_2d(holder, float4(tex_coord * size, tex_coord));
+        return float4(result, 1.0f);
+   }*/
 
    return input.color;
 }

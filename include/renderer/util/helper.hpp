@@ -56,6 +56,7 @@ namespace renderer {
         virtual void resize() = 0;
     };
 
+    // TODO: Renderer impl should handle shader and constant buffer creation
     // https://github.com/kevinmoran/BeginnerDirect3D11
     class dx11_device : public device {
         friend class dx11_renderer;
@@ -88,6 +89,8 @@ namespace renderer {
         ID3D11RenderTargetView* frame_buffer_view_;
         ID3D11DepthStencilView* depth_stencil_view_;
 
+        ID3D11SamplerState* sampler_state_;
+
         ID3D11VertexShader* vertex_shader_;
         ID3D11PixelShader* pixel_shader_;
 
@@ -99,6 +102,7 @@ namespace renderer {
 
         DirectX::XMMATRIX projection;
         ID3D11Buffer* projection_buffer_{};
+        ID3D11Buffer* global_buffer_{};
         ID3D11Buffer* command_buffer_{};
     };
 }

@@ -39,15 +39,38 @@ void draw_thread() {
 
         const auto size = window->get_size();
 
-        // Color key
+        // TODO: Color key does not work if there are more draw calls later on for some reason?
         buf->push_key({255, 0, 0, 255});
 
-        buf->draw_rect({0, 0, 100, 100}, {255, 0, 0, 255});
-        buf->draw_rect({100, 0, 100, 100}, {0, 0, 255, 255});
-        buf->draw_rect({0, 100, 100, 100}, {0, 255, 0, 255});
-        buf->draw_rect({100, 100, 100, 100}, {255, 255, 0, 255});
+        buf->draw_rect_filled({0, 0, 100, 100}, {255, 0, 0, 255});
+        buf->draw_rect_filled({100, 0, 100, 100}, {0, 0, 255, 255});
+        buf->draw_rect_filled({0, 100, 100, 100}, {0, 255, 0, 255});
+        buf->draw_rect_filled({100, 100, 100, 100}, {255, 255, 0, 255});
 
         buf->pop_key();
+
+        buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125});
+
+        buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255}, 10.0f);
+
+        static renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
+        hsv.h += 0.1f;
+        if (hsv.h > 360.0f)
+            hsv.h = 0.0f;
+
+        glm::vec2 points[] = {
+            {400.0f, 500.0f},
+            {700.0f, 500.0f},
+            {600.0f, 350.0f},
+            {700.0f, 300.0f},
+            {500.0f, 200.0f},
+            {500.0f, 600.0f},
+            {600.0f, 600.0f}
+        };
+
+        auto rgb = hsv.get_rgb();
+        rgb.a = 155;
+        buf->draw_polyline(points, rgb, 30.0f);
 
         // Draw rect
         /*{
@@ -62,8 +85,6 @@ void draw_thread() {
                     hsv.h = 0.0f;
             }
         }*/
-
-        buf->draw_circle({100.0f, 100.0f}, 50.0f, {0, 0, 0, 255});
 
         renderer::renderer->swap_buffers(id);
 
@@ -107,7 +128,7 @@ int main() {
     }
 
     renderer::renderer = std::make_unique<renderer::dx11_renderer>(device);
-    renderer::renderer->set_vsync(false);
+    renderer::renderer->set_vsync(true);
 
     std::thread draw(draw_thread);
 
