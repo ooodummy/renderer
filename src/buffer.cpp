@@ -41,7 +41,7 @@ void renderer::buffer::draw_line(glm::vec2 start, glm::vec2 end, color_rgba col)
 }
 
 void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness) {
-    glm::vec2 points[] = {
+    std::vector<glm::vec2> points = {
         {rect.x, rect.y},
         {rect.x + rect.z, rect.y},
         {rect.x + rect.z, rect.y + rect.w},
@@ -64,25 +64,25 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col) {
-    const int segments = 24;
-
-    glm::vec2 points[segments];
+void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col, float thickness, size_t segments) {
+    std::vector<glm::vec2> points;
+    points.reserve(segments);
 
     for (size_t i = 0; i < segments; i++) {
         const auto theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(segments);
 
-        points[i] = {pos.x + radius * std::cos(theta), pos.y + radius * std::sin(theta)};
+        points.emplace_back(pos.x + radius * std::cos(theta), pos.y + radius * std::sin(theta));
     }
 
-    draw_polyline(points, col, 30.0f, joint_miter, cap_joint);
+    draw_polyline(points, col, thickness, joint_miter, cap_joint);
 }
 
-void renderer::buffer::push_scissor(glm::vec4 bounds, bool circle) {
+void renderer::buffer::push_scissor(glm::vec4 bounds, bool in, bool circle) {
     scissor_commands_.emplace_back(
         DirectX::XMFLOAT4{
             bounds.x, bounds.y, bounds.z, bounds.w
         },
+        in,
         circle
         );
     update_scissor();
@@ -104,8 +104,9 @@ void renderer::buffer::update_scissor() {
         const auto& new_command = scissor_commands_.back();
 
         active_command.scissor_enable = true;
-        active_command.scissor_bounds = new_command.first;
-        active_command.scissor_circle = new_command.second;
+        active_command.scissor_bounds = std::get<0>(new_command);
+        active_command.scissor_in = std::get<1>(new_command);
+        active_command.scissor_circle = std::get<2>(new_command);
     }
 }
 

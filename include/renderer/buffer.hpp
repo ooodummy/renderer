@@ -89,15 +89,12 @@ namespace renderer {
             add_vertices(vertices);
         }
 
-        template <std::size_t N>
-        void draw_polyline(glm::vec2(&points)[N], color_rgba col, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt) {
+        void draw_polyline(const std::vector<glm::vec2>& points, color_rgba col, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt) {
             polyline line;
             line.set_thickness(thickness);
             line.set_joint(joint);
             line.set_cap(cap);
-            for (size_t i = 0; i < N; i++) {
-                line.add(points[i]);
-            }
+            line.set_points(points);
 
             auto path = line.compute();
             if (path.empty())
@@ -125,9 +122,9 @@ namespace renderer {
         void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col);
         void draw_rect(glm::vec4 rect, color_rgba col, float thickness = 1.0f);
         void draw_rect_filled(glm::vec4 rect, color_rgba col);
-        void draw_circle(glm::vec2 pos, float radius, color_rgba col);
+        void draw_circle(glm::vec2 pos, float radius, color_rgba col, float thickness = 1.0f, size_t segments = 24);
 
-        void push_scissor(glm::vec4 bounds, bool circle = false);
+        void push_scissor(glm::vec4 bounds, bool in = true, bool circle = false);
         void pop_scissor();
 
         void push_key(color_rgba color);
@@ -145,7 +142,7 @@ namespace renderer {
 
         bool split_batch_;
 
-        std::vector<std::pair<DirectX::XMFLOAT4, bool>> scissor_commands_;
+        std::vector<std::tuple<DirectX::XMFLOAT4, bool, bool>> scissor_commands_;
         std::vector<DirectX::XMFLOAT4> key_commands_;
         std::vector<float> blur_commands_;
 

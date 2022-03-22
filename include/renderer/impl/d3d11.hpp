@@ -1,12 +1,11 @@
 #ifndef _RENDERER_MANAGER_IMPL_DIRECTX11_HPP_
 #define _RENDERER_MANAGER_IMPL_DIRECTX11_HPP_
 
-#include "../util/helper.hpp"
-
 #include "../renderer.hpp"
 
-#include <DirectXMath.h>
+#include "device.hpp"
 
+#include <DirectXMath.h>
 #include <utility>
 
 namespace renderer {

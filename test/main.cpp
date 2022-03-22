@@ -51,14 +51,14 @@ void draw_thread() {
 
         buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125});
 
-        buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255}, 10.0f);
+        buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
 
         static renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
         hsv.h += 0.1f;
         if (hsv.h > 360.0f)
             hsv.h = 0.0f;
 
-        glm::vec2 points[] = {
+        const std::vector<glm::vec2> points = {
             {400.0f, 500.0f},
             {700.0f, 500.0f},
             {600.0f, 350.0f},
@@ -70,7 +70,14 @@ void draw_thread() {
 
         auto rgb = hsv.get_rgb();
         rgb.a = 155;
+
+        buf->draw_rect({400.0f, 300.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
+
+        buf->push_scissor({400.0f, 300.0f, 200.0f, 200.0f}, true, false);
+
         buf->draw_polyline(points, rgb, 30.0f);
+
+        buf->pop_scissor();
 
         // Draw rect
         /*{

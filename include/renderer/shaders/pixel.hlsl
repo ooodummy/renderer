@@ -103,7 +103,7 @@ float4 ps_main(VS_Output input) : SV_TARGET
         if (input.position.x < scissor_bounds.x ||
             input.position.y < scissor_bounds.y ||
             input.position.x > scissor_bounds.x + scissor_bounds.z ||
-            input.position.x > scissor_bounds.y + scissor_bounds.w)
+            input.position.y > scissor_bounds.y + scissor_bounds.w)
         {
             inside = false;
         }

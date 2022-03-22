@@ -59,17 +59,18 @@ namespace renderer {
         void set_joint(joint_type type);
         void set_cap(cap_type cap);
 
+        void set_points(const std::vector<glm::vec2>& points);
         void add(const glm::vec2& point);
 
     private:
         void create_joint(std::vector<glm::vec2>& vertices, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false);
         static void create_triangle_fan(std::vector<glm::vec2>& vertices, glm::vec2 connect_to, glm::vec2 origin, glm::vec2 start, glm::vec2 end, bool clockwise);
 
-        joint_type joint = joint_miter;
-        cap_type cap = cap_square;
-        float thickness = 1.0f;
+        joint_type joint_ = joint_miter;
+        cap_type cap_ = cap_square;
+        float thickness_ = 1.0f;
 
-        std::vector<glm::vec2> points;
+        std::vector<glm::vec2> points_;
     };
 }
 

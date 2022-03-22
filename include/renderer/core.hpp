@@ -1,10 +1,10 @@
 #ifndef _RENDERER_CORE_HPP_
 #define _RENDERER_CORE_HPP_
 
-#include "impl/dx11.hpp"
+#include "impl/d3d11.hpp"
 
 #include "util/easing.hpp"
-#include "util/helper.hpp"
+#include "util/window.hpp"
 
 #include "buffer.hpp"
 #include "color.hpp"

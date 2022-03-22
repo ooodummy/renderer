@@ -1,83 +1,8 @@
-#include "renderer/util/helper.hpp"
+#include "renderer/impl/device.hpp"
 
 #include "renderer/shaders/command.hpp"
+
 #include "renderer/vertex.hpp"
-
-#include <cassert>
-
-void renderer::window::set_title(const std::string_view& title) {
-    title_ = title;
-}
-
-void renderer::window::set_pos(const glm::i16vec2& pos) {
-    pos_ = pos;
-}
-
-void renderer::window::set_size(const glm::i16vec2& size) {
-    size_ = size;
-}
-
-glm::i16vec2 renderer::window::get_pos() {
-    return pos_;
-}
-
-glm::i16vec2 renderer::window::get_size() {
-    return size_;
-}
-
-bool renderer::win32_window::create() {
-    if (!proc_)
-        return false;
-
-    memset(&wc_, 0, sizeof(wc_));
-
-    wc_.style = CS_DBLCLKS;
-    wc_.lpfnWndProc = proc_;
-    wc_.hInstance = ::GetModuleHandleA(nullptr);
-    wc_.lpszClassName = title_.data();
-    wc_.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wc_.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-
-    const auto style = CS_HREDRAW | CS_VREDRAW;
-
-    ::RegisterClassA(&wc_);
-
-    RECT rect = { pos_.x, pos_.y, pos_.x + size_.x, pos_.y + size_.y };
-    ::AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, style);
-
-    hwnd_ = ::CreateWindowExA(style, wc_.lpszClassName, title_.data(),
-                            WS_OVERLAPPEDWINDOW, rect.left, rect.top,
-                            rect.right - rect.left, rect.bottom - rect.top,
-                            nullptr, nullptr, wc_.hInstance, nullptr);
-
-    if (!hwnd_)
-        return false;
-
-    return true;
-}
-
-bool renderer::win32_window::destroy() {
-    if (!::DestroyWindow(hwnd_) ||
-		!::UnregisterClassA(wc_.lpszClassName, wc_.hInstance))
-        return false;
-
-    return true;
-}
-
-bool renderer::win32_window::set_visibility(bool visible) {
-    ::ShowWindow(hwnd_, visible);
-    ::UpdateWindow(hwnd_);
-
-    return true;
-}
-
-void renderer::win32_window::set_proc(WNDPROC WndProc) {
-    proc_ = WndProc;
-}
-
-HWND renderer::win32_window::get_hwnd() const {
-    return hwnd_;
-}
 
 bool renderer::dx11_device::init() {
     if (!create_device())
@@ -113,15 +38,15 @@ bool renderer::dx11_device::create_device() {
 #endif
 
     auto hr = D3D11CreateDevice(nullptr,
-                           D3D_DRIVER_TYPE_HARDWARE,
-                           nullptr,
-                           creation_flags,
-                           feature_levels,
-                           1,
-                           D3D11_SDK_VERSION,
-                           &base_device,
-                           nullptr,
-                           &base_context);
+                                D3D_DRIVER_TYPE_HARDWARE,
+                                nullptr,
+                                creation_flags,
+                                feature_levels,
+                                1,
+                                D3D11_SDK_VERSION,
+                                &base_device,
+                                nullptr,
+                                &base_context);
 
     if (FAILED(hr))
         return false;
@@ -229,7 +154,6 @@ void renderer::dx11_device::create_depth_stencil_view() {
     const auto size = window_->get_size();
 
     D3D11_TEXTURE2D_DESC depth_desc;
-    ID3D11Texture2D* depth_stencil = NULL;
     depth_desc.Width = size.x;
     depth_desc.Height = size.y;
     depth_desc.MipLevels = 1;
@@ -241,6 +165,8 @@ void renderer::dx11_device::create_depth_stencil_view() {
     depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
     depth_desc.CPUAccessFlags = 0;
     depth_desc.MiscFlags = 0;
+
+    ID3D11Texture2D* depth_stencil;
 
     auto hr = device_->CreateTexture2D(&depth_desc, nullptr, &depth_stencil);
     assert(SUCCEEDED(hr));
@@ -382,8 +308,8 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
         index_data.SysMemSlicePitch = 0;
 
         auto hr = device_->CreateBuffer(&index_buffer_desc,
-                                   &index_data,
-                                   &index_buffer_);
+                                        &index_data,
+                                        &index_buffer_);
         assert(SUCCEEDED(hr));
 
         delete[] indices;
