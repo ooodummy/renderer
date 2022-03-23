@@ -1,23 +1,21 @@
 #ifndef _RENDERER_IMPL_DEVICE_HPP_
 #define _RENDERER_IMPL_DEVICE_HPP_
 
-#include "../util/window.hpp"
+#include "renderer/util/window.hpp"
 
 #include <memory>
 
-#include <d3d11.h>
 #include <d3d11_1.h>
-#include <d3dcompiler.h>
 #include <DirectXMath.h>
 
 namespace renderer {
     // TODO: Renderer impl should handle shader and constant buffer creation
     // https://github.com/kevinmoran/BeginnerDirect3D11
-    class dx11_device : std::enable_shared_from_this<dx11_device> {
+    class device : std::enable_shared_from_this<device> {
         friend class dx11_renderer;
 
     public:
-        dx11_device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {}
+        device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {}
 
         bool init();
         void resize();

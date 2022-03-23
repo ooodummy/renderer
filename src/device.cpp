@@ -1,10 +1,10 @@
-#include "renderer/impl/device.hpp"
+#include "renderer/device.hpp"
 
-#include "renderer/shaders/command.hpp"
+#include "renderer/types/constant_buffers.hpp"
 
-#include "renderer/vertex.hpp"
+#include "renderer/types/vertex.hpp"
 
-bool renderer::dx11_device::init() {
+bool renderer::device::init() {
     if (!create_device())
         return false;
 
@@ -26,7 +26,7 @@ bool renderer::dx11_device::init() {
     return true;
 }
 
-bool renderer::dx11_device::create_device() {
+bool renderer::device::create_device() {
     ID3D11Device* base_device;
     ID3D11DeviceContext* base_context;
 
@@ -62,7 +62,7 @@ bool renderer::dx11_device::create_device() {
     return true;
 }
 
-bool renderer::dx11_device::setup_debug_layer() {
+bool renderer::device::setup_debug_layer() {
     ID3D11Debug *debug;
     auto hr = device_->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug);
     if (FAILED(hr))
@@ -85,7 +85,7 @@ bool renderer::dx11_device::setup_debug_layer() {
     return true;
 }
 
-bool renderer::dx11_device::create_swap_chain() {
+bool renderer::device::create_swap_chain() {
     HRESULT hr;
 
     IDXGIFactory2* dxgi_factory;
@@ -150,7 +150,7 @@ bool renderer::dx11_device::create_swap_chain() {
 }
 
 // TODO: This does not work if resized
-void renderer::dx11_device::create_depth_stencil_view() {
+void renderer::device::create_depth_stencil_view() {
     const auto size = window_->get_size();
 
     D3D11_TEXTURE2D_DESC depth_desc;
@@ -180,7 +180,7 @@ void renderer::dx11_device::create_depth_stencil_view() {
     //assert(SUCCEEDED(hr));
 }
 
-void renderer::dx11_device::create_frame_buffer_view() {
+void renderer::device::create_frame_buffer_view() {
     ID3D11Texture2D* frame_buffer;
     auto hr = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&frame_buffer);
     assert(SUCCEEDED(hr));
@@ -195,7 +195,7 @@ void renderer::dx11_device::create_frame_buffer_view() {
 #include "renderer/shaders/compiled/vertex.h"
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
-void renderer::dx11_device::create_shaders() {
+void renderer::device::create_shaders() {
     HRESULT hr;
 
     hr = device_->CreateVertexShader(vertex_shader_data,
@@ -210,6 +210,7 @@ void renderer::dx11_device::create_shaders() {
                                     &pixel_shader_);
     assert(SUCCEEDED(hr));
 
+    // TODO: DXGI_FORMAT_R8G8B8A8_UINT
     D3D11_INPUT_ELEMENT_DESC input_element_desc[] = {
         { "POS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
@@ -223,7 +224,7 @@ void renderer::dx11_device::create_shaders() {
     assert(SUCCEEDED(hr));
 }
 
-void renderer::dx11_device::create_states() {
+void renderer::device::create_states() {
     D3D11_BLEND_DESC blend_state_desc{};
 
     blend_state_desc.RenderTarget->BlendEnable = TRUE;
@@ -260,7 +261,7 @@ void renderer::dx11_device::create_states() {
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
-void renderer::dx11_device::create_buffers(size_t vertex_count) {
+void renderer::device::create_buffers(size_t vertex_count) {
     if (vertex_count <= 0) {
         release_buffers();
         return;
@@ -337,7 +338,7 @@ void renderer::dx11_device::create_buffers(size_t vertex_count) {
     assert(SUCCEEDED(hr));
 }
 
-void renderer::dx11_device::release_buffers() {
+void renderer::device::release_buffers() {
     if (vertex_buffer_) {
         vertex_buffer_->Release();
         vertex_buffer_ = nullptr;
@@ -359,7 +360,7 @@ void renderer::dx11_device::release_buffers() {
     }
 }
 
-void renderer::dx11_device::resize() {
+void renderer::device::resize() {
     context_->OMSetRenderTargets(0, nullptr, nullptr);
     frame_buffer_view_->Release();
 

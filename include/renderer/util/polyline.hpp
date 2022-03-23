@@ -1,16 +1,12 @@
-#ifndef _RENDERER_POLYLINE_HPP_
-#define _RENDERER_POLYLINE_HPP_
+#ifndef _RENDERER_UTIL_POLYLINE_HPP_
+#define _RENDERER_UTIL_POLYLINE_HPP_
 
-#define _USE_MATH_DEFINES
-#include "color.hpp"
+#include "../types/color.hpp"
 
-#include <cmath>
 #include <vector>
 #include <optional>
 
 #include <glm/glm.hpp>
-
-// This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
 
 namespace renderer {
     enum joint_type {
@@ -51,6 +47,7 @@ namespace renderer {
     static constexpr float miter_min_angle = 0.349066; // ~20 degrees
     static constexpr float round_min_angle = 0.174533; // ~10 degrees
 
+    // This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
     class polyline {
     public:
         std::vector<glm::vec2> compute(bool allow_overlap = false);

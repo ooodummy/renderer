@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(freetype CONFIG REQUIRED)
 
 add_custom_target(shaders)
 
@@ -49,7 +50,8 @@ file(GLOB_RECURSE SOURCES src/*.*)
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_link_libraries(${PROJECT_NAME} PUBLIC d3d11 d3dcompiler fmt::fmt glm::glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC d3d11 fmt::fmt glm::glm)
+target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 
 add_dependencies(${PROJECT_NAME} shaders)
 

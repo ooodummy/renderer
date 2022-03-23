@@ -8,9 +8,11 @@
 #include <future>
 
 std::shared_ptr<renderer::win32_window> window;
+std::shared_ptr<renderer::dx11_renderer> dx11;
 
 MSG msg{};
 bool update_size = false;
+size_t segoe;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
@@ -26,16 +28,18 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             window->set_size({LOWORD(lParam), HIWORD(lParam)});
             update_size = true;
         }
+        default:
+            break;
     }
 
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
 
 void draw_thread() {
-    const auto id = renderer::renderer->register_buffer();
+    const auto id = dx11->register_buffer();
 
     while (msg.message != WM_QUIT) {
-        const auto buf = renderer::renderer->get_buffer_node(id).working;
+        const auto buf = dx11->get_buffer_node(id).working;
 
         const auto size = window->get_size();
 
@@ -95,7 +99,7 @@ void draw_thread() {
             }
         }*/
 
-        renderer::renderer->swap_buffers(id);
+        dx11->swap_buffers(id);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -129,15 +133,23 @@ int main() {
 
     window->set_visibility(true);
 
-    auto device = std::make_shared<renderer::dx11_device>(window);
+    auto device = std::make_shared<renderer::device>(window);
 
     if (!device->init()) {
         MessageBoxA(nullptr, "Failed to initialize device.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
 
-    renderer::renderer = std::make_unique<renderer::dx11_renderer>(device);
-    renderer::renderer->set_vsync(true);
+    dx11 = std::make_unique<renderer::dx11_renderer>(device);
+
+    if (!dx11->init()) {
+        MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);
+        return 1;
+    }
+
+    dx11->set_vsync(true);
+
+    segoe = dx11->register_font({"Segoe UI", 10, FW_NORMAL, true});
 
     std::thread draw(draw_thread);
 
@@ -155,7 +167,7 @@ int main() {
             update_size = false;
         }
 
-        renderer::renderer->draw();
+        dx11->draw();
     }
 
     msg.message = WM_QUIT;

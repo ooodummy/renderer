@@ -1,9 +1,9 @@
 #include "renderer/buffer.hpp"
 
-#define _USE_MATH_DEFINES
-#include <cmath>
+#include "renderer/renderer.hpp"
 
-#include <corecrt_math_defines.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
@@ -21,6 +21,71 @@ const std::vector<renderer::vertex>& renderer::buffer::get_vertices() {
 
 const std::vector<renderer::batch>& renderer::buffer::get_batches() {
     return batches_;
+}
+
+void renderer::buffer::add_vertices(const std::vector<vertex>& vertices) {
+    auto& active_batch = batches_.back();
+    active_batch.size += vertices.size();
+
+    vertices_.resize(vertices_.size() + vertices.size());
+    memcpy(&vertices_[vertices_.size() - vertices.size()], vertices.data(), vertices.size() * sizeof(vertex));
+}
+
+void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture, color_rgba col) {
+    if (batches_.empty()) {
+        batches_.emplace_back(0, type);
+    }
+    else {
+        auto& previous = batches_.back();
+
+        if (previous.type != type || (split_batch_ && previous.size != 0)) {
+            batches_.emplace_back(0, type);
+            split_batch_ = false;
+        }
+        else {
+            // If the previous type is a strip don't batch because then that will cause issues
+            switch (previous.type) {
+                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
+                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
+                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
+                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
+                    batches_.emplace_back(0, type);
+                    split_batch_ = false;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    batch& new_batch = batches_.back();
+
+    new_batch.texture = texture;
+    new_batch.color = col;
+    new_batch.command = active_command;
+
+    add_vertices(vertices);
+}
+
+void renderer::buffer::draw_polyline(const std::vector<glm::vec2>& points, color_rgba col, float thickness, joint_type joint, cap_type cap) {
+    polyline line;
+    line.set_thickness(thickness);
+    line.set_joint(joint);
+    line.set_cap(cap);
+    line.set_points(points);
+
+    auto path = line.compute();
+    if (path.empty())
+        return;
+
+    std::vector<vertex> vertices;
+    vertices.reserve(path.size());
+
+    for (auto& point : path) {
+        vertices.emplace_back(vertex(point.x, point.y, col));
+    }
+
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void renderer::buffer::draw_point(glm::vec2 pos, color_rgba col) {
@@ -106,6 +171,16 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
     }
 
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void renderer::buffer::draw_char(glm::vec2 pos, char c, size_t font_id, color_rgba col) {
+
+}
+
+void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {
+    // TODO: Handle alignment
+
+    //const auto& char_set = renderer_.font_map_[font_id];
 }
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool in, bool circle) {

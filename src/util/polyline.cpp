@@ -1,4 +1,8 @@
-#include "renderer/polyline.hpp"
+#include "renderer/util/polyline.hpp"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 renderer::line_segment::line_segment(const glm::vec2& a, const glm::vec2& b) : a(a), b(b) {}
 

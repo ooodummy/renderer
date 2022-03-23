@@ -1,7 +1,9 @@
-#ifndef _RENDERER_VERTEX_HPP_
-#define _RENDERER_VERTEX_HPP_
+#ifndef _RENDERER_TYPES_VERTEX_HPP_
+#define _RENDERER_TYPES_VERTEX_HPP_
 
 #include "color.hpp"
+
+#include <glm/vec2.hpp>
 
 namespace renderer {
     struct vertex {

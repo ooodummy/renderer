@@ -1,30 +1,5 @@
 #include "renderer/util/window.hpp"
 
-#include "renderer/shaders/command.hpp"
-#include "renderer/vertex.hpp"
-
-#include <cassert>
-
-void renderer::window::set_title(const std::string_view& title) {
-    title_ = title;
-}
-
-void renderer::window::set_pos(const glm::i16vec2& pos) {
-    pos_ = pos;
-}
-
-void renderer::window::set_size(const glm::i16vec2& size) {
-    size_ = size;
-}
-
-glm::i16vec2 renderer::window::get_pos() {
-    return pos_;
-}
-
-glm::i16vec2 renderer::window::get_size() {
-    return size_;
-}
-
 bool renderer::win32_window::create() {
     if (!proc_)
         return false;
@@ -50,10 +25,7 @@ bool renderer::win32_window::create() {
                             rect.right - rect.left, rect.bottom - rect.top,
                             nullptr, nullptr, wc_.hInstance, nullptr);
 
-    if (!hwnd_)
-        return false;
-
-    return true;
+    return hwnd_ != nullptr;
 }
 
 bool renderer::win32_window::destroy() {
@@ -62,6 +34,26 @@ bool renderer::win32_window::destroy() {
         return false;
 
     return true;
+}
+
+void renderer::win32_window::set_title(const std::string& title) {
+    title_ = title;
+}
+
+void renderer::win32_window::set_pos(const glm::i16vec2& pos) {
+    pos_ = pos;
+}
+
+glm::i16vec2 renderer::win32_window::get_pos() {
+    return pos_;
+}
+
+void renderer::win32_window::set_size(const glm::i16vec2& size) {
+    size_ = size;
+}
+
+glm::i16vec2 renderer::win32_window::get_size() {
+    return size_;
 }
 
 bool renderer::win32_window::set_visibility(bool visible) {
