@@ -77,6 +77,37 @@ void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col, 
     draw_polyline(points, col, thickness, joint_miter, cap_joint);
 }
 
+void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgba col, size_t segments) {
+    std::vector<vertex> vertices;
+    vertices.reserve(segments);
+
+    glm::vec2 first{};
+    glm::vec2 prev{};
+    for (size_t i = 0; i < segments; i++) {
+        const auto theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(segments);
+        glm::vec2 point = {pos.x + radius * std::cos(theta), pos.y + radius * std::sin(theta)};
+
+        if (i == 0)
+            first = point;
+
+        if (prev != glm::vec2{}) {
+            vertices.emplace_back(prev, col);
+            vertices.emplace_back(point, col);
+            vertices.emplace_back(pos, col);
+        }
+
+        if (i == segments - 1) {
+            vertices.emplace_back(point, col);
+            vertices.emplace_back(first, col);
+            vertices.emplace_back(pos, col);
+        }
+
+        prev = point;
+    }
+
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool in, bool circle) {
     scissor_commands_.emplace_back(
         DirectX::XMFLOAT4{

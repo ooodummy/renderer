@@ -120,9 +120,12 @@ namespace renderer {
 
         void draw_point(glm::vec2 pos, color_rgba col);
         void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col);
+
         void draw_rect(glm::vec4 rect, color_rgba col, float thickness = 1.0f);
         void draw_rect_filled(glm::vec4 rect, color_rgba col);
+
         void draw_circle(glm::vec2 pos, float radius, color_rgba col, float thickness = 1.0f, size_t segments = 24);
+        void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col, size_t segments = 24);
 
         void push_scissor(glm::vec4 bounds, bool in = true, bool circle = false);
         void pop_scissor();

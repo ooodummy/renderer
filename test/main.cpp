@@ -50,8 +50,10 @@ void draw_thread() {
         buf->pop_key();
 
         buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125});
+        buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
         buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
+        buf->draw_rect_filled({450.0f, 50.0f, 100.0f, 100.0f}, {255, 0, 0, 255});
 
         static renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
         hsv.h += 0.1f;
@@ -69,13 +71,13 @@ void draw_thread() {
         };
 
         auto rgb = hsv.get_rgb();
-        rgb.a = 155;
+        rgb.a = 200;
 
         buf->draw_rect({400.0f, 300.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
 
         buf->push_scissor({400.0f, 300.0f, 200.0f, 200.0f}, true, false);
 
-        buf->draw_polyline(points, rgb, 30.0f);
+        buf->draw_polyline(points, rgb, 25.0f);
 
         buf->pop_scissor();
 
