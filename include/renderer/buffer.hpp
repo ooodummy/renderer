@@ -66,7 +66,7 @@ namespace renderer {
 
         // Commands that will then be used when
         std::vector<std::tuple<DirectX::XMFLOAT4, bool, bool>> scissor_commands_;
-        std::vector<DirectX::XMFLOAT4> key_commands_;
+        std::vector<uint32_t> key_commands_;
         std::vector<float> blur_commands_;
 
         void update_scissor();

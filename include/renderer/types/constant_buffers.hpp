@@ -14,8 +14,8 @@ namespace renderer {
         alignas(4) bool scissor_in;
         alignas(4) bool scissor_circle;
         alignas(4) bool key_enable;
-        alignas(16) DirectX::XMFLOAT4 key_color;
-        float blur_strength;
+        alignas(16) uint32_t key_color;
+        alignas(4) float blur_strength;
     };
 }// namespace renderer
 

@@ -56,7 +56,7 @@ void draw_thread() {
                 rainbow_timer.reset();
 
             // TODO: Should I macro start and end hsv?
-            rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000).get_rgb();
+            rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000);
         }
 
         // Color key test

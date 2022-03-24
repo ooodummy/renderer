@@ -228,7 +228,7 @@ void renderer::buffer::update_scissor() {
 }
 
 void renderer::buffer::push_key(color_rgba color) {
-    key_commands_.emplace_back(color);
+    key_commands_.push_back(color);
     update_key();
 }
 

@@ -1,7 +1,5 @@
 #include "types.hlsl"
 
-sampler frame_view : register(s0);
-
 cbuffer global : register(b0)
 {
     float2 size;
@@ -14,78 +12,14 @@ cbuffer command : register(b1)
     bool scissor_in;
     bool scissor_circle;
     bool key_enable;
-    float4 key_color;
+    uint4 key_color;
     float blur_strength;
-}
-
-struct matrix_holder
-{
-	float mm[25];
-};
-
-matrix_holder get_matrix_2d(float filter, float strength)
-{
-	float matrix1[25] = {0.0f, 1.0f, 2.0f, 1.0f, 0.0f, 1.0f, 3.0f, 5.0f, 3.0f, 1.0f, 2.0f, 5.0f, 16.0f,
-	                     5.0f, 2.0f, 1.0f, 3.0f, 5.0f, 3.0f, 1.0f, 0.0f, 1.0f, 2.0f, 1.0f, 0.0f};
-
-	matrix_holder ret;
-
-	float sum = 0;
-
-	for (int i = 0; i < 25; i++)
-	{
-		if (i == 12)
-			sum += filter;
-		else
-			sum += matrix1[i];
-	}
-
-	for (int j = 0; j < 25; j++)
-	{
-		if (j == 12)
-			ret.mm[j] = filter / sum;
-		else
-			ret.mm[j] = matrix1[j] / sum;
-	}
-
-	return ret;
-}
-
-float3 blur_2d(matrix_holder holder, float4 pos)
-{
-	float r = 0.0f;
-	float g = 0.0f;
-	float b = 0.0f;
-
-	float3 result;
-	float2 step = float2(1.0f / size.x, 1.0f / size.y);
-
-	for (int px = -2; px <= 2; px++)
-	{
-		for (int py = -2; py <= 2; py++)
-		{
-			float g = holder.mm[5.0f * (px + 2.0f) + (py + 2.0f)];
-
-			float2 coord = float2(pos.z + px * step.x, pos.w + py * step.y);
-
-			float4 col = tex2D(frame_view, coord);
-			r += col.r * g;
-			g += col.g * g;
-			b += col.b * g;
-		}
-	}
-
-	result.r = r;
-	result.g = g;
-	result.b = b;
-
-	return result;
 }
 
 float4 ps_main(VS_Output input) : SV_TARGET
 {
     if (key_enable)
-   {
+    {
         if (input.color.x == key_color.x &&
             input.color.y == key_color.y &&
             input.color.z == key_color.z &&
@@ -131,5 +65,5 @@ float4 ps_main(VS_Output input) : SV_TARGET
         return float4(result, 1.0f);
    }*/
 
-   return input.color;
+   return float4(input.color.r / 255.0f, input.color.g / 255.0f, input.color.b / 255.0f, input.color.a / 255.0f);
 }
