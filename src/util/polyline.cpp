@@ -21,7 +21,7 @@ glm::vec2 renderer::line_segment::normal() const {
 }
 
 glm::vec2 renderer::line_segment::direction(bool normalized) const {
-    auto dir = a - b;
+    const auto dir = a - b;
 
     if (normalized) {
         return dir / std::sqrt(dir.x * dir.x + dir.y * dir.y);
@@ -32,23 +32,23 @@ glm::vec2 renderer::line_segment::direction(bool normalized) const {
 }
 
 std::optional<glm::vec2> renderer::line_segment::intersection(const renderer::line_segment& o, bool infinite_lines) const {
-    auto r = direction(false);
-    auto s = o.direction(false);
+    const auto r = direction(false);
+    const auto s = o.direction(false);
 
-    auto dst = o.a - a;
+    const auto dst = o.a - a;
 
     auto cross = [](const glm::vec2& a, const glm::vec2& b) -> float {
         return a.x * b.y - a.y * b.x;
     };
 
-    auto numerator = cross(dst, r);
-    auto denominator = cross(r, s);
+    const auto numerator = cross(dst, r);
+    const auto denominator = cross(r, s);
 
     if (std::abs(denominator) < 0.0001f)
         return std::nullopt;
 
-    auto u = numerator / denominator;
-    auto t = cross(dst, s) / denominator;
+    const auto u = numerator / denominator;
+    const auto t = cross(dst, s) / denominator;
 
     if (!infinite_lines && (t < 0.0f || t > 1.0f || u < 0.0f || u > 1.0f))
         return std::nullopt;
@@ -86,8 +86,8 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
     if (segments.empty())
         return {};
 
-    auto& first_segment = segments[0];
-    auto& last_segment = segments[segments.size() - 1];
+    const auto& first_segment = segments[0];
+    const auto& last_segment = segments[segments.size() - 1];
 
     auto path_start1 = first_segment.edge1.a;
     auto path_start2 = first_segment.edge2.a;
@@ -120,7 +120,7 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
     glm::vec2 end2;
 
     for (size_t i = 0; i < segments.size(); i++) {
-        auto& segment = segments[i];
+        const auto& segment = segments[i];
 
         if (i == 0) {
             start1 = path_start1;
@@ -170,11 +170,11 @@ void renderer::polyline::add(const glm::vec2& point) {
 }
 
 void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const renderer::poly_segment& segment1, const renderer::poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap) {
-    auto dir1 = segment1.center.direction();
-    auto dir2 = segment2.center.direction();
+    const auto dir1 = segment1.center.direction();
+    const auto dir2 = segment2.center.direction();
 
     // Ignore me not using GLM properly because I'm lazy
-    auto angle = std::acos(glm::dot(dir1, dir2) / std::sqrt(dir1.x * dir1.x + dir1.y * dir1.y) * std::sqrt(dir2.x * dir2.x + dir2.y * dir2.y));
+    const auto angle = std::acos(glm::dot(dir1, dir2) / std::sqrt(dir1.x * dir1.x + dir1.y * dir1.y) * std::sqrt(dir2.x * dir2.x + dir2.y * dir2.y));
     auto wrapped_angle = angle;
 
     if (wrapped_angle > M_PI / 2.0f)
@@ -185,8 +185,8 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
     }
 
     if (joint_ == joint_miter) {
-        auto sec1 = segment1.edge1.intersection(segment2.edge1, true);
-        auto sec2 = segment1.edge2.intersection(segment2.edge2, true);
+        const auto sec1 = segment1.edge1.intersection(segment2.edge1, true);
+        const auto sec2 = segment1.edge2.intersection(segment2.edge2, true);
 
         end1 = sec1 ? *sec1 : segment1.edge1.b;
         end2 = sec2 ? *sec2 : segment1.edge2.b;
@@ -195,12 +195,7 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
         next_start2 = end2;
     }
     else {
-        auto x1 = dir1.x;
-        auto x2 = dir2.x;
-        auto y1 = dir1.y;
-        auto y2 = dir2.y;
-
-        auto clockwise = x1 * y2 - x2 * y1 < 0.0f;
+        const auto clockwise = dir1.x * dir2.y - dir2.x * dir1.y < 0.0f;
 
         const line_segment* inner1, *inner2, *outer1, *outer2;
 
@@ -217,8 +212,8 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
             inner2 = &segment2.edge1;
         }
 
-        auto inner_sec_opt = inner1->intersection(*inner2, allow_overlap);
-        auto inner_sec = inner_sec_opt ? *inner_sec_opt : inner1->b;
+        const auto inner_sec_opt = inner1->intersection(*inner2, allow_overlap);
+        const auto inner_sec = inner_sec_opt ? *inner_sec_opt : inner1->b;
 
         glm::vec2 inner_start;
         if (inner_sec_opt) {
@@ -261,9 +256,9 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
     }
 }
 
-void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, glm::vec2 connect_to, glm::vec2 origin, glm::vec2 start, glm::vec2 end, bool clockwise) {
-    auto point1 = start - origin;
-    auto point2 = end - origin;
+void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise) {
+    const auto point1 = start - origin;
+    const auto point2 = end - origin;
 
     auto angle1 = atan2(point1.y, point1.x);
     auto angle2 = atan2(point2.y, point2.x);
@@ -279,19 +274,20 @@ void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, g
         }
     }
 
-    auto joint_angle = angle2 - angle1;
+    const auto joint_angle = angle2 - angle1;
 
-    auto segments = std::max(1, (int)std::floor(std::abs(joint_angle) / round_min_angle));
-    auto seg_angle = joint_angle / segments;
+    const auto segments = std::max(1, (int)std::floor(std::abs(joint_angle) / round_min_angle));
+    const auto seg_angle = joint_angle / static_cast<float>(segments);
 
     glm::vec2 start_point = start;
     glm::vec2 end_point;
 
     for (size_t i = 0; i < segments; i++) {
-        if (i + 1 == segments)
+        if (i + 1 == segments) {
             end_point = end;
+        }
         else {
-            auto rot = (i + 1) * seg_angle;
+            const auto rot = (static_cast<float>(i) + 1.0f) * seg_angle;
 
             end_point = {
                 std::cos(rot) * point1.x - std::sin(rot) * point1.y,

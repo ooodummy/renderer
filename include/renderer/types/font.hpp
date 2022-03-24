@@ -2,6 +2,7 @@
 #define _RENDERER_TYPES_FONT_HPP_
 
 #include <string>
+#include <utility>
 
 namespace renderer {
     enum text_align {
@@ -16,7 +17,7 @@ namespace renderer {
 
     struct font {
         font(std::string family, int size, int weight, bool anti_aliased = true) : family(std::move(family)), size(size), weight(weight), anti_aliased(anti_aliased) {
-            path = get_font_path(family);
+            path = get_font_path(this->family);
         }
 
         std::string family;

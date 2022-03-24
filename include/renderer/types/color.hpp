@@ -6,16 +6,16 @@
 #include <DirectXMath.h>
 
 #define COLOR_WHITE color_rgba(255, 255, 255)
-#define COLOR_RED color_rgba(255, 255, 255)
-#define COLOR_GREEN color_rgba(255, 255, 255)
-#define COLOR_WHITE color_rgba(255, 255, 255)
+#define COLOR_RED color_rgba(255, 0, 0)
+#define COLOR_GREEN color_rgba(0, 255, 0)
+#define COLOR_BLUE color_rgba(0, 0, 255)
 
 namespace renderer {
     class color_rgba;
 
     class color_hsv {
     public:
-        color_hsv(float _h, float _s, float _v);
+        color_hsv(float h = 0.0f, float s = 1.0f, float v = 1.0f); // NOLINT(google-explicit-constructor)
 
         [[nodiscard]] color_rgba get_rgb() const;
 
@@ -24,7 +24,7 @@ namespace renderer {
 
     class color_rgba {
     public:
-        color_rgba(uint8_t _r = 255, uint8_t _g = 255, uint8_t _b = 255, uint8_t _a = 255); // NOLINT(google-explicit-constructor)
+        color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255); // NOLINT(google-explicit-constructor)
 
         [[nodiscard]] color_hsv get_hsv() const;
 

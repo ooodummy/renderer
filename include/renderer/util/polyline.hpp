@@ -61,7 +61,7 @@ namespace renderer {
 
     private:
         void create_joint(std::vector<glm::vec2>& vertices, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false);
-        static void create_triangle_fan(std::vector<glm::vec2>& vertices, glm::vec2 connect_to, glm::vec2 origin, glm::vec2 start, glm::vec2 end, bool clockwise);
+        static void create_triangle_fan(std::vector<glm::vec2>& vertices, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise);
 
         joint_type joint_ = joint_miter;
         cap_type cap_ = cap_square;

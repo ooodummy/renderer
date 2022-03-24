@@ -6,10 +6,10 @@ std::string renderer::get_font_path(const std::string& family) {
     HKEY key;
     RegOpenKeyExA(HKEY_LOCAL_MACHINE, R"(Software\Microsoft\Windows NT\CurrentVersion\Fonts)", 0, KEY_READ, &key);
 
-    std::string path;
     char buf[MAX_PATH];
+    std::string path;
 
-    for (auto i = 0;; i++) {
+    for (size_t i = 0;; i++) {
         memset(buf, 0, MAX_PATH);
 
         DWORD buf_size = MAX_PATH;

@@ -29,7 +29,7 @@ namespace renderer {
 
     class dx11_renderer : std::enable_shared_from_this<dx11_renderer> {
     public:
-        explicit dx11_renderer(std::shared_ptr<device> device) : device_(std::move(device)) {}
+        explicit dx11_renderer(std::shared_ptr<device> device) : device_(std::move(device)) {} // NOLINT(cppcoreguidelines-pro-type-member-init)
 
         size_t register_buffer(size_t priority = 0);
         buffer_node get_buffer_node(size_t id);
@@ -50,10 +50,13 @@ namespace renderer {
         void draw();
 
     private:
+        std::shared_ptr<device> device_;
+
         std::shared_mutex buffer_list_mutex_;
         std::vector<buffer_node> buffers_;
 
-        std::shared_ptr<device> device_;
+        void update_buffers();
+        void render_buffers();
 
         bool vsync_ = false;
 
@@ -62,9 +65,6 @@ namespace renderer {
         std::map<size_t, std::map<char, glyph>> font_map_;
 
         bool create_font_glyph(char c, size_t id);
-
-        void update_buffers();
-        void render_buffers();
     };
 }
 

@@ -19,7 +19,7 @@ namespace renderer {
         void set_title(const std::string& title);
 
         void set_pos(const glm::i16vec2& pos);
-        glm::i16vec2 get_pos();
+        [[maybe_unused]] glm::i16vec2 get_pos();
 
         void set_size(const glm::i16vec2& size);
         glm::i16vec2 get_size();

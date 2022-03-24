@@ -5,23 +5,23 @@
 #include "renderer/types/vertex.hpp"
 
 bool renderer::device::init() {
-    if (!create_device())
-        return false;
+    if (!device_) {
+        if (!create_device())
+            return false;
+    }
 
 #ifdef _DEBUG
-    if (!setup_debug_layer())
-        return false;
+    setup_debug_layer();
 #endif
 
-    if (!create_swap_chain())
-        return false;
-
+    // TODO: Find out what behavior could be unexpected and return the HRESULT
+    create_swap_chain();
     create_depth_stencil_view();
     create_frame_buffer_view();
     create_states();
 
     create_shaders();
-    create_buffers(500); // TODO: Should not make with max vertex size and instead remake to resize no?
+    create_buffers(500);
 
     return true;
 }
@@ -62,11 +62,10 @@ bool renderer::device::create_device() {
     return true;
 }
 
-bool renderer::device::setup_debug_layer() {
+void renderer::device::setup_debug_layer() const {
     ID3D11Debug *debug;
     auto hr = device_->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug);
-    if (FAILED(hr))
-        return false;
+    assert(SUCCEEDED(hr));
 
     ID3D11InfoQueue *info_queue = nullptr;
     hr = debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&info_queue);
@@ -78,14 +77,10 @@ bool renderer::device::setup_debug_layer() {
     }
 
     debug->Release();
-
-    if (FAILED(hr))
-        return false;
-
-    return true;
+    assert(SUCCEEDED(hr));
 }
 
-bool renderer::device::create_swap_chain() {
+void renderer::device::create_swap_chain() {
     HRESULT hr;
 
     IDXGIFactory2* dxgi_factory;
@@ -113,7 +108,8 @@ bool renderer::device::create_swap_chain() {
         RECT rect;
         if (!GetWindowRect(window_->get_hwnd(), &rect)) {
             dxgi_factory->Release();
-            return false;
+            assert(false);
+            return;
         }
 
         swap_chain_desc.Width = rect.right - rect.left;
@@ -145,8 +141,6 @@ bool renderer::device::create_swap_chain() {
                                               &swap_chain_);
     assert(SUCCEEDED(hr));
     dxgi_factory->Release();
-
-    return true;
 }
 
 // TODO: This does not work if resized
@@ -167,7 +161,6 @@ void renderer::device::create_depth_stencil_view() {
     depth_desc.MiscFlags = 0;
 
     ID3D11Texture2D* depth_stencil;
-
     auto hr = device_->CreateTexture2D(&depth_desc, nullptr, &depth_stencil);
     assert(SUCCEEDED(hr));
 

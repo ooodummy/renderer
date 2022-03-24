@@ -9,7 +9,7 @@
 namespace renderer {
     class batch {
     public:
-        batch(size_t _size, D3D_PRIMITIVE_TOPOLOGY _type) : size(_size), type(_type) {}
+        batch(size_t size, D3D_PRIMITIVE_TOPOLOGY type) : size(size), type(type) {}
 
         // Basic geometry
         size_t size;
@@ -18,11 +18,6 @@ namespace renderer {
         // Fonts
         ID3D11Texture2D* texture = nullptr;
         color_rgba color{};
-
-        // Clipping
-        RECT clip_rect{};
-        bool clip_push = false;
-        bool clip_pop = false;
 
         command_buffer command{};
     };

@@ -2,7 +2,6 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
-
 #include <cassert>
 
 float util::ease(float a, float b, float t, float d, util::ease_type type) { // NOLINT(misc-no-recursion)

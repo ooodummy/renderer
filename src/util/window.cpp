@@ -44,7 +44,7 @@ void renderer::win32_window::set_pos(const glm::i16vec2& pos) {
     pos_ = pos;
 }
 
-glm::i16vec2 renderer::win32_window::get_pos() {
+[[maybe_unused]] glm::i16vec2 renderer::win32_window::get_pos() {
     return pos_;
 }
 

@@ -4,12 +4,12 @@
 
 #include <algorithm>
 
-renderer::color_hsv::color_hsv(float _h, float _s, float _v) : h(_h), s(_s), v(_v) {}
+renderer::color_hsv::color_hsv(float h, float s, float v) : h(h), s(s), v(v) {}
 
 renderer::color_rgba renderer::color_hsv::get_rgb() const {
-    const float c = v * s;
-    const float x = c * (1.0f - std::abs(fmodf(h / 60.0f, 2.0f) - 1.0f));
-    const float m = v - c;
+    const auto c = v * s;
+    const auto x = c * (1.0f - std::abs(fmodf(h / 60.0f, 2.0f) - 1.0f));
+    const auto m = v - c;
 
     float r, g, b;
 
@@ -56,25 +56,25 @@ renderer::color_rgba renderer::color_hsv::get_rgb() const {
     };
 }
 
-renderer::color_rgba::color_rgba(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) : r(_r), g(_g), b(_b), a(_a) {}
+renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
 renderer::color_hsv renderer::color_rgba::get_hsv() const {
-    const float fr = static_cast<float>(r) / 255.0f;
-    const float fg = static_cast<float>(g) / 255.0f;
-    const float fb = static_cast<float>(b) / 255.0f;
+    const auto fr = static_cast<float>(r) / 255.0f;
+    const auto fg = static_cast<float>(g) / 255.0f;
+    const auto fb = static_cast<float>(b) / 255.0f;
 
-    const float max = std::max(std::max(fr, fg), fb);
-    const float min = std::min(std::min(fr, fg), fb);
-    const float delta = max - min;
+    const auto max = std::max(std::max(fr, fg), fb);
+    const auto min = std::min(std::min(fr, fg), fb);
+    const auto delta = max - min;
 
-    float hue = 0.0f;
+    auto hue = 0.0f;
 
     if (delta != 0.0f) {
         if (max == fr)
             hue = fmodf(((fg - fb) / delta), 6.0f);
         else if (max == fg)
             hue = ((fb - fr) / delta) + 2.0f;
-        else if (max == fb)
+        else
             hue = ((fr - fg) / delta) + 4.0f;
 
         hue *= 60.0f;

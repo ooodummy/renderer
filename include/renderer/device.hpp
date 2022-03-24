@@ -15,15 +15,16 @@ namespace renderer {
         friend class dx11_renderer;
 
     public:
-        device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {}
+        // TODO: Setup the device helper to just be given a device that already exist
+        explicit device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {} // NOLINT(cppcoreguidelines-pro-type-member-init)
 
         bool init();
         void resize();
 
     private:
         bool create_device();
-        bool setup_debug_layer();
-        bool create_swap_chain();
+        void setup_debug_layer() const;
+        void create_swap_chain();
         void create_depth_stencil_view();
         void create_frame_buffer_view();
         void create_shaders();
@@ -35,7 +36,7 @@ namespace renderer {
 
     public:
         // Basic context
-        ID3D11Device1* device_;
+        ID3D11Device1* device_ = nullptr;
         ID3D11DeviceContext1* context_;
 
         IDXGISwapChain1* swap_chain_;

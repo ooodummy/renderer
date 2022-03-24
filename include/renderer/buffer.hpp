@@ -25,7 +25,7 @@ namespace renderer {
         void add_vertices(const std::vector<vertex>& vertices);
         void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture = nullptr, color_rgba col = { 255, 255, 255, 255 });
 
-        void draw_polyline(const std::vector<glm::vec2>& points, color_rgba col, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
+        void draw_polyline(const std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 
         void draw_point(glm::vec2 pos, color_rgba col = COLOR_WHITE);
         void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col = COLOR_WHITE);
@@ -34,10 +34,10 @@ namespace renderer {
         void draw_rect_filled(glm::vec4 rect, color_rgba col = COLOR_WHITE);
 
         void draw_circle(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
-        void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col, size_t segments = 24);
+        void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
     private:
-        void draw_char(glm::vec2 pos, char c, size_t font_id, color_rgba col = COLOR_WHITE);
+        void draw_char(glm::vec2 pos, char c, size_t font_id = 0, color_rgba col = COLOR_WHITE);
 
     public:
         void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = align_left, text_align v_align = align_bottom);
