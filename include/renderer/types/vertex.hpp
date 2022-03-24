@@ -14,6 +14,6 @@ namespace renderer {
         DirectX::XMFLOAT2 pos;
         DirectX::XMFLOAT4 col;
     };
-}
+}// namespace renderer
 
 #endif

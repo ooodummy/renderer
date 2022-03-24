@@ -17,10 +17,10 @@ namespace renderer {
 
         // Fonts
         ID3D11Texture2D* texture = nullptr;
-        color_rgba color{};
+        color_rgba color {};
 
-        command_buffer command{};
+        command_buffer command {};
     };
-}
+}// namespace renderer
 
 #endif

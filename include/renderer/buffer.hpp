@@ -23,7 +23,7 @@ namespace renderer {
         void clear();
 
         void add_vertices(const std::vector<vertex>& vertices);
-        void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture = nullptr, color_rgba col = { 255, 255, 255, 255 });
+        void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture = nullptr, color_rgba col = {255, 255, 255, 255});
 
         void draw_polyline(const std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 
@@ -73,8 +73,8 @@ namespace renderer {
         void update_key();
         void update_blur();
 
-        command_buffer active_command{};
+        command_buffer active_command {};
     };
-}
+}// namespace renderer
 
 #endif

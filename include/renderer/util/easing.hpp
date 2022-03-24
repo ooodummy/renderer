@@ -1,7 +1,7 @@
 #ifndef _RENDERER_UTIL_EASING_HPP_
 #define _RENDERER_UTIL_EASING_HPP_
 
-namespace util {
+namespace renderer {
     enum ease_type {
         linear,
         in_sine,
@@ -40,6 +40,6 @@ namespace util {
      * @return Eased point
      */
     float ease(float a, float b, float t, float d, ease_type type = linear);
-}
+}// namespace renderer
 
 #endif

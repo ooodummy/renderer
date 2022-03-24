@@ -2,8 +2,8 @@
 
 #include "renderer/types/constant_buffers.hpp"
 
-#include "renderer/device.hpp"
 #include "renderer/buffer.hpp"
+#include "renderer/device.hpp"
 
 #include <d3d11.h>
 
@@ -25,10 +25,9 @@ size_t renderer::dx11_renderer::register_buffer([[maybe_unused]] size_t priority
     std::unique_lock lock_guard(buffer_list_mutex_);
 
     const auto id = buffers_.size();
-    buffers_.emplace_back(buffer_node{
+    buffers_.emplace_back(buffer_node {
         std::make_shared<buffer>(*this),
-        std::make_shared<buffer>(*this)
-    });
+        std::make_shared<buffer>(*this)});
 
     return id;
 }
@@ -67,7 +66,7 @@ bool renderer::dx11_renderer::init() {
 }
 
 void renderer::dx11_renderer::begin() {
-    FLOAT background_color[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
+    FLOAT background_color[4] = {0.1f, 0.2f, 0.6f, 1.0f};
     device_->context_->ClearRenderTargetView(device_->frame_buffer_view_, background_color);
 
     {
@@ -76,7 +75,7 @@ void renderer::dx11_renderer::begin() {
         HRESULT hr;
         D3D11_MAPPED_SUBRESOURCE mapped_resource;
 
-        if (size != glm::i16vec2{}) {
+        if (size != glm::i16vec2 {}) {
             D3D11_VIEWPORT viewport = {0.0f, 0.0f, (FLOAT) (size.x), (FLOAT) (size.y), 0.0f, 1.0f};
             device_->context_->RSSetViewports(1, &viewport);
 
@@ -93,8 +92,8 @@ void renderer::dx11_renderer::begin() {
             device_->context_->VSSetConstantBuffers(0, 1, &device_->projection_buffer_);
         }
 
-        global_buffer global{};
-        global.dimensions = { static_cast<float>(size.x), static_cast<float>(size.y) };
+        global_buffer global {};
+        global.dimensions = {static_cast<float>(size.x), static_cast<float>(size.y)};
 
         hr = device_->context_->Map(device_->global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
         assert(SUCCEEDED(hr));
@@ -103,7 +102,7 @@ void renderer::dx11_renderer::begin() {
         }
         device_->context_->Unmap(device_->global_buffer_, 0);
 
-        device_->context_->PSSetConstantBuffers (1, 1, &device_->global_buffer_);
+        device_->context_->PSSetConstantBuffers(1, 1, &device_->global_buffer_);
     }
 
     device_->context_->OMSetBlendState(device_->blend_state_, nullptr, 0xffffffff);
@@ -126,9 +125,9 @@ void renderer::dx11_renderer::populate() {
 
     // IDK if any of this code here is correct at all
     // God bless http://www.rastertek.com/dx11tut11.html
-    for (const auto& [active, working] : buffers_) {
+    for (const auto& [active, working]: buffers_) {
         auto& batches = active->get_batches();
-        for (auto& batch : batches) {
+        for (auto& batch: batches) {
             {
                 D3D11_MAPPED_SUBRESOURCE mapped_resource;
                 const auto hr = device_->context_->Map(device_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
@@ -168,7 +167,7 @@ void renderer::dx11_renderer::reset() {
     {
         std::unique_lock lock_guard(buffer_list_mutex_);
 
-        for (const auto& [active, working] : buffers_) {
+        for (const auto& [active, working]: buffers_) {
             active->clear();
         }
     }
@@ -179,7 +178,7 @@ void renderer::dx11_renderer::update_buffers() {
 
     size_t vertex_count = 0;
 
-    for (const auto& [active, working] : buffers_) {
+    for (const auto& [active, working]: buffers_) {
         vertex_count += active->get_vertices().size();
     }
 
@@ -199,7 +198,7 @@ void renderer::dx11_renderer::update_buffers() {
             HRESULT hr = device_->context_->Map(device_->vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
             assert(SUCCEEDED(hr));
 
-            for (const auto& [active, working] : buffers_) {
+            for (const auto& [active, working]: buffers_) {
                 auto& vertices = active->get_vertices();
 
                 memcpy(mapped_subresource.pData, vertices.data(), vertices.size() * sizeof(vertex));

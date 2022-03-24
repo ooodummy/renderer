@@ -1,10 +1,10 @@
 #include "renderer/util/easing.hpp"
 
 #define _USE_MATH_DEFINES
-#include <cmath>
 #include <cassert>
+#include <cmath>
 
-float util::ease(float a, float b, float t, float d, util::ease_type type) { // NOLINT(misc-no-recursion)
+float renderer::ease(float a, float b, float t, float d, renderer::ease_type type) {// NOLINT(misc-no-recursion)
     b -= a;
 
     switch (type) {

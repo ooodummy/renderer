@@ -3,8 +3,8 @@
 
 #include "../types/color.hpp"
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 #include <glm/glm.hpp>
 
@@ -44,8 +44,8 @@ namespace renderer {
         line_segment center, edge1, edge2;
     };
 
-    static constexpr float miter_min_angle = 0.349066; // ~20 degrees
-    static constexpr float round_min_angle = 0.174533; // ~10 degrees
+    static constexpr float miter_min_angle = 0.349066;// ~20 degrees
+    static constexpr float round_min_angle = 0.174533;// ~10 degrees
 
     // This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
     class polyline {
@@ -69,6 +69,6 @@ namespace renderer {
 
         std::vector<glm::vec2> points_;
     };
-}
+}// namespace renderer
 
 #endif

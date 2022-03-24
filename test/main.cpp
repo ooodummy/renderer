@@ -1,17 +1,20 @@
 #include <renderer/core.hpp>
 
-#include <windowsx.h>
 #include <dwmapi.h>
-#include <thread>
 #include <future>
+#include <thread>
+#include <windowsx.h>
+#include <condition_variable>
 
 std::shared_ptr<renderer::win32_window> window;
 std::shared_ptr<renderer::dx11_renderer> dx11;
 size_t segoe;
 
-MSG msg{};
+renderer::sync_manager sync;
+
+MSG msg {};
 bool update_size = false;
-glm::i32vec2 mouse_pos{};
+glm::i32vec2 mouse_pos {};
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
@@ -29,8 +32,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_MOUSEMOVE:
             mouse_pos = {
                 GET_X_LPARAM(lParam),
-                GET_Y_LPARAM(lParam)
-            };
+                GET_Y_LPARAM(lParam)};
             break;
         default:
             break;
@@ -42,23 +44,42 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 void draw_thread() {
     const auto id = dx11->register_buffer();
 
+    renderer::timer rainbow_timer;
+    renderer::color_rgba rainbow;
+
     while (msg.message != WM_QUIT) {
         const auto buf = dx11->get_buffer_node(id).working;
 
-        //buf->push_key({255, 0, 0, 255});
+        {
+            const auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
+            if (elapsed_ms > 5000)
+                rainbow_timer.reset();
 
-        buf->draw_rect_filled({0, 0, 50, 50}, {255, 0, 0, 255});
-        buf->draw_rect_filled({100, 25, 50, 50}, {0, 0, 255, 255});
-        buf->draw_rect_filled({25, 100, 50, 50}, {0, 255, 0, 255});
-        buf->draw_rect_filled({125, 125, 50, 50}, {255, 255, 0, 255});
+            // TODO: Should I macro start and end hsv?
+            rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000).get_rgb();
+        }
 
-        //buf->pop_key();
+        // Color key test
+        buf->push_key(COLOR_RED);
 
+        {
+            glm::vec2 cube_offset = {50.0f, 50.0f};
+            const auto cube_size = 20.0f;
+            const auto cube_half = cube_size / 2.0f;
+            const auto cube_double = cube_size * 2.0f;
+            const auto cube_space = cube_size * 2.5f;
+
+            buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
+            buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
+            buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
+            buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
+        }
+
+        buf->pop_key();
+
+        // TODO: Fix circle polyline
         //buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
         //buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
-
-        //buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
-        //buf->draw_rect_filled({450.0f, 50.0f, 100.0f, 100.0f}, {255, 0, 0, 255});
 
         const std::vector<glm::vec2> points = {
             {400.0f, 500.0f},
@@ -67,27 +88,25 @@ void draw_thread() {
             {700.0f, 300.0f},
             {500.0f, 200.0f},
             {500.0f, 600.0f},
-            {600.0f, 600.0f}
-        };
+            {600.0f, 600.0f}};
 
         const glm::vec4 scissor_bounds = {
             static_cast<float>(mouse_pos.x) - 50.0f,
             static_cast<float>(mouse_pos.y) - 50.0f,
             100.0f,
-            100.0f
-        };
-
-        buf->draw_rect(scissor_bounds, {255, 0, 0, 255});
+            100.0f};
 
         buf->push_scissor(scissor_bounds, true, false);
 
-        buf->draw_polyline(points, {255, 0, 255, 175}, 20.0f);
+        buf->draw_polyline(points, rainbow, 20.0f);
 
         buf->pop_scissor();
 
+        buf->draw_rect(scissor_bounds, COLOR_WHITE);
+
         dx11->swap_buffers(id);
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        sync.wait();
     }
 }
 
@@ -114,7 +133,7 @@ int main() {
 
     {
         auto attribute = DWMWCP_DONOTROUND;
-        DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE , &attribute, sizeof(attribute));
+        DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
     }
 
     window->set_visibility(true);
@@ -154,6 +173,8 @@ int main() {
         }
 
         dx11->draw();
+
+        sync.notify();
     }
 
     msg.message = WM_QUIT;

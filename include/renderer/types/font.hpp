@@ -32,6 +32,6 @@ namespace renderer {
 
         bool anti_aliased;
     };
-}
+}// namespace renderer
 
 #endif

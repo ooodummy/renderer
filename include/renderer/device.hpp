@@ -5,8 +5,8 @@
 
 #include <memory>
 
-#include <d3d11_1.h>
 #include <DirectXMath.h>
+#include <d3d11_1.h>
 
 namespace renderer {
     // TODO: Renderer impl should handle shader and constant buffer creation
@@ -16,7 +16,7 @@ namespace renderer {
 
     public:
         // TODO: Setup the device helper to just be given a device that already exist
-        explicit device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {} // NOLINT(cppcoreguidelines-pro-type-member-init)
+        explicit device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
 
         bool init();
         void resize();
@@ -54,15 +54,15 @@ namespace renderer {
 
         // Buffers
         ID3D11InputLayout* input_layout_;
-        ID3D11Buffer* vertex_buffer_{};
-        ID3D11Buffer* index_buffer_{};
+        ID3D11Buffer* vertex_buffer_ {};
+        ID3D11Buffer* index_buffer_ {};
 
         // Constant buffers
         DirectX::XMMATRIX projection;
-        ID3D11Buffer* projection_buffer_{};
-        ID3D11Buffer* global_buffer_{};
-        ID3D11Buffer* command_buffer_{};
+        ID3D11Buffer* projection_buffer_ {};
+        ID3D11Buffer* global_buffer_ {};
+        ID3D11Buffer* command_buffer_ {};
     };
-}
+}// namespace renderer
 
 #endif

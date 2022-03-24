@@ -38,6 +38,6 @@ namespace renderer {
         WNDCLASS wc_;
         HWND hwnd_;
     };
-}
+}// namespace renderer
 
 #endif

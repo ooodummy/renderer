@@ -25,8 +25,7 @@ glm::vec2 renderer::line_segment::direction(bool normalized) const {
 
     if (normalized) {
         return dir / std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    }
-    else {
+    } else {
         return dir;
     }
 }
@@ -95,7 +94,7 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
     auto path_end2 = last_segment.edge2.b;
 
     std::vector<glm::vec2> vertices;
-    vertices.reserve(segments.size() * 5); // Save needing to update capacity more times
+    vertices.reserve(segments.size() * 5);// Save needing to update capacity more times
 
     if (cap_ == cap_square) {
         path_start1 -= first_segment.edge1.direction() * thickness_;
@@ -103,12 +102,10 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
 
         path_end1 += last_segment.edge1.direction() * thickness_;
         path_end2 += last_segment.edge2.direction() * thickness_;
-    }
-    else if (cap_ == cap_round) {
+    } else if (cap_ == cap_round) {
         create_triangle_fan(vertices, first_segment.center.a, first_segment.center.a, first_segment.edge1.a, first_segment.edge2.a, false);
         create_triangle_fan(vertices, last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b, true);
-    }
-    else if (cap_ == cap_joint) {
+    } else if (cap_ == cap_joint) {
         create_joint(vertices, last_segment, first_segment, path_end1, path_end2, path_start1, path_start2, allow_overlap);
     }
 
@@ -130,8 +127,7 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
         if (i + 1 == segments.size()) {
             end1 = path_end1;
             end2 = path_end2;
-        }
-        else {
+        } else {
             create_joint(vertices, segment, segments[i + 1], end1, end2, next_start1, next_start2, allow_overlap);
         }
 
@@ -191,19 +187,17 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
 
         next_start1 = end1;
         next_start2 = end2;
-    }
-    else {
+    } else {
         const auto clockwise = dir1.x * dir2.y - dir2.x * dir1.y < 0.0f;
 
-        const line_segment* inner1, *inner2, *outer1, *outer2;
+        const line_segment *inner1, *inner2, *outer1, *outer2;
 
         if (clockwise) {
             outer1 = &segment1.edge1;
             outer2 = &segment2.edge1;
             inner1 = &segment1.edge2;
             inner2 = &segment2.edge2;
-        }
-        else {
+        } else {
             outer1 = &segment1.edge2;
             outer2 = &segment2.edge2;
             inner1 = &segment1.edge1;
@@ -216,11 +210,9 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
         glm::vec2 inner_start;
         if (inner_sec_opt) {
             inner_start = inner_sec;
-        }
-        else if (angle > M_PI / 2.0f) {
+        } else if (angle > M_PI / 2.0f) {
             inner_start = outer1->b;
-        }
-        else {
+        } else {
             inner_start = inner1->b;
         }
 
@@ -230,8 +222,7 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
 
             next_start1 = outer2->a;
             next_start2 = inner_start;
-        }
-        else {
+        } else {
             end1 = inner_sec;
             end2 = outer1->b;
 
@@ -244,11 +235,9 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
             vertices.push_back(outer1->b);
             vertices.push_back(outer2->a);
             vertices.push_back(inner_sec);
-        }
-        else if (joint_ == joint_round) {
+        } else if (joint_ == joint_round) {
             create_triangle_fan(vertices, inner_sec, segment1.center.b, outer1->b, outer2->a, clockwise);
-        }
-        else {
+        } else {
             assert(false);
         }
     }
@@ -265,8 +254,7 @@ void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, c
         if (angle2 > angle1) {
             angle2 -= 2 * M_PI;
         }
-    }
-    else {
+    } else {
         if (angle1 > angle2) {
             angle1 -= 2 * M_PI;
         }
@@ -274,7 +262,7 @@ void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, c
 
     const auto joint_angle = angle2 - angle1;
 
-    const auto segments = std::max(1, (int)std::floor(std::abs(joint_angle) / round_min_angle));
+    const auto segments = std::max(1, (int) std::floor(std::abs(joint_angle) / round_min_angle));
     const auto seg_angle = joint_angle / static_cast<float>(segments);
 
     glm::vec2 start_point = start;
@@ -283,14 +271,12 @@ void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, c
     for (size_t i = 0; i < segments; i++) {
         if (i + 1 == segments) {
             end_point = end;
-        }
-        else {
+        } else {
             const auto rot = (static_cast<float>(i) + 1.0f) * seg_angle;
 
             end_point = {
                 std::cos(rot) * point1.x - std::sin(rot) * point1.y,
-                std::sin(rot) * point1.x + std::cos(rot) * point1.y
-            };
+                std::sin(rot) * point1.x + std::cos(rot) * point1.y};
 
             end_point += origin;
         }

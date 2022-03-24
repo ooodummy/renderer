@@ -37,28 +37,23 @@ void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRI
 
     if (batches_.empty()) {
         batches_.emplace_back(0, type);
-    }
-    else {
+        split_batch_ = false;
+    } else {
         auto& previous = batches_.back();
 
         if (split_batch_) {
             if (previous.size != 0)
                 batches_.emplace_back(0, type);
             split_batch_ = false;
-        }
-        else if (previous.type != type) {
+        } else if (previous.type != type) {
             batches_.emplace_back(0, type);
-        }
-        else {
+        } else {
             if (type == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP) {
-                const std::vector<vertex> degenerate = {
+                add_vertices({
                     vertices_.back(),
                     vertices.front()
-                };
-
-                add_vertices(degenerate);
-            }
-            else {
+                });
+            } else {
                 // TODO: Look into batching these topologies
                 switch (type) {
                     case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
@@ -96,7 +91,7 @@ void renderer::buffer::draw_polyline(const std::vector<glm::vec2>& points, color
     std::vector<vertex> vertices;
     vertices.reserve(path.size());
 
-    for (auto& point : path) {
+    for (auto& point: path) {
         vertices.emplace_back(vertex(point.x, point.y, col));
     }
 
@@ -105,8 +100,7 @@ void renderer::buffer::draw_polyline(const std::vector<glm::vec2>& points, color
 
 void renderer::buffer::draw_point(glm::vec2 pos, color_rgba col) {
     std::vector<vertex> vertices = {
-        {pos.x, pos.y, col}
-    };
+        {pos.x, pos.y, col}};
 
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 }
@@ -114,8 +108,7 @@ void renderer::buffer::draw_point(glm::vec2 pos, color_rgba col) {
 void renderer::buffer::draw_line(glm::vec2 start, glm::vec2 end, color_rgba col) {
     std::vector<vertex> vertices = {
         {start.x, start.y, col},
-        {end.x, end.y, col}
-    };
+        {end.x, end.y, col}};
 
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
@@ -125,8 +118,7 @@ void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness
         {rect.x, rect.y},
         {rect.x + rect.z, rect.y},
         {rect.x + rect.z, rect.y + rect.w},
-        {rect.x, rect.y + rect.w}
-    };
+        {rect.x, rect.y + rect.w}};
 
     draw_polyline(points, col, thickness, joint_miter, cap_joint);
 }
@@ -147,8 +139,7 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
         {rect.x, rect.y, col},
         {rect.x + rect.z, rect.y, col},
         {rect.x, rect.y + rect.w, col},
-        {rect.x + rect.z, rect.y + rect.w, col}
-    };
+        {rect.x + rect.z, rect.y + rect.w, col}};
 
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
@@ -170,8 +161,8 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
     std::vector<vertex> vertices;
     vertices.reserve(segments);
 
-    glm::vec2 first{};
-    glm::vec2 prev{};
+    glm::vec2 first {};
+    glm::vec2 prev {};
     for (size_t i = 0; i < segments; i++) {
         const auto theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(segments);
         glm::vec2 point = {pos.x + radius * std::cos(theta), pos.y + radius * std::sin(theta)};
@@ -179,7 +170,7 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
         if (i == 0)
             first = point;
 
-        if (prev != glm::vec2{}) {
+        if (prev != glm::vec2 {}) {
             vertices.emplace_back(prev, col);
             vertices.emplace_back(point, col);
             vertices.emplace_back(pos, col);
@@ -198,7 +189,6 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
 }
 
 void renderer::buffer::draw_char(glm::vec2 pos, char c, size_t font_id, color_rgba col) {
-
 }
 
 void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {
@@ -209,12 +199,10 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t 
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool in, bool circle) {
     scissor_commands_.emplace_back(
-        DirectX::XMFLOAT4{
-            bounds.x, bounds.y, bounds.z, bounds.w
-        },
+        DirectX::XMFLOAT4 {
+            bounds.x, bounds.y, bounds.z, bounds.w},
         in,
-        circle
-        );
+        circle);
     update_scissor();
 }
 
@@ -229,8 +217,7 @@ void renderer::buffer::update_scissor() {
 
     if (scissor_commands_.empty()) {
         active_command.scissor_enable = false;
-    }
-    else {
+    } else {
         const auto& new_command = scissor_commands_.back();
 
         active_command.scissor_enable = true;
@@ -256,8 +243,7 @@ void renderer::buffer::update_key() {
 
     if (key_commands_.empty()) {
         active_command.key_enable = false;
-    }
-    else {
+    } else {
         active_command.key_enable = true;
         active_command.key_color = key_commands_.back();
     }
@@ -279,8 +265,7 @@ void renderer::buffer::update_blur() {
 
     if (blur_commands_.empty()) {
         active_command.blur_strength = 0.0f;
-    }
-    else {
+    } else {
         active_command.blur_strength = blur_commands_.back();
     }
 }

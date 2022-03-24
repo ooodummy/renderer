@@ -51,11 +51,11 @@ bool renderer::device::create_device() {
     if (FAILED(hr))
         return false;
 
-    hr = base_device->QueryInterface(__uuidof(ID3D11Device1), (void**)&device_);
+    hr = base_device->QueryInterface(__uuidof(ID3D11Device1), (void**) &device_);
     assert(SUCCEEDED(hr));
     base_device->Release();
 
-    hr = base_context->QueryInterface(__uuidof(ID3D11DeviceContext1), (void**)&context_);
+    hr = base_context->QueryInterface(__uuidof(ID3D11DeviceContext1), (void**) &context_);
     assert(SUCCEEDED(hr));
     base_context->Release();
 
@@ -63,12 +63,12 @@ bool renderer::device::create_device() {
 }
 
 void renderer::device::setup_debug_layer() const {
-    ID3D11Debug *debug;
-    auto hr = device_->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug);
+    ID3D11Debug* debug;
+    auto hr = device_->QueryInterface(__uuidof(ID3D11Debug), (void**) &debug);
     assert(SUCCEEDED(hr));
 
-    ID3D11InfoQueue *info_queue = nullptr;
-    hr = debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&info_queue);
+    ID3D11InfoQueue* info_queue = nullptr;
+    hr = debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**) &info_queue);
 
     if (SUCCEEDED(hr)) {
         info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
@@ -86,7 +86,7 @@ void renderer::device::create_swap_chain() {
     IDXGIFactory2* dxgi_factory;
     {
         IDXGIDevice1* dxgi_device;
-        hr = device_->QueryInterface(__uuidof(IDXGIDevice1), (void**)&dxgi_device);
+        hr = device_->QueryInterface(__uuidof(IDXGIDevice1), (void**) &dxgi_device);
         assert(SUCCEEDED(hr));
 
         IDXGIAdapter* dxgi_adapter;
@@ -97,7 +97,7 @@ void renderer::device::create_swap_chain() {
         DXGI_ADAPTER_DESC adapter_desc;
         dxgi_adapter->GetDesc(&adapter_desc);
 
-        hr = dxgi_adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&dxgi_factory);
+        hr = dxgi_adapter->GetParent(__uuidof(IDXGIFactory2), (void**) &dxgi_factory);
         assert(SUCCEEDED(hr));
         dxgi_adapter->Release();
     }
@@ -175,7 +175,7 @@ void renderer::device::create_depth_stencil_view() {
 
 void renderer::device::create_frame_buffer_view() {
     ID3D11Texture2D* frame_buffer;
-    auto hr = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&frame_buffer);
+    auto hr = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**) &frame_buffer);
     assert(SUCCEEDED(hr));
 
     hr = device_->CreateRenderTargetView(frame_buffer, nullptr, &frame_buffer_view_);
@@ -205,9 +205,8 @@ void renderer::device::create_shaders() {
 
     // TODO: DXGI_FORMAT_R8G8B8A8_UINT
     D3D11_INPUT_ELEMENT_DESC input_element_desc[] = {
-        { "POS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
+        {"POS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}};
 
     hr = device_->CreateInputLayout(input_element_desc,
                                     ARRAYSIZE(input_element_desc),
@@ -218,7 +217,7 @@ void renderer::device::create_shaders() {
 }
 
 void renderer::device::create_states() {
-    D3D11_BLEND_DESC blend_state_desc{};
+    D3D11_BLEND_DESC blend_state_desc {};
 
     blend_state_desc.RenderTarget->BlendEnable = TRUE;
     blend_state_desc.RenderTarget->SrcBlend = D3D11_BLEND_SRC_ALPHA;
@@ -309,7 +308,7 @@ void renderer::device::create_buffers(size_t vertex_count) {
         delete[] indices;
     }
 
-    D3D11_BUFFER_DESC buffer_desc{};
+    D3D11_BUFFER_DESC buffer_desc {};
 
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
     buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
@@ -361,7 +360,7 @@ void renderer::device::resize() {
     assert(SUCCEEDED(res));
 
     ID3D11Texture2D* frame_buffer;
-    res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&frame_buffer);
+    res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**) &frame_buffer);
     assert(SUCCEEDED(res));
 
     res = device_->CreateRenderTargetView(frame_buffer, nullptr, &frame_buffer_view_);
