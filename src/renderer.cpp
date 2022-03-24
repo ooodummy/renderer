@@ -7,6 +7,9 @@
 
 #include <d3d11.h>
 
+// Use this for help
+// https://github.com/ooodummy/carbon/blob/96d35073927cddef5cad0dcb6c77f659ea5a3df2/src/renderer/impl/d3d9.cpp
+
 void renderer::dx11_renderer::draw() {
     begin();
     populate();

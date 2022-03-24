@@ -43,22 +43,33 @@ void draw_thread() {
 
         const auto size = window->get_size();
 
+        constexpr auto scale = 80.0f;
+        renderer::color_hsv offset = {0.0f, 1.0f, 1.0f};
+
+        for (size_t i = 0; i < size.x / scale; i += 1) {
+            buf->draw_rect_filled({i * scale, 0, i * scale + scale, scale}, offset.get_rgb());
+
+            offset.h += 360.0f / (size.x / scale);
+            if (offset.h >= 360.0f)
+                offset.h = 0.0f;
+        }
+
         // TODO: Color key does not work if there are more draw calls later on for some reason?
-        /*buf->push_key({255, 0, 0, 255});
+        buf->push_key({255, 0, 0, 255});
 
         buf->draw_rect_filled({0, 0, 100, 100}, {255, 0, 0, 255});
         buf->draw_rect_filled({100, 0, 100, 100}, {0, 0, 255, 255});
         buf->draw_rect_filled({0, 100, 100, 100}, {0, 255, 0, 255});
         buf->draw_rect_filled({100, 100, 100, 100}, {255, 255, 0, 255});
 
-        buf->pop_key();*/
+        buf->pop_key();
 
         buf->draw_rect_filled({100, 100, 100, 100}, {255, 0, 0, 255});
         buf->draw_rect_filled({300, 150, 100, 100}, {0, 0, 255, 255});
         buf->draw_rect_filled({150, 300, 100, 100}, {0, 255, 0, 255});
         buf->draw_rect_filled({350, 350, 100, 100}, {255, 255, 0, 255});
 
-        /*buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125});
+        buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
         buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
         buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
@@ -86,23 +97,9 @@ void draw_thread() {
 
         buf->push_scissor({400.0f, 300.0f, 200.0f, 200.0f}, true, false);
 
-        buf->draw_polyline(points, rgb, 25.0f);
+        buf->draw_polyline(points, rgb, 30.0f);
 
-        buf->pop_scissor();*/
-
-        // Draw rect
-        /*{
-            constexpr auto scale = 80.0f;
-            renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
-
-            for (size_t i = 0; i < size.x / scale; i += 1) {
-                buf->draw_rect({i * scale, 0, i * scale + scale, scale}, hsv.get_rgb());
-
-                hsv.h += 360.0f / (size.x / scale);
-                if (hsv.h >= 360.0f)
-                    hsv.h = 0.0f;
-            }
-        }*/
+        buf->pop_scissor();
 
         dx11->swap_buffers(id);
 

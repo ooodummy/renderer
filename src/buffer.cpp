@@ -59,10 +59,10 @@ void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRI
                 add_vertices(degenerate);
             }
             else {
+                // TODO: Look into batching these topologies
                 switch (type) {
                     case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
                     case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
-                    //case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
                     case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
                         batches_.emplace_back(0, type);
                         break;
@@ -100,7 +100,7 @@ void renderer::buffer::draw_polyline(const std::vector<glm::vec2>& points, color
         vertices.emplace_back(vertex(point.x, point.y, col));
     }
 
-    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
 void renderer::buffer::draw_point(glm::vec2 pos, color_rgba col) {

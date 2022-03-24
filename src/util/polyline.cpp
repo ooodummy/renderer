@@ -135,11 +135,9 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
             create_joint(vertices, segment, segments[i + 1], end1, end2, next_start1, next_start2, allow_overlap);
         }
 
-        vertices.push_back(start2);
         vertices.push_back(start1);
         vertices.push_back(end1);
         vertices.push_back(start2);
-        vertices.push_back(end1);
         vertices.push_back(end2);
 
         start1 = next_start1;
@@ -241,7 +239,7 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
             next_start2 = outer2->a;
         }
 
-        // TODO: Fix for triangle list
+        // TODO: Fix for triangle strip
         if (joint_ == joint_bevel) {
             vertices.push_back(outer1->b);
             vertices.push_back(outer2->a);
