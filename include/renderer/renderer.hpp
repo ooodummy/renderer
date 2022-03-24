@@ -31,7 +31,7 @@ namespace renderer {
     public:
         explicit dx11_renderer(std::shared_ptr<device> device) : device_(std::move(device)) {} // NOLINT(cppcoreguidelines-pro-type-member-init)
 
-        size_t register_buffer(size_t priority = 0);
+        size_t register_buffer([[maybe_unused]] size_t priority = 0);
         buffer_node get_buffer_node(size_t id);
 
         void swap_buffers(size_t id);

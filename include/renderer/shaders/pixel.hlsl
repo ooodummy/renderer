@@ -9,7 +9,6 @@ cbuffer global : register(b0)
 
 cbuffer command : register(b1)
 {
-    float4 dimensions;
     bool scissor_enable;
     float4 scissor_bounds;
     bool scissor_in;

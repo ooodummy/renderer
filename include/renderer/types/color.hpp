@@ -25,6 +25,7 @@ namespace renderer {
     class color_rgba {
     public:
         color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255); // NOLINT(google-explicit-constructor)
+        explicit color_rgba(uint32_t color);
 
         [[nodiscard]] color_hsv get_hsv() const;
 

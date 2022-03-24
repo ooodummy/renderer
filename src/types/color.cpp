@@ -58,6 +58,11 @@ renderer::color_rgba renderer::color_hsv::get_rgb() const {
 
 renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
+renderer::color_rgba::color_rgba(uint32_t color) : a((color >> 24) & 0xff),
+                                                   r((color >> 16) & 0xff),
+                                                   g((color >> 8) & 0xff),
+                                                   b(color & 0xff) {}
+
 renderer::color_hsv renderer::color_rgba::get_hsv() const {
     const auto fr = static_cast<float>(r) / 255.0f;
     const auto fg = static_cast<float>(g) / 255.0f;

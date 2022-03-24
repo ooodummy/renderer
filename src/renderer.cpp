@@ -20,7 +20,8 @@ void renderer::dx11_renderer::set_vsync(bool vsync) {
     vsync_ = vsync;
 }
 
-size_t renderer::dx11_renderer::register_buffer(size_t priority) {
+// TODO: Buffer priority
+size_t renderer::dx11_renderer::register_buffer([[maybe_unused]] size_t priority) {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
     const auto id = buffers_.size();

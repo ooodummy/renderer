@@ -1,33 +1,37 @@
 #include <renderer/core.hpp>
 
-#include <fmt/core.h>
-
+#include <windowsx.h>
 #include <dwmapi.h>
-#include <thread>
 #include <thread>
 #include <future>
 
 std::shared_ptr<renderer::win32_window> window;
 std::shared_ptr<renderer::dx11_renderer> dx11;
+size_t segoe;
 
 MSG msg{};
 bool update_size = false;
-size_t segoe;
+glm::i32vec2 mouse_pos{};
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CREATE:
             break;
-        case WM_DESTROY: {
+        case WM_DESTROY:
             PostQuitMessage(0);
             return 0;
-        }
         case WM_MOVE:
             break;
-        case WM_SIZE: {
+        case WM_SIZE:
             window->set_size({LOWORD(lParam), HIWORD(lParam)});
             update_size = true;
-        }
+            break;
+        case WM_MOUSEMOVE:
+            mouse_pos = {
+                GET_X_LPARAM(lParam),
+                GET_Y_LPARAM(lParam)
+            };
+            break;
         default:
             break;
     }
@@ -41,44 +45,20 @@ void draw_thread() {
     while (msg.message != WM_QUIT) {
         const auto buf = dx11->get_buffer_node(id).working;
 
-        const auto size = window->get_size();
+        //buf->push_key({255, 0, 0, 255});
 
-        constexpr auto scale = 80.0f;
-        renderer::color_hsv offset = {0.0f, 1.0f, 1.0f};
+        buf->draw_rect_filled({0, 0, 50, 50}, {255, 0, 0, 255});
+        buf->draw_rect_filled({100, 25, 50, 50}, {0, 0, 255, 255});
+        buf->draw_rect_filled({25, 100, 50, 50}, {0, 255, 0, 255});
+        buf->draw_rect_filled({125, 125, 50, 50}, {255, 255, 0, 255});
 
-        for (size_t i = 0; i < size.x / scale; i += 1) {
-            buf->draw_rect_filled({i * scale, 0, i * scale + scale, scale}, offset.get_rgb());
+        //buf->pop_key();
 
-            offset.h += 360.0f / (size.x / scale);
-            if (offset.h >= 360.0f)
-                offset.h = 0.0f;
-        }
+        //buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
+        //buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
-        // TODO: Color key does not work if there are more draw calls later on for some reason?
-        buf->push_key({255, 0, 0, 255});
-
-        buf->draw_rect_filled({0, 0, 100, 100}, {255, 0, 0, 255});
-        buf->draw_rect_filled({100, 0, 100, 100}, {0, 0, 255, 255});
-        buf->draw_rect_filled({0, 100, 100, 100}, {0, 255, 0, 255});
-        buf->draw_rect_filled({100, 100, 100, 100}, {255, 255, 0, 255});
-
-        buf->pop_key();
-
-        buf->draw_rect_filled({100, 100, 100, 100}, {255, 0, 0, 255});
-        buf->draw_rect_filled({300, 150, 100, 100}, {0, 0, 255, 255});
-        buf->draw_rect_filled({150, 300, 100, 100}, {0, 255, 0, 255});
-        buf->draw_rect_filled({350, 350, 100, 100}, {255, 255, 0, 255});
-
-        buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
-        buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
-
-        buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
-        buf->draw_rect_filled({450.0f, 50.0f, 100.0f, 100.0f}, {255, 0, 0, 255});
-
-        static renderer::color_hsv hsv = {0.0f, 1.0f, 1.0f};
-        hsv.h += 0.1f;
-        if (hsv.h > 360.0f)
-            hsv.h = 0.0f;
+        //buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
+        //buf->draw_rect_filled({450.0f, 50.0f, 100.0f, 100.0f}, {255, 0, 0, 255});
 
         const std::vector<glm::vec2> points = {
             {400.0f, 500.0f},
@@ -90,20 +70,24 @@ void draw_thread() {
             {600.0f, 600.0f}
         };
 
-        auto rgb = hsv.get_rgb();
-        rgb.a = 200;
+        const glm::vec4 scissor_bounds = {
+            static_cast<float>(mouse_pos.x) - 50.0f,
+            static_cast<float>(mouse_pos.y) - 50.0f,
+            100.0f,
+            100.0f
+        };
 
-        buf->draw_rect({400.0f, 300.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
+        buf->draw_rect(scissor_bounds, {255, 0, 0, 255});
 
-        buf->push_scissor({400.0f, 300.0f, 200.0f, 200.0f}, true, false);
+        buf->push_scissor(scissor_bounds, true, false);
 
-        buf->draw_polyline(points, rgb, 30.0f);
+        buf->draw_polyline(points, {255, 0, 255, 175}, 20.0f);
 
         buf->pop_scissor();
 
         dx11->swap_buffers(id);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -149,7 +133,7 @@ int main() {
         return 1;
     }
 
-    dx11->set_vsync(true);
+    dx11->set_vsync(false);
 
     segoe = dx11->register_font({"Segoe UI", 10, FW_NORMAL, true});
 

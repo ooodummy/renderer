@@ -5,6 +5,10 @@
 #include <utility>
 
 namespace renderer {
+    // Texture atlas can be used for font's to reduce sizes and batch
+    // Could create a buffer and then when drawing textured quads I could just add them to the texture and draw that
+    //  I don't know how ordering the z position can be handled hen doing this though
+
     enum text_align {
         align_top,
         align_left,
