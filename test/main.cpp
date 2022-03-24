@@ -44,16 +44,21 @@ void draw_thread() {
         const auto size = window->get_size();
 
         // TODO: Color key does not work if there are more draw calls later on for some reason?
-        buf->push_key({255, 0, 0, 255});
+        /*buf->push_key({255, 0, 0, 255});
 
         buf->draw_rect_filled({0, 0, 100, 100}, {255, 0, 0, 255});
         buf->draw_rect_filled({100, 0, 100, 100}, {0, 0, 255, 255});
         buf->draw_rect_filled({0, 100, 100, 100}, {0, 255, 0, 255});
         buf->draw_rect_filled({100, 100, 100, 100}, {255, 255, 0, 255});
 
-        buf->pop_key();
+        buf->pop_key();*/
 
-        buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125});
+        buf->draw_rect_filled({100, 100, 100, 100}, {255, 0, 0, 255});
+        buf->draw_rect_filled({300, 150, 100, 100}, {0, 0, 255, 255});
+        buf->draw_rect_filled({150, 300, 100, 100}, {0, 255, 0, 255});
+        buf->draw_rect_filled({350, 350, 100, 100}, {255, 255, 0, 255});
+
+        /*buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125});
         buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
         buf->draw_rect({400.0f, 0.0f, 200.0f, 200.0f}, {255, 0, 0, 255});
@@ -83,7 +88,7 @@ void draw_thread() {
 
         buf->draw_polyline(points, rgb, 25.0f);
 
-        buf->pop_scissor();
+        buf->pop_scissor();*/
 
         // Draw rect
         /*{

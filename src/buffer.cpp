@@ -32,28 +32,43 @@ void renderer::buffer::add_vertices(const std::vector<vertex>& vertices) {
 }
 
 void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture, color_rgba col) {
+    if (vertices.empty())
+        return;
+
     if (batches_.empty()) {
         batches_.emplace_back(0, type);
     }
     else {
         auto& previous = batches_.back();
 
-        if (previous.type != type || (split_batch_ && previous.size != 0)) {
-            batches_.emplace_back(0, type);
+        if (split_batch_) {
+            if (previous.size != 0)
+                batches_.emplace_back(0, type);
             split_batch_ = false;
         }
+        else if (previous.type != type) {
+            batches_.emplace_back(0, type);
+        }
         else {
-            // If the previous type is a strip don't batch because then that will cause issues
-            switch (previous.type) {
-                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
-                case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
-                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
-                case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
-                    batches_.emplace_back(0, type);
-                    split_batch_ = false;
-                    break;
-                default:
-                    break;
+            if (type == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP) {
+                const std::vector<vertex> degenerate = {
+                    vertices_.back(),
+                    vertices.front()
+                };
+
+                add_vertices(degenerate);
+            }
+            else {
+                switch (type) {
+                    case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
+                    case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
+                    //case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
+                    case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
+                        batches_.emplace_back(0, type);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -117,7 +132,7 @@ void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness
 }
 
 void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
-    std::vector<vertex> vertices = {
+    /*std::vector<vertex> vertices = {
         {rect.x, rect.y, col},
         {rect.x + rect.z, rect.y, col},
         {rect.x, rect.y + rect.w, col},
@@ -126,7 +141,16 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
         {rect.x, rect.y + rect.w, col}
     };
 
-    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
+
+    std::vector<vertex> vertices = {
+        {rect.x, rect.y, col},
+        {rect.x + rect.z, rect.y, col},
+        {rect.x, rect.y + rect.w, col},
+        {rect.x + rect.z, rect.y + rect.w, col}
+    };
+
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
 void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col, float thickness, size_t segments) {

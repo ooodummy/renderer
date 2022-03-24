@@ -50,6 +50,7 @@ namespace renderer {
         void draw();
 
     private:
+        // Might want to just store as object ref
         std::shared_ptr<device> device_;
 
         std::shared_mutex buffer_list_mutex_;
