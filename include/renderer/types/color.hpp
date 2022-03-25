@@ -3,7 +3,7 @@
 
 #include "../util/easing.hpp"
 
-#include <cstdint>
+#include <DirectXMath.h>
 
 #define COLOR_WHITE renderer::color_rgba(255, 255, 255)
 #define COLOR_RED renderer::color_rgba(255, 0, 0)
@@ -34,6 +34,7 @@ namespace renderer {
 
         [[nodiscard]] operator uint32_t() const;
         [[nodiscard]] operator color_hsv() const;
+        [[nodiscard]] operator DirectX::XMFLOAT4() const;
 
         [[nodiscard]] color_hsv get_hsv() const;
         [[nodiscard]] color_rgba ease(const color_rgba& o, float p, renderer::ease_type type = renderer::linear) const;

@@ -12,7 +12,7 @@ namespace renderer {
         vertex(glm::vec2 pos, color_rgba col) : pos(pos.x, pos.y), col(col) {}
 
         DirectX::XMFLOAT2 pos;
-        uint32_t col;
+        DirectX::XMFLOAT4 col;
     };
 }// namespace renderer
 

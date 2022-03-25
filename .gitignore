@@ -67,6 +67,7 @@ _deps
 *.sln
 *.suo
 *.sdf
+CMakeSettings.json
 
 # CLion
 .idea/

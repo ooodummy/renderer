@@ -205,7 +205,7 @@ void renderer::device::create_shaders() {
 
     D3D11_INPUT_ELEMENT_DESC input_element_desc[] = {
         {"POS", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COL", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+        {"COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
 
     hr = device_->CreateInputLayout(input_element_desc,
@@ -344,6 +344,11 @@ void renderer::device::release_buffers() {
     if (projection_buffer_) {
         projection_buffer_->Release();
         projection_buffer_ = nullptr;
+    }
+
+    if (global_buffer_) {
+        global_buffer_->Release();
+        global_buffer_ = nullptr;
     }
 
     if (command_buffer_) {

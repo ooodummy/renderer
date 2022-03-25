@@ -85,6 +85,14 @@ renderer::color_rgba::operator renderer::color_hsv() const {
     return get_hsv();
 }
 
+renderer::color_rgba::operator DirectX::XMFLOAT4() const {
+    return {
+        static_cast<float>(r) / 255.0f,
+        static_cast<float>(g) / 255.0f,
+        static_cast<float>(b) / 255.0f,
+        static_cast<float>(a) / 255.0f};
+}
+
 renderer::color_hsv renderer::color_rgba::get_hsv() const {
     const auto fr = static_cast<float>(r) / 255.0f;
     const auto fg = static_cast<float>(g) / 255.0f;

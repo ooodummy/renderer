@@ -4,13 +4,10 @@
 #include <future>
 #include <thread>
 #include <windowsx.h>
-#include <condition_variable>
 
 std::shared_ptr<renderer::win32_window> window;
 std::shared_ptr<renderer::dx11_renderer> dx11;
 size_t segoe;
-
-renderer::sync_manager sync;
 
 MSG msg {};
 bool update_size = false;
@@ -106,7 +103,7 @@ void draw_thread() {
 
         dx11->swap_buffers(id);
 
-        sync.wait();
+        //sync.wait();
     }
 }
 
@@ -174,7 +171,7 @@ int main() {
 
         dx11->draw();
 
-        sync.notify();
+        //sync.notify();
     }
 
     msg.message = WM_QUIT;
