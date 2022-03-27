@@ -10,14 +10,7 @@
 #include <DirectXMath.h>
 #include <d3d11.h>
 
-#include <freetype/freetype.h>
-#include <glm/vec2.hpp>
-
 namespace renderer {
-    struct glyph {
-        ID3D11Texture2D* texture;
-    };
-
     class buffer;
 
     struct buffer_node {
@@ -38,6 +31,8 @@ namespace renderer {
 
         size_t register_font(const font& font);
         glm::vec2 get_text_size(const std::string& text, size_t id);
+
+        glyph get_font_glyph(size_t id, char c);
 
         bool init();
         void set_vsync(bool vsync);
@@ -63,9 +58,8 @@ namespace renderer {
 
         FT_Library library_;
         std::vector<font> fonts_;
-        std::map<size_t, std::map<char, glyph>> font_map_;
 
-        bool create_font_glyph(char c, size_t id);
+        bool create_font_glyph(size_t id, char c);
     };
 }// namespace renderer
 

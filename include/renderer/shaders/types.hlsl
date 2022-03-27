@@ -1,6 +1,6 @@
 struct VS_Input
 {
-    float2 pos : POS;
+    float3 pos : POS;
     float4 color : COL;
 };
 

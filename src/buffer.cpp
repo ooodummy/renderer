@@ -24,14 +24,14 @@ const std::vector<renderer::batch>& renderer::buffer::get_batches() {
 }
 
 void renderer::buffer::add_vertices(const std::vector<vertex>& vertices) {
-    auto& active_batch = batches_.back();
-    active_batch.size += vertices.size();
+    auto& batch = batches_.back();
+    batch.size += vertices.size();
 
     vertices_.resize(vertices_.size() + vertices.size());
     memcpy(&vertices_[vertices_.size() - vertices.size()], vertices.data(), vertices.size() * sizeof(vertex));
 }
 
-void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture, color_rgba col) {
+void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv, color_rgba col) {
     if (vertices.empty())
         return;
 
@@ -45,7 +45,7 @@ void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRI
             if (previous.size != 0)
                 batches_.emplace_back(0, type);
             split_batch_ = false;
-        } else if (previous.type != type) {
+        } else if (previous.type != type || rv != nullptr || rv != previous.rv) {
             batches_.emplace_back(0, type);
         } else {
             if (type == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP) {
@@ -68,9 +68,9 @@ void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRI
         }
     }
 
-    batch& new_batch = batches_.back();
+    auto& new_batch = batches_.back();
 
-    new_batch.texture = texture;
+    new_batch.rv = rv;
     new_batch.color = col;
     new_batch.command = active_command;
 
@@ -124,17 +124,6 @@ void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness
 }
 
 void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
-    /*std::vector<vertex> vertices = {
-        {rect.x, rect.y, col},
-        {rect.x + rect.z, rect.y, col},
-        {rect.x, rect.y + rect.w, col},
-        {rect.x + rect.z, rect.y, col},
-        {rect.x + rect.z, rect.y + rect.w, col},
-        {rect.x, rect.y + rect.w, col}
-    };
-
-    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);*/
-
     std::vector<vertex> vertices = {
         {rect.x, rect.y, col},
         {rect.x + rect.z, rect.y, col},
@@ -142,6 +131,16 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
         {rect.x + rect.z, rect.y + rect.w, col}};
 
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+}
+
+void renderer::buffer::draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, color_rgba col) {
+    std::vector<vertex> vertices = {
+        {rect.x, rect.y, col},
+        {rect.x + rect.z, rect.y, col},
+        {rect.x, rect.y + rect.w, col},
+        {rect.x + rect.z, rect.y + rect.w, col}};
+
+    add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, rv, col);
 }
 
 void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col, float thickness, size_t segments) {
@@ -188,13 +187,21 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
     add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void renderer::buffer::draw_char(glm::vec2 pos, char c, size_t font_id, color_rgba col) {
+void renderer::buffer::draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col) {
+    draw_textured_quad({pos.x + glyph.bearing.x, pos.y + glyph.bearing.y, glyph.size}, glyph.rv, col);
 }
 
 void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {
     // TODO: Handle alignment
+    for (char c : text) {
+        if (!isprint(c) || c == ' ')
+            continue;
 
-    //const auto& char_set = renderer_.font_map_[font_id];
+        auto glyph = renderer_.get_font_glyph(font_id, c);
+        draw_glyph(pos, glyph, col);
+
+        pos.x += glyph.advance / 64.0f;
+    }
 }
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool in, bool circle) {

@@ -50,7 +50,7 @@ namespace renderer {
     // This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
     class polyline {
     public:
-        std::vector<glm::vec2> compute(bool allow_overlap = false);
+        std::vector<glm::vec2> compute(bool allow_overlap = false) const;
 
         void set_thickness(float new_thickness);
         void set_joint(joint_type type);
@@ -60,7 +60,7 @@ namespace renderer {
         void add(const glm::vec2& point);
 
     private:
-        void create_joint(std::vector<glm::vec2>& vertices, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false);
+        void create_joint(std::vector<glm::vec2>& vertices, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false) const;
         static void create_triangle_fan(std::vector<glm::vec2>& vertices, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise);
 
         joint_type joint_ = joint_miter;

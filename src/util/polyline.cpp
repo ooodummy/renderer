@@ -59,31 +59,35 @@ renderer::poly_segment::poly_segment(const renderer::line_segment& _center, floa
                                                                                                edge1(center + center.normal() * thickness),
                                                                                                edge2(center - center.normal() * thickness) {}
 
-std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
-    thickness_ /= 2.0f;
+std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
+    if (points_.empty())
+        return {};
+
+    const auto half_thickness_ = thickness_ / 2.0f;
 
     // Create segments
     std::vector<poly_segment> segments;
-    for (size_t i = 0; i + 1 < points_.size(); i++) {
+    segments.reserve(points_.size());
+    for (size_t i = 0; i < points_.size() - 1; i++) {
         const auto& a = points_[i];
         const auto& b = points_[i + 1];
 
         if (a != b) {
-            segments.emplace_back(line_segment(a, b), thickness_);
+            segments.emplace_back(line_segment(a, b), half_thickness_);
         }
     }
+
+    if (segments.empty())
+        return {};
 
     if (cap_ == cap_joint) {
         const auto& a = points_[points_.size() - 1];
         const auto& b = points_[0];
 
         if (a != b) {
-            segments.emplace_back(line_segment(a, b), thickness_);
+            segments.emplace_back(line_segment(a, b), half_thickness_);
         }
     }
-
-    if (segments.empty())
-        return {};
 
     const auto& first_segment = segments[0];
     const auto& last_segment = segments[segments.size() - 1];
@@ -94,14 +98,14 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
     auto path_end2 = last_segment.edge2.b;
 
     std::vector<glm::vec2> vertices;
-    vertices.reserve(segments.size() * 5);// Save needing to update capacity more times
+    vertices.reserve(segments.size() * 4);// Save needing to update capacity more times
 
     if (cap_ == cap_square) {
-        path_start1 -= first_segment.edge1.direction() * thickness_;
-        path_start2 -= first_segment.edge2.direction() * thickness_;
+        path_start1 -= first_segment.edge1.direction() * half_thickness_;
+        path_start2 -= first_segment.edge2.direction() * half_thickness_;
 
-        path_end1 += last_segment.edge1.direction() * thickness_;
-        path_end2 += last_segment.edge2.direction() * thickness_;
+        path_end1 += last_segment.edge1.direction() * half_thickness_;
+        path_end2 += last_segment.edge2.direction() * half_thickness_;
     } else if (cap_ == cap_round) {
         create_triangle_fan(vertices, first_segment.center.a, first_segment.center.a, first_segment.edge1.a, first_segment.edge2.a, false);
         create_triangle_fan(vertices, last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b, true);
@@ -111,18 +115,13 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) {
 
     glm::vec2 next_start1;
     glm::vec2 next_start2;
-    glm::vec2 start1;
-    glm::vec2 start2;
+    glm::vec2 start1 = path_start1;
+    glm::vec2 start2 = path_start2;
     glm::vec2 end1;
     glm::vec2 end2;
 
     for (size_t i = 0; i < segments.size(); i++) {
         const auto& segment = segments[i];
-
-        if (i == 0) {
-            start1 = path_start1;
-            start2 = path_start2;
-        }
 
         if (i + 1 == segments.size()) {
             end1 = path_end1;
@@ -163,7 +162,7 @@ void renderer::polyline::add(const glm::vec2& point) {
     points_.push_back(point);
 }
 
-void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const renderer::poly_segment& segment1, const renderer::poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap) {
+void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const renderer::poly_segment& segment1, const renderer::poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap) const {
     const auto dir1 = segment1.center.direction();
     const auto dir2 = segment2.center.direction();
 
@@ -174,11 +173,13 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
     if (wrapped_angle > M_PI / 2.0f)
         wrapped_angle = M_PI - wrapped_angle;
 
+    auto override_joint = joint_;
+
     if (joint_ == joint_miter && wrapped_angle < miter_min_angle) {
-        joint_ = joint_bevel;
+        override_joint = joint_bevel;
     }
 
-    if (joint_ == joint_miter) {
+    if (override_joint == joint_miter) {
         const auto sec1 = segment1.edge1.intersection(segment2.edge1, true);
         const auto sec2 = segment1.edge2.intersection(segment2.edge2, true);
 
@@ -231,11 +232,11 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
         }
 
         // TODO: Fix for triangle strip
-        if (joint_ == joint_bevel) {
+        if (override_joint == joint_bevel) {
             vertices.push_back(outer1->b);
             vertices.push_back(outer2->a);
             vertices.push_back(inner_sec);
-        } else if (joint_ == joint_round) {
+        } else if (override_joint == joint_round) {
             create_triangle_fan(vertices, inner_sec, segment1.center.b, outer1->b, outer2->a, clockwise);
         } else {
             assert(false);

@@ -1,8 +1,12 @@
 #ifndef _RENDERER_TYPES_FONT_HPP_
 #define _RENDERER_TYPES_FONT_HPP_
 
-#include <string>
-#include <utility>
+#include <d3d11.h>
+
+#include <unordered_map>
+
+#include <freetype/freetype.h>
+#include <glm/vec2.hpp>
 
 namespace renderer {
     // Texture atlas can be used for font's to reduce sizes and batch
@@ -19,6 +23,14 @@ namespace renderer {
 
     std::string get_font_path(const std::string& family);
 
+    struct glyph {
+        ID3D11ShaderResourceView* rv;
+
+        glm::u32vec2 size;
+        glm::i32vec2 bearing;
+        int32_t advance;
+    };
+
     struct font {
         font(std::string family, int size, int weight, bool anti_aliased = true) : family(std::move(family)), size(size), weight(weight), anti_aliased(anti_aliased) {
             path = get_font_path(this->family);
@@ -31,6 +43,9 @@ namespace renderer {
         int weight;
 
         bool anti_aliased;
+
+        FT_Face face = nullptr;
+        std::unordered_map<char, glyph> char_set;
     };
 }// namespace renderer
 

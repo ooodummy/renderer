@@ -16,7 +16,7 @@ namespace renderer {
         D3D_PRIMITIVE_TOPOLOGY type;
 
         // Fonts
-        ID3D11Texture2D* texture = nullptr;
+        ID3D11ShaderResourceView* rv = nullptr;
         color_rgba color {};
 
         command_buffer command {};

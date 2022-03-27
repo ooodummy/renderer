@@ -8,10 +8,10 @@
 namespace renderer {
     struct vertex {
         vertex() = default;
-        vertex(float x, float y, color_rgba col) : pos(x, y), col(col) {}
-        vertex(glm::vec2 pos, color_rgba col) : pos(pos.x, pos.y), col(col) {}
+        vertex(float x, float y, color_rgba col) : pos(x, y, 0.0f), col(col) {}
+        vertex(glm::vec2 pos, color_rgba col) : pos(pos.x, pos.y, 0.0f), col(col) {}
 
-        DirectX::XMFLOAT2 pos;
+        DirectX::XMFLOAT3 pos;
         DirectX::XMFLOAT4 col;
     };
 }// namespace renderer

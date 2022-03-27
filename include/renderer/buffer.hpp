@@ -12,6 +12,12 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
+// TODO: Things I need to optimize
+//  SSO for vertices that are being added so I do not heap allocate a vector >:(
+//  Generate circle metadata just to avoid some trig needing to be done all the time
+//  A bunch more drawing functions for primitives
+//  Push/pop font for drawing text and just set the index to something like -1 or max when undefined
+
 namespace renderer {
     class dx11_renderer;
 
@@ -23,7 +29,7 @@ namespace renderer {
         void clear();
 
         void add_vertices(const std::vector<vertex>& vertices);
-        void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11Texture2D* texture = nullptr, color_rgba col = {255, 255, 255, 255});
+        void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = {255, 255, 255, 255});
 
         void draw_polyline(const std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 
@@ -33,16 +39,15 @@ namespace renderer {
         void draw_rect(glm::vec4 rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
         void draw_rect_filled(glm::vec4 rect, color_rgba col = COLOR_WHITE);
 
+        void draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, color_rgba col = COLOR_WHITE);
+
         void draw_circle(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
         void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
-    private:
-        void draw_char(glm::vec2 pos, char c, size_t font_id = 0, color_rgba col = COLOR_WHITE);
-
-    public:
+        void draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col = COLOR_WHITE);
         void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = align_left, text_align v_align = align_bottom);
 
-        void push_scissor(glm::vec4 bounds, bool in = true, bool circle = false);
+        void push_scissor(glm::vec4 bounds, bool in = false, bool circle = false);
         void pop_scissor();
 
         void push_key(color_rgba color);

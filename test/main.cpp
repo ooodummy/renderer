@@ -9,6 +9,8 @@ std::shared_ptr<renderer::win32_window> window;
 std::shared_ptr<renderer::dx11_renderer> dx11;
 size_t segoe;
 
+renderer::sync_manager sync;
+
 MSG msg {};
 bool update_size = false;
 glm::i32vec2 mouse_pos {};
@@ -56,7 +58,12 @@ void draw_thread() {
             rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000);
         }
 
-        // Color key test
+        const glm::vec4 scissor_bounds = {
+            static_cast<float>(mouse_pos.x) - 50.0f,
+            static_cast<float>(mouse_pos.y) - 50.0f,
+            100.0f,
+            100.0f};
+
         buf->push_key(COLOR_RED);
 
         {
@@ -67,7 +74,11 @@ void draw_thread() {
             const auto cube_space = cube_size * 2.5f;
 
             buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
+
+            buf->push_scissor(scissor_bounds);
             buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
+            buf->pop_scissor();
+
             buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
             buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
         }
@@ -87,23 +98,17 @@ void draw_thread() {
             {500.0f, 600.0f},
             {600.0f, 600.0f}};
 
-        const glm::vec4 scissor_bounds = {
-            static_cast<float>(mouse_pos.x) - 50.0f,
-            static_cast<float>(mouse_pos.y) - 50.0f,
-            100.0f,
-            100.0f};
-
-        buf->push_scissor(scissor_bounds, true, false);
-
-        buf->draw_polyline(points, rainbow, 20.0f);
-
+        buf->push_scissor(scissor_bounds, true);
+        buf->draw_polyline(points, rainbow, 20.0f, renderer::joint_miter);
         buf->pop_scissor();
+
+        buf->draw_text({250.0f, 250.0f}, "Hello World!", segoe);
 
         buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
         dx11->swap_buffers(id);
 
-        //sync.wait();
+        sync.notify();
     }
 }
 
@@ -171,7 +176,7 @@ int main() {
 
         dx11->draw();
 
-        //sync.notify();
+        sync.wait();
     }
 
     msg.message = WM_QUIT;
