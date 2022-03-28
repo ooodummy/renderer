@@ -193,6 +193,7 @@ void renderer::buffer::draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba 
 
 void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {
     // TODO: Handle alignment
+
     for (char c : text) {
         if (!isprint(c) || c == ' ')
             continue;

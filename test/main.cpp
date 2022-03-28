@@ -102,9 +102,16 @@ void draw_thread() {
         buf->draw_polyline(points, rainbow, 20.0f, renderer::joint_miter);
         buf->pop_scissor();
 
-        buf->draw_text({250.0f, 250.0f}, "Hello World!", segoe);
+        const std::string test_string = "Hello World!";
+        dx11->get_font_glyph(segoe, 'A');
+        //buf->draw_text({250.0f, 250.0f}, test_string, segoe);
+        //buf->draw_rect({250.0f, 250.0f, dx11->get_text_size(test_string, segoe)}, COLOR_RED);
 
         buf->draw_rect(scissor_bounds, COLOR_WHITE);
+
+        // TODO: Fix inconsistent sizes
+        buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
+        buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
 
         dx11->swap_buffers(id);
 

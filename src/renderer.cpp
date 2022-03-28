@@ -140,7 +140,10 @@ void renderer::dx11_renderer::populate() {
                 device_->context_->PSSetConstantBuffers(1, 1, &device_->command_buffer_);
             }
 
+            ID3D11ShaderResourceView* rv;
+
             if (batch.rv) {
+                device_->context_->PSGetShaderResources(0, 1, &rv);
                 device_->context_->PSSetShaderResources(0, 1, &batch.rv);
             }
 
@@ -148,7 +151,7 @@ void renderer::dx11_renderer::populate() {
             device_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
 
             if (batch.rv) {
-                //device_->context_->PSSetShaderResources(0, 1, nullptr);
+                device_->context_->PSSetShaderResources(0, 1, &rv);
             }
 
             offset += batch.size;
@@ -327,8 +330,16 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
     }
     device_->context_->Unmap(texture, 0);
 
-    hr = device_->device_->CreateShaderResourceView(texture, nullptr, &glyph.rv);
-    assert(SUCCEEDED(hr));
+    D3D11_SHADER_RESOURCE_VIEW_DESC rv_desc{};
+    rv_desc.Format = texture_desc.Format;
+    rv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    rv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
+    // TODO: Creating the shader resource view is killing RenderDoc for some reason
+    //hr = device_->device_->CreateShaderResourceView(texture, &rv_desc, &glyph.rv);
+    //assert(SUCCEEDED(hr));
+
+    //glyph.rv->GetResource((ID3D11Resource**)&texture);
 
     texture->Release();
 
@@ -350,5 +361,17 @@ renderer::glyph renderer::dx11_renderer::get_font_glyph(size_t id, char c) {
 }
 
 glm::vec2 renderer::dx11_renderer::get_text_size(const std::string& text, size_t id) {
-    return glm::vec2();
+    glm::vec2 size{};
+
+    for (char c : text) {
+        if (!isprint(c) || c == ' ')
+            continue;
+
+        auto glyph = get_font_glyph(id, c);
+
+        size.x += glyph.advance / 64.0f;
+        size.y = std::max(size.y, static_cast<float>(glyph.size.y));
+    }
+
+    return size;
 }
