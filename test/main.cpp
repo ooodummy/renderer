@@ -66,22 +66,20 @@ void draw_thread() {
 
         buf->push_key(COLOR_RED);
 
-        {
-            glm::vec2 cube_offset = {50.0f, 50.0f};
-            const auto cube_size = 20.0f;
-            const auto cube_half = cube_size / 2.0f;
-            const auto cube_double = cube_size * 2.0f;
-            const auto cube_space = cube_size * 2.5f;
+        glm::vec2 cube_offset = {50.0f, 50.0f};
+        const auto cube_size = 20.0f;
+        const auto cube_half = cube_size / 2.0f;
+        const auto cube_double = cube_size * 2.0f;
+        const auto cube_space = cube_size * 2.5f;
 
-            buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
+        buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
 
-            buf->push_scissor(scissor_bounds);
-            buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
-            buf->pop_scissor();
+        buf->push_scissor(scissor_bounds);
+        buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
+        buf->pop_scissor();
 
-            buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
-            buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
-        }
+        buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
+        buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
 
         buf->pop_key();
 
@@ -99,7 +97,9 @@ void draw_thread() {
             {600.0f, 600.0f}};
 
         buf->push_scissor(scissor_bounds, true);
+        rainbow.a = 175;
         buf->draw_polyline(points, rainbow, 20.0f, renderer::joint_miter);
+        rainbow.a = 255;
         buf->pop_scissor();
 
         const std::string test_string = "Hello World!";
@@ -111,7 +111,7 @@ void draw_thread() {
 
         // TODO: Fix inconsistent sizes
         buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
-        buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
+        //buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
 
         dx11->swap_buffers(id);
 
@@ -147,10 +147,10 @@ int main() {
 
     window->set_visibility(true);
 
-    auto device = std::make_shared<renderer::device>(window);
+    auto device = std::make_shared<renderer::pipeline>(window);
 
     if (!device->init()) {
-        MessageBoxA(nullptr, "Failed to initialize device.", "Error", MB_ICONERROR | MB_OK);
+        MessageBoxA(nullptr, "Failed to initialize pipeline.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
 

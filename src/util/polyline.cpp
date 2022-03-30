@@ -80,6 +80,7 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
     if (segments.empty())
         return {};
 
+    // Connect cap joint
     if (cap_ == cap_joint) {
         const auto& a = points_[points_.size() - 1];
         const auto& b = points_[0];
@@ -98,7 +99,7 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
     auto path_end2 = last_segment.edge2.b;
 
     std::vector<glm::vec2> vertices;
-    vertices.reserve(segments.size() * 4);// Save needing to update capacity more times
+    vertices.reserve(segments.size() * 4);
 
     if (cap_ == cap_square) {
         path_start1 -= first_segment.edge1.direction() * half_thickness_;
@@ -137,6 +138,13 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
 
         start1 = next_start1;
         start2 = next_start2;
+    }
+
+    float whole;
+    const auto fractional = std::modf(half_thickness_, &whole);
+
+    for (auto& vertex : vertices) {
+        vertex -= fractional;
     }
 
     return vertices;

@@ -84,7 +84,7 @@ void renderer::buffer::draw_polyline(const std::vector<glm::vec2>& points, color
     line.set_cap(cap);
     line.set_points(points);
 
-    auto path = line.compute();
+    const auto path = line.compute();
     if (path.empty())
         return;
 
@@ -116,9 +116,9 @@ void renderer::buffer::draw_line(glm::vec2 start, glm::vec2 end, color_rgba col)
 void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness) {
     std::vector<glm::vec2> points = {
         {rect.x, rect.y},
-        {rect.x + rect.z, rect.y},
-        {rect.x + rect.z, rect.y + rect.w},
-        {rect.x, rect.y + rect.w}};
+        {rect.x + rect.z - 1.0f, rect.y},
+        {rect.x + rect.z - 1.0f, rect.y + rect.w - 1.0f},
+        {rect.x, rect.y + rect.w - 1.0f}};
 
     draw_polyline(points, col, thickness, joint_miter, cap_joint);
 }

@@ -8,7 +8,7 @@
 #include "util/window.hpp"
 
 #include "buffer.hpp"
-#include "device.hpp"
+#include "pipeline.hpp"
 #include "renderer.hpp"
 
 #endif

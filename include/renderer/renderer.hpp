@@ -18,11 +18,11 @@ namespace renderer {
         std::shared_ptr<buffer> working;
     };
 
-    class device;
+    class pipeline;
 
     class dx11_renderer : std::enable_shared_from_this<dx11_renderer> {
     public:
-        explicit dx11_renderer(std::shared_ptr<device> device) : device_(std::move(device)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+        explicit dx11_renderer(std::shared_ptr<pipeline> pipeline) : pipeline_(std::move(pipeline)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
 
         size_t register_buffer([[maybe_unused]] size_t priority = 0);
         buffer_node get_buffer_node(size_t id);
@@ -46,7 +46,7 @@ namespace renderer {
 
     private:
         // Might want to just store as object ref
-        std::shared_ptr<device> device_;
+        std::shared_ptr<pipeline> pipeline_;
 
         std::shared_mutex buffer_list_mutex_;
         std::vector<buffer_node> buffers_;

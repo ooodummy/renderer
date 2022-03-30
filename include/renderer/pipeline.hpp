@@ -11,14 +11,16 @@
 namespace renderer {
     // TODO: Renderer impl should handle shader and constant buffer creation
     // https://github.com/kevinmoran/BeginnerDirect3D11
-    class device : std::enable_shared_from_this<device> {
+    class pipeline : std::enable_shared_from_this<pipeline> {
         friend class dx11_renderer;
 
     public:
-        // TODO: Setup the device helper to just be given a device that already exist
-        explicit device(std::shared_ptr<win32_window> window) : window_(std::move(window)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+        // TODO: Setup the pipeline helper to just be given a pipeline that already exist
+        explicit pipeline(std::shared_ptr<win32_window> window) : window_(std::move(window)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
 
         bool init();
+        void release();
+
         void resize();
 
     private:
@@ -29,7 +31,9 @@ namespace renderer {
         void create_frame_buffer_view();
         void create_shaders();
         void create_states();
-        void create_buffers(size_t vertex_count);
+        void create_constant_buffers();
+
+        void create_vertex_buffers(size_t vertex_count);
         void release_buffers();
 
         std::shared_ptr<win32_window> window_;
@@ -45,6 +49,7 @@ namespace renderer {
         ID3D11DepthStencilView* depth_stencil_view_;
 
         ID3D11SamplerState* sampler_state_;
+        ID3D11RasterizerState* rasterizer_state_;
 
         // Shaders
         ID3D11VertexShader* vertex_shader_;
