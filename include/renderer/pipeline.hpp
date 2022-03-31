@@ -23,6 +23,8 @@ namespace renderer {
 
         void resize();
 
+        std::shared_ptr<win32_window> get_window();
+
     private:
         bool create_device();
         void setup_debug_layer() const;
@@ -63,7 +65,7 @@ namespace renderer {
         ID3D11Buffer* index_buffer_ {};
 
         // Constant buffers
-        DirectX::XMMATRIX projection;
+        DirectX::XMFLOAT4X4 projection;
         ID3D11Buffer* projection_buffer_ {};
         ID3D11Buffer* global_buffer_ {};
         ID3D11Buffer* command_buffer_ {};

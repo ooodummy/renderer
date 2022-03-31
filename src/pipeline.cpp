@@ -131,7 +131,7 @@ void renderer::pipeline::create_swap_chain() {
     assert(SUCCEEDED(hr));
     swap_chain_desc.SampleDesc.Quality = max_quality;*/
     swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.BufferCount = 1;
+    swap_chain_desc.BufferCount = 2;
     swap_chain_desc.Scaling = DXGI_SCALING_STRETCH;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -280,7 +280,7 @@ void renderer::pipeline::create_states() {
 void renderer::pipeline::create_constant_buffers() {
     D3D11_BUFFER_DESC buffer_desc;
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-    buffer_desc.ByteWidth = sizeof(DirectX::XMMATRIX);
+    buffer_desc.ByteWidth = sizeof(DirectX::XMFLOAT4X4);
     buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
@@ -378,4 +378,8 @@ void renderer::pipeline::resize() {
     res = device_->CreateRenderTargetView(frame_buffer, nullptr, &frame_buffer_view_);
     assert(SUCCEEDED(res));
     frame_buffer->Release();
+}
+
+std::shared_ptr<renderer::win32_window> renderer::pipeline::get_window() {
+    return window_;
 }

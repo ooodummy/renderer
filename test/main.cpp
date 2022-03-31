@@ -103,9 +103,8 @@ void draw_thread() {
         buf->pop_scissor();
 
         const std::string test_string = "Hello World!";
-        dx11->get_font_glyph(segoe, 'A');
-        //buf->draw_text({250.0f, 250.0f}, test_string, segoe);
-        //buf->draw_rect({250.0f, 250.0f, dx11->get_text_size(test_string, segoe)}, COLOR_RED);
+        buf->draw_text({250.0f, 250.0f}, test_string, segoe);
+        buf->draw_rect({250.0f, 250.0f, dx11->get_text_size(test_string, segoe)}, COLOR_RED);
 
         buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
@@ -163,7 +162,7 @@ int main() {
 
     dx11->set_vsync(false);
 
-    segoe = dx11->register_font({"Segoe UI", 10, FW_NORMAL, true});
+    segoe = dx11->register_font({"Segoe UI", 10, FW_NORMAL, false});
 
     std::thread draw(draw_thread);
 

@@ -79,13 +79,19 @@ void renderer::dx11_renderer::begin() {
             D3D11_VIEWPORT viewport = {0.0f, 0.0f, (FLOAT) (size.x), (FLOAT) (size.y), 0.0f, 1.0f};
             pipeline_->context_->RSSetViewports(1, &viewport);
 
-            pipeline_->projection = DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX, viewport.Width, viewport.Height, viewport.TopLeftY,
-                                                                           viewport.MinDepth, viewport.MaxDepth);
+            DirectX::XMStoreFloat4x4(&pipeline_->projection,
+                                     DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX,
+                                                                              viewport.Width,
+                                                                              viewport.Height,
+                                                                              viewport.TopLeftY,
+                                                                              viewport.MinDepth,
+                                                                              viewport.MaxDepth)
+                                     );
 
             hr = pipeline_->context_->Map(pipeline_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
             assert(SUCCEEDED(hr));
             {
-                std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMMATRIX));
+                std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMFLOAT4X4));
             }
             pipeline_->context_->Unmap(pipeline_->projection_buffer_, 0);
 
@@ -247,7 +253,9 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
         if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
             return false;
 
-        if (FT_Set_Char_Size(font.face, font.size * 64, 0, 0, 0) != FT_Err_Ok)
+        const auto dpi = GetDpiForWindow(pipeline_->get_window()->get_hwnd());
+
+        if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
             return false;
 
         if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
@@ -277,6 +285,47 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
 
     glyph.advance = font.face->glyph->advance.x;
 
+    UINT* data = new UINT[glyph.size.x * glyph.size.y];
+
+    unsigned char* src_pixels = font.face->glyph->bitmap.buffer;
+    auto* dest_pixels = static_cast<UINT*>(data);
+
+    switch (font.face->glyph->bitmap.pixel_mode) {
+        case FT_PIXEL_MODE_MONO: {
+                for (uint32_t y = 0; y < glyph.size.y; y++) {
+                const uint8_t *bits_ptr = src_pixels;
+
+                uint8_t bits = 0;
+                for (uint32_t x = 0; x < glyph.size.x; x++, bits <<= 1) {
+                    if ((x & 7) == 0)
+                        bits = *bits_ptr++;
+
+                    dest_pixels[x] = (bits & 0x80) ? 255 : 0;
+                }
+
+                src_pixels += font.face->glyph->bitmap.pitch;
+                dest_pixels += glyph.size.x;
+            }
+        }
+        break;
+        case FT_PIXEL_MODE_GRAY: {
+            for (uint32_t j = 0; j < glyph.size.y; ++j) {
+                memcpy(dest_pixels, src_pixels, glyph.size.x);
+
+                src_pixels += font.face->glyph->bitmap.pitch;
+                dest_pixels += glyph.size.x;
+            }
+        }
+        break;
+        default:
+            return false;
+    }
+
+    D3D11_SUBRESOURCE_DATA texture_data;
+    texture_data.pSysMem = data;
+    texture_data.SysMemPitch = glyph.size.x;
+    texture_data.SysMemSlicePitch = 0;
+
     D3D11_TEXTURE2D_DESC texture_desc;
     texture_desc.Width = glyph.size.x;
     texture_desc.Height = glyph.size.y;
@@ -284,54 +333,16 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
     texture_desc.Format = DXGI_FORMAT_A8_UNORM;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D11_USAGE_DYNAMIC;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     texture_desc.MiscFlags = 0;
 
     ID3D11Texture2D* texture;
-    auto hr = pipeline_->device_->CreateTexture2D(&texture_desc, nullptr, &texture);
+    auto hr = pipeline_->device_->CreateTexture2D(&texture_desc, &texture_data, &texture);
     assert(SUCCEEDED(hr));
 
-    D3D11_MAPPED_SUBRESOURCE mapped_resource;
-    hr = pipeline_->context_->Map(texture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-    assert(SUCCEEDED(hr));
-    {
-        unsigned char* src_pixels = font.face->glyph->bitmap.buffer;
-        auto* dest_pixels = static_cast<unsigned char *>(mapped_resource.pData);
-
-        switch (font.face->glyph->bitmap.pixel_mode) {
-            case FT_PIXEL_MODE_MONO: {
-                for (uint32_t y = 0; y < glyph.size.y; y++) {
-                    const uint8_t *bits_ptr = src_pixels;
-
-                    uint8_t bits = 0;
-                    for (uint32_t x = 0; x < glyph.size.x; x++, bits <<= 1) {
-                        if ((x & 7) == 0)
-                            bits = *bits_ptr++;
-
-                        dest_pixels[x] = (bits & 0x80) ? 255 : 0;
-                    }
-
-                    src_pixels += font.face->glyph->bitmap.pitch;
-                    dest_pixels += mapped_resource.RowPitch;
-                }
-            }
-            break;
-            case FT_PIXEL_MODE_GRAY: {
-                for (uint32_t j = 0; j < glyph.size.y; ++j) {
-                    memcpy(dest_pixels, src_pixels, glyph.size.x);
-
-                    src_pixels += font.face->glyph->bitmap.pitch;
-                    dest_pixels += mapped_resource.RowPitch;
-                }
-            }
-            break;
-            default:
-                return false;
-        }
-    }
-    pipeline_->context_->Unmap(texture, 0);
+    delete[] data;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
     srv_desc.Format = texture_desc.Format;
@@ -340,10 +351,8 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
     srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
 
     // TODO: Creating the shader resource view is killing RenderDoc for some reason
-    //hr = pipeline_->device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);
-    //assert(SUCCEEDED(hr));
-
-    //glyph.rv->GetResource((ID3D11Resource**)&texture);
+    hr = pipeline_->device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);
+    assert(SUCCEEDED(hr));
 
     texture->Release();
 
