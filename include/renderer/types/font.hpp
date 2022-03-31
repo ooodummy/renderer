@@ -14,11 +14,11 @@ namespace renderer {
     //  I don't know how ordering the z position can be handled hen doing this though
 
     enum text_align {
-        align_top,
-        align_left,
-        align_center,
-        align_right,
-        align_bottom
+        text_align_top,
+        text_align_left,
+        text_align_center,
+        text_align_right,
+        text_align_bottom
     };
 
     std::string get_font_path(const std::string& family);

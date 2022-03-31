@@ -287,13 +287,13 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
 
     UINT* data = new UINT[glyph.size.x * glyph.size.y];
 
-    unsigned char* src_pixels = font.face->glyph->bitmap.buffer;
-    auto* dest_pixels = static_cast<UINT*>(data);
+    auto src_pixels = font.face->glyph->bitmap.buffer;
+    UINT* dest_pixels = data;
 
     switch (font.face->glyph->bitmap.pixel_mode) {
         case FT_PIXEL_MODE_MONO: {
                 for (uint32_t y = 0; y < glyph.size.y; y++) {
-                const uint8_t *bits_ptr = src_pixels;
+                const uint8_t* bits_ptr = font.face->glyph->bitmap.buffer;
 
                 uint8_t bits = 0;
                 for (uint32_t x = 0; x < glyph.size.x; x++, bits <<= 1) {
@@ -330,13 +330,16 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
     texture_desc.Width = glyph.size.x;
     texture_desc.Height = glyph.size.y;
     texture_desc.MipLevels = texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_A8_UNORM;
+    texture_desc.Format = DXGI_FORMAT_R8_UINT;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     texture_desc.MiscFlags = 0;
+
+    auto test = sizeof(UINT);
+    auto test2 = sizeof(float);
 
     ID3D11Texture2D* texture;
     auto hr = pipeline_->device_->CreateTexture2D(&texture_desc, &texture_data, &texture);

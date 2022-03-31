@@ -154,6 +154,10 @@ void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col, 
     }
 
     draw_polyline(points, col, thickness, joint_miter, cap_joint);
+
+    for (auto& point : points) {
+        draw_rect_filled({point - 1.0f, 3.0f, 3.0f}, COLOR_RED);
+    }
 }
 
 void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgba col, size_t segments) {
@@ -201,7 +205,7 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t 
         auto glyph = renderer_.get_font_glyph(font_id, c);
         draw_glyph(pos, glyph, col);
 
-        pos.x += glyph.advance / 64.0f;
+        pos.x += static_cast<float>(glyph.advance) / 64.0f;
     }
 }
 

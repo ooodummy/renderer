@@ -45,7 +45,7 @@ namespace renderer {
         void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
         void draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col = COLOR_WHITE);
-        void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = align_left, text_align v_align = align_bottom);
+        void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = text_align_left, text_align v_align = text_align_bottom);
 
         void push_scissor(glm::vec4 bounds, bool in = false, bool circle = false);
         void pop_scissor();
