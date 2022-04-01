@@ -80,6 +80,7 @@ namespace carbon {
             // Outline
             buf->draw_rect(bounds + glm::vec4(-1.0f, -1.0f, 2.0f, 2.0f), COLOR_WHITE);
 
+            // Controls
             title_bar_->draw();
             tab_bar_->draw();
             sub_tab_bar_->draw();
@@ -96,7 +97,7 @@ namespace carbon {
         }
 
     private:
-        std::shared_ptr<title_bar> title_bar_ = nullptr;
+        std::shared_ptr<title_bar> title_bar_;
         std::shared_ptr<flex_container> container1_;
         std::shared_ptr<tab_bar> tab_bar_;
         std::shared_ptr<flex_container> container2_;

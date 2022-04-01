@@ -56,7 +56,7 @@ void draw_thread() {
         const auto buf = dx11->get_buffer_node(id).working;
         carbon::buf = buf;
 
-        //menu->draw();
+        menu->draw();
 
         dx11->swap_buffers(id);
 
