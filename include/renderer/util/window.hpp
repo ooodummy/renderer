@@ -11,7 +11,7 @@
 
 namespace renderer {
     // https://docs.microsoft.com/en-us/windows/win32/learnwin32/creating-a-window
-    class win32_window : std::enable_shared_from_this<win32_window> {
+    class win32_window : public std::enable_shared_from_this<win32_window> {
     public:
         bool create();
         bool destroy();

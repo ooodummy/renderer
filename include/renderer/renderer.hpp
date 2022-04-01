@@ -20,9 +20,9 @@ namespace renderer {
 
     class pipeline;
 
-    class dx11_renderer : std::enable_shared_from_this<dx11_renderer> {
+    class d3d11_renderer : public std::enable_shared_from_this<d3d11_renderer> {
     public:
-        explicit dx11_renderer(std::shared_ptr<pipeline> pipeline) : pipeline_(std::move(pipeline)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+        explicit d3d11_renderer(std::shared_ptr<pipeline> pipeline) : pipeline_(std::move(pipeline)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
 
         size_t register_buffer([[maybe_unused]] size_t priority = 0);
         buffer_node get_buffer_node(size_t id);

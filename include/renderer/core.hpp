@@ -8,7 +8,6 @@
 #include "util/window.hpp"
 
 #include "buffer.hpp"
-#include "layout.hpp"
 #include "pipeline.hpp"
 #include "renderer.hpp"
 

@@ -10,18 +10,18 @@
 // Use this for help
 // https://github.com/ooodummy/carbon/blob/96d35073927cddef5cad0dcb6c77f659ea5a3df2/src/renderer/impl/d3d9.cpp
 
-void renderer::dx11_renderer::draw() {
+void renderer::d3d11_renderer::draw() {
     begin();
     populate();
     end();
 }
 
-void renderer::dx11_renderer::set_vsync(bool vsync) {
+void renderer::d3d11_renderer::set_vsync(bool vsync) {
     vsync_ = vsync;
 }
 
 // TODO: Buffer priority
-size_t renderer::dx11_renderer::register_buffer([[maybe_unused]] size_t priority) {
+size_t renderer::d3d11_renderer::register_buffer([[maybe_unused]] size_t priority) {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
     const auto id = buffers_.size();
@@ -32,7 +32,7 @@ size_t renderer::dx11_renderer::register_buffer([[maybe_unused]] size_t priority
     return id;
 }
 
-renderer::buffer_node renderer::dx11_renderer::get_buffer_node(const size_t id) {
+renderer::buffer_node renderer::d3d11_renderer::get_buffer_node(const size_t id) {
     std::shared_lock lock_guard(buffer_list_mutex_);
 
     assert(id < buffers_.size());
@@ -40,7 +40,7 @@ renderer::buffer_node renderer::dx11_renderer::get_buffer_node(const size_t id) 
     return buffers_[id];
 }
 
-void renderer::dx11_renderer::swap_buffers(size_t id) {
+void renderer::d3d11_renderer::swap_buffers(size_t id) {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
     assert(id < buffers_.size());
@@ -51,21 +51,21 @@ void renderer::dx11_renderer::swap_buffers(size_t id) {
     buf.working->clear();
 }
 
-size_t renderer::dx11_renderer::register_font(const font& font) {
+size_t renderer::d3d11_renderer::register_font(const font& font) {
     const auto id = fonts_.size();
     fonts_.emplace_back(font);
 
     return id;
 }
 
-bool renderer::dx11_renderer::init() {
+bool renderer::d3d11_renderer::init() {
     if (FT_Init_FreeType(&library_))
         return false;
 
     return true;
 }
 
-void renderer::dx11_renderer::begin() {
+void renderer::d3d11_renderer::begin() {
     FLOAT background_color[4] = {0.1f, 0.2f, 0.6f, 1.0f};
     pipeline_->context_->ClearRenderTargetView(pipeline_->frame_buffer_view_, background_color);
 
@@ -122,7 +122,7 @@ void renderer::dx11_renderer::begin() {
     render_buffers();
 }
 
-void renderer::dx11_renderer::populate() {
+void renderer::d3d11_renderer::populate() {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
     size_t offset = 0;
@@ -165,7 +165,7 @@ void renderer::dx11_renderer::populate() {
     }
 }
 
-void renderer::dx11_renderer::end() {
+void renderer::d3d11_renderer::end() {
     const auto hr = pipeline_->swap_chain_->Present(vsync_, 0);
 
     // https://docs.microsoft.com/en-us/windows/uwp/gaming/handling-device-lost-scenarios
@@ -175,7 +175,7 @@ void renderer::dx11_renderer::end() {
     }
 }
 
-void renderer::dx11_renderer::reset() {
+void renderer::d3d11_renderer::reset() {
     pipeline_->release_buffers();
 
     {
@@ -197,7 +197,7 @@ void renderer::dx11_renderer::reset() {
     }
 }
 
-void renderer::dx11_renderer::update_buffers() {
+void renderer::d3d11_renderer::update_buffers() {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
     size_t vertex_count = 0;
@@ -234,7 +234,7 @@ void renderer::dx11_renderer::update_buffers() {
     }
 }
 
-void renderer::dx11_renderer::render_buffers() {
+void renderer::d3d11_renderer::render_buffers() {
     UINT stride = sizeof(vertex);
     UINT offset = 0;
     pipeline_->context_->IASetVertexBuffers(0, 1, &pipeline_->vertex_buffer_, &stride, &offset);
@@ -246,7 +246,7 @@ void renderer::dx11_renderer::render_buffers() {
 }
 
 // TODO: This makes a new font face every time a glyph is requested which is not ideal at all I just need it to be functional
-bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
+bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
     auto& font = fonts_[id];
 
     if (!font.face) {
@@ -362,7 +362,7 @@ bool renderer::dx11_renderer::create_font_glyph(size_t id, char c) {
     return true;
 }
 
-renderer::glyph renderer::dx11_renderer::get_font_glyph(size_t id, char c) {
+renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, char c) {
     auto& font = fonts_[id];
     auto glyph = font.char_set.find(c);
 
@@ -376,7 +376,7 @@ renderer::glyph renderer::dx11_renderer::get_font_glyph(size_t id, char c) {
     return glyph->second;
 }
 
-glm::vec2 renderer::dx11_renderer::get_text_size(const std::string& text, size_t id) {
+glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_t id) {
     glm::vec2 size{};
 
     for (char c : text) {

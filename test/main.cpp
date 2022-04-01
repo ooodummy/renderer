@@ -1,4 +1,5 @@
 #include <renderer/core.hpp>
+#include <carbon/carbon.hpp>
 
 #include <dwmapi.h>
 #include <future>
@@ -6,10 +7,12 @@
 #include <windowsx.h>
 
 std::shared_ptr<renderer::win32_window> window;
-std::shared_ptr<renderer::dx11_renderer> dx11;
+std::shared_ptr<renderer::d3d11_renderer> dx11;
 size_t segoe;
 
 renderer::sync_manager sync;
+
+std::shared_ptr<carbon::window> menu;
 
 MSG msg {};
 bool update_size = false;
@@ -40,110 +43,20 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
 
-// Could probably pass as just a ref
-void draw_test_primitives(const std::shared_ptr<renderer::buffer>& buf) {
-    static renderer::timer rainbow_timer;
-    static renderer::color_rgba rainbow;
-
-    {
-        const auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
-        if (elapsed_ms > 5000)
-            rainbow_timer.reset();
-
-        // TODO: Should I macro start and end hsv?
-        rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000);
-    }
-
-    const glm::vec4 scissor_bounds = {
-        static_cast<float>(mouse_pos.x) - 50.0f,
-        static_cast<float>(mouse_pos.y) - 50.0f,
-        100.0f,
-        100.0f};
-
-    buf->push_key(COLOR_RED);
-
-    glm::vec2 cube_offset = {50.0f, 50.0f};
-    const auto cube_size = 20.0f;
-    const auto cube_half = cube_size / 2.0f;
-    const auto cube_double = cube_size * 2.0f;
-    const auto cube_space = cube_size * 2.5f;
-
-    buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
-
-    buf->push_scissor(scissor_bounds);
-    buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
-    buf->pop_scissor();
-
-    buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
-    buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
-
-    buf->pop_key();
-
-    // TODO: Fix circle polyline
-    buf->draw_circle({300.0f, 300.0f}, 150.0f, {255, 255, 255, 125}, 15.0f);
-    //buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
-
-    const std::vector<glm::vec2> points = {
-        {400.0f, 500.0f},
-        {700.0f, 500.0f},
-        {600.0f, 350.0f},
-        {700.0f, 300.0f},
-        {500.0f, 200.0f},
-        {500.0f, 600.0f},
-        {600.0f, 600.0f}};
-
-    buf->push_scissor(scissor_bounds, true);
-    rainbow.a = 175;
-    buf->draw_polyline(points, rainbow, 20.0f, renderer::joint_miter);
-    rainbow.a = 255;
-    buf->pop_scissor();
-
-    const std::string test_string = "Hello World!";
-    buf->draw_text({250.0f, 250.0f}, test_string, segoe);
-    buf->draw_rect({250.0f, 250.0f, dx11->get_text_size(test_string, segoe)}, COLOR_RED);
-
-    buf->draw_rect(scissor_bounds, COLOR_WHITE);
-
-    // TODO: Fix inconsistent sizes
-    buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
-    //buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
-}
-
 void draw_thread() {
+    menu = std::make_shared<carbon::window>();
+    menu->set_pos({200.0f, 200.0f});
+    menu->set_size({580.0f, 500.0f});
+
+    menu->apply_layout();
+
     const auto id = dx11->register_buffer();
 
     while (msg.message != WM_QUIT) {
         const auto buf = dx11->get_buffer_node(id).working;
+        carbon::buf = buf;
 
-        //draw_test_primitives(buf);
-
-        // Layout engine testing
-        auto grid_container = std::make_shared<renderer::grid_layout>();
-        grid_container->set_pos({200.0f, 200.0f});
-        grid_container->set_size({200.0f, 200.0f});
-        grid_container->set_grid({2, 3});
-
-        auto grid_item1 = grid_container->add_child();
-        grid_item1->set_margin(10.0f);
-
-        auto grid_item2 = grid_container->add_child();
-        auto grid_item3 = grid_container->add_child();
-
-        grid_container->compute();
-
-        buf->draw_rect_filled(grid_container->get_bounds() + glm::vec4{-1.0f, -1.0f, 2.0f, 2.0f}, COLOR_WHITE);
-        buf->draw_rect_filled(grid_container->get_bounds(), COLOR_BLACK);
-
-        renderer::color_hsv hsv = { 0.0f, 1.0f, 1.0f };
-
-        auto children = grid_container->get_children();
-        for (auto& child : children) {
-            buf->draw_rect_filled(child->get_bounds(), hsv);
-
-            hsv.h += 360.0f / static_cast<float>(children.size());
-            if (hsv.h >= 360.0f)
-                hsv.h = 0.0f;
-        }
+        //menu->draw();
 
         dx11->swap_buffers(id);
 
@@ -186,7 +99,7 @@ int main() {
         return 1;
     }
 
-    dx11 = std::make_unique<renderer::dx11_renderer>(device);
+    dx11 = std::make_unique<renderer::d3d11_renderer>(device);
 
     if (!dx11->init()) {
         MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);

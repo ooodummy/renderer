@@ -11,8 +11,8 @@
 namespace renderer {
     // TODO: Renderer impl should handle shader and constant buffer creation
     // https://github.com/kevinmoran/BeginnerDirect3D11
-    class pipeline : std::enable_shared_from_this<pipeline> {
-        friend class dx11_renderer;
+    class pipeline : public std::enable_shared_from_this<pipeline> {
+        friend class d3d11_renderer;
 
     public:
         // TODO: Setup the pipeline helper to just be given a pipeline that already exist

@@ -19,11 +19,11 @@
 //  Push/pop font for drawing text and just set the index to something like -1 or max when undefined
 
 namespace renderer {
-    class dx11_renderer;
+    class d3d11_renderer;
 
-    class buffer : std::enable_shared_from_this<buffer> {
+    class buffer : public std::enable_shared_from_this<buffer> {
     public:
-        explicit buffer(dx11_renderer& renderer) : renderer_(renderer) {}
+        explicit buffer(d3d11_renderer& renderer) : renderer_(renderer) {}
         ~buffer() = default;
 
         void clear();
@@ -60,7 +60,7 @@ namespace renderer {
         const std::vector<batch>& get_batches();
 
     protected:
-        dx11_renderer& renderer_;
+        d3d11_renderer& renderer_;
 
     private:
         std::vector<vertex> vertices_;

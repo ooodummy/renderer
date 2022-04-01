@@ -50,7 +50,7 @@ namespace renderer {
     // This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
     class polyline {
     public:
-        std::vector<glm::vec2> compute(bool allow_overlap = false) const;
+        [[nodiscard]] std::vector<glm::vec2> compute(bool allow_overlap = false) const;
 
         void set_thickness(float new_thickness);
         void set_joint(joint_type type);
