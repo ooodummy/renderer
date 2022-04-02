@@ -6,22 +6,32 @@
 
 #include <memory>
 
+#include <fmt/printf.h>
+
 namespace carbon {
-	class widget : public std::enable_shared_from_this<widget> {
+	class widget : public flex_container {
 	public:
 		widget() = default;
 		~widget() = default;
 
-		virtual void apply_layout() {}
+		void draw_children() { // NOLINT(misc-no-recursion)
+			// TODO: Clip to parent bounds
+
+			for (auto& child : children_) {
+				auto container = dynamic_cast<widget*>(child.get());
+				assert(container);
+
+				container->draw();
+				container->draw_children();
+			}
+		}
+
 		virtual void draw() {}
 		virtual void input() {}
 	};
 
-	class widget_item : public widget, public flex_item {
-	};
-
-	class widget_container : public widget, public flex_container {
-	};
+	//class widget_flex_container : public widget, public flex_container {
+	//};
 }// namespace carbon
 
 #endif

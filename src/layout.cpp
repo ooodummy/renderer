@@ -153,12 +153,14 @@ void carbon::flex_item::set_shrink(glm::vec2 shrink) {
 }
 
 void carbon::grid_container::compute() {
-	if (children_.size() > grid_.x * grid_.y)
+	cell_bounds_list_ = {};
+
+	if (children_.size() > grid_size_.x * grid_size_.y)
 		assert(false);
 
 	const glm::vec2 size = {
-		size_.x / static_cast<float>(grid_.x),
-		size_.y / static_cast<float>(grid_.y)
+		size_.x / static_cast<float>(grid_size_.x),
+		size_.y / static_cast<float>(grid_size_.y)
 	};
 
 	glm::i16vec2 grid_pos = get_grid_start();
@@ -179,14 +181,16 @@ void carbon::grid_container::compute() {
 		child->set_pos(child_pos);
 		child->set_size(child_size);
 
+		cell_bounds_list_.emplace_back(child_pos, child_size);
+
 		child->compute();
 
 		increment_and_resize_grid(grid_pos);
 	}
 }
 
-void carbon::grid_container::set_grid(glm::i16vec2 grid) {
-	grid_ = grid;
+void carbon::grid_container::set_grid_size(glm::i16vec2 grid) {
+	grid_size_ = grid;
 }
 
 void carbon::grid_container::set_column_direction(flex_direction direction) {
@@ -199,20 +203,18 @@ void carbon::grid_container::set_row_direction(flex_direction direction) {
 
 glm::i16vec2 carbon::grid_container::get_grid_start() {
 	return {
-		row_direction_ == flex_direction_forward ? 0 : grid_.x - 1,
-		column_direction_ == flex_direction_forward ? 0 : grid_.y - 1
+		row_direction_ == flex_direction_forward ? 0 : grid_size_.x - 1,
+		column_direction_ == flex_direction_forward ? 0 : grid_size_.y - 1
 	};
 }
 
 void carbon::grid_container::increment_and_resize_grid(glm::i16vec2& pos) {
-	// TODO: Handle resizing grid
-
 	if (row_direction_ == flex_direction_forward)
 		pos.x++;
 	else
 		pos.x--;
 
-	if (row_direction_ == flex_direction_forward ? pos.x >= grid_.x : pos.x < 0) {
+	if (row_direction_ == flex_direction_forward ? pos.x >= grid_size_.x : pos.x < 0) {
 		// This feels like this call is unnecessary
 		const auto start = get_grid_start();
 		pos.x = start.x;
@@ -222,8 +224,18 @@ void carbon::grid_container::increment_and_resize_grid(glm::i16vec2& pos) {
 		else
 			pos.y--;
 
-		if (column_direction_ == flex_direction_forward ? pos.y >= grid_.y : pos.y < 0) {
-			assert(false);
+		if (column_direction_ == flex_direction_forward ? pos.y >= grid_size_.y : pos.y < 0) {
+			switch (resize_) {
+				case flex_grid_resize_none:
+					assert(false);
+					break;
+				case flex_grid_resize_row:
+					grid_size_.x++;
+					break;
+				case flex_grid_resize_column:
+					grid_size_.y++;
+					break;
+			}
 		}
 	}
 }
@@ -332,55 +344,34 @@ glm::vec2 carbon::flex_container::get_sum(glm::vec4 src) {
 }
 
 float carbon::flex_container::get_axis(flex_axis axis, glm::vec2 src) {
-	switch (axis) {
-		case flex_axis_row:
-			return src.x;
-		case flex_axis_column:
-			return src.y;
-		default:
-			assert(false);
-			break;
-	}
-
-	return 0.0f;
+	if (axis == flex_axis_row)
+		return src.x;
+	else
+		return src.y;
 }
 
 glm::vec2 carbon::flex_container::get_axis(flex_axis axis, glm::vec4 src) {
-	switch (axis) {
-		case flex_axis_row:
-			return { src.x, src.z };
-		case flex_axis_column:
-			return { src.y, src.w };
-		default:
-			assert(false);
-	}
+	if (axis == flex_axis_row)
+		return { src.x, src.z };
+	else
+		return {src.y, src.w};
 }
 
 void carbon::flex_container::set_axis(flex_axis axis, glm::vec2& dst, float src) {
-	switch (axis) {
-		case flex_axis_row:
-			dst.x = src;
-			break;
-		case flex_axis_column:
-			dst.y = src;
-			break;
-		default:
-			assert(false);
-	}
+	if (axis == flex_axis_row)
+		dst.x = src;
+	else
+		dst.y = src;
 }
 
 void carbon::flex_container::set_axis(flex_axis axis, glm::vec4& dst, glm::vec2 src) {
-	switch (axis) {
-		case flex_axis_row:
-			dst.x = src.x;
-			dst.z = src.y;
-			break;
-		case flex_axis_column:
-			dst.y = src.y;
-			dst.w = src.y;
-			break;
-		default:
-			assert(false);
+	if (axis == flex_axis_row) {
+		dst.x = src.x;
+		dst.z = src.y;
+	}
+	else {
+		dst.y = src.x;
+		dst.w = src.y;
 	}
 }
 
@@ -417,17 +408,14 @@ void carbon::flex_container::set_cross(glm::vec4& dst, glm::vec2 src) const {
 }
 
 glm::vec2 carbon::flex_container::get_axes(glm::vec2 dst) const {
-	auto main = get_main(dst);
-	auto cross = get_cross(dst);
-
-	return { main, cross };
+	if (main_axis_ == flex_axis_row)
+		return { dst.x, dst.y };
+	else
+		return { dst.y, dst.x };
 }
 
 glm::vec4 carbon::flex_container::get_axes(glm::vec4 dst) const {
-	auto main = get_main(dst);
-	auto cross = get_cross(dst);
-
-	return { main, cross };
+	return { get_main(dst), get_cross(dst) };
 }
 
 void carbon::flex_container::set_axes(glm::vec2& dst, glm::vec2 src) const {

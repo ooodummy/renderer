@@ -137,18 +137,19 @@ namespace carbon {
 		void compute() override;
 
 		// TODO: Options to set specific row sizes
-		void set_grid(glm::i16vec2 grid);
+		void set_grid_size(glm::i16vec2 grid);
 
 		void set_row_direction(flex_direction direction);
 		void set_column_direction(flex_direction direction);
 
 		void set_resize(flex_grid_resize resize);
 
-	private:
+	protected:
 		glm::i16vec2 get_grid_start();
 		void increment_and_resize_grid(glm::i16vec2& pos);
 
-		glm::i16vec2 grid_ = { 0, 0 };
+		glm::i16vec2 grid_size_ = { 0, 0 };
+		std::vector<glm::vec4> cell_bounds_list_;
 
 		flex_direction row_direction_ = flex_direction_forward;
 		flex_direction column_direction_ = flex_direction_forward;
@@ -171,7 +172,6 @@ namespace carbon {
 
 		static float get_axis(flex_axis axis, glm::vec2 src);
 		static glm::vec2 get_axis(flex_axis axis, glm::vec4 src);
-
 		static void set_axis(flex_axis axis, glm::vec2& dst, float src);
 		static void set_axis(flex_axis axis, glm::vec4& dst, glm::vec2 src);
 
