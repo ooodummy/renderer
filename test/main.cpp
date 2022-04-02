@@ -2,7 +2,6 @@
 #include <carbon/carbon.hpp>
 
 #include <dwmapi.h>
-#include <future>
 #include <thread>
 #include <windowsx.h>
 
@@ -48,7 +47,7 @@ void draw_thread() {
     menu->set_pos({200.0f, 200.0f});
     menu->set_size({580.0f, 500.0f});
 
-    menu->apply_layout();
+    //menu->apply_layout();
 
     const auto id = dx11->register_buffer();
 
