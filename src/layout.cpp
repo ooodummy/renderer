@@ -414,8 +414,8 @@ void carbon::flex_container::compute() {
 			case flex_unit_percentage:
 				basis_size = (static_cast<float>(basis) * basis_factor);
 				break;
+				// TODO: I have zero clue how I plan to make a child basis an aspect of other that gets calculated before
 			case flex_unit_relative:
-				break;
 			default:
 				break;
 		}
