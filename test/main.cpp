@@ -5,11 +5,14 @@
 #include <thread>
 #include <windowsx.h>
 
-std::shared_ptr<renderer::win32_window> window;
-std::shared_ptr<renderer::d3d11_renderer> dx11;
+#include <fmt/core.h>
+
+std::unique_ptr<renderer::win32_window> window;
+std::unique_ptr<renderer::d3d11_renderer> dx11;
 size_t segoe;
 
-renderer::sync_manager sync;
+renderer::sync_manager updated_draw;
+renderer::sync_manager updated_buf;
 
 MSG msg {};
 bool update_size = false;
@@ -40,72 +43,158 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
 
-void draw_thread() {
-	std::shared_ptr<carbon::window> menu = std::make_shared<carbon::window>();
-    menu->set_pos({200.0f, 200.0f});
-    menu->set_size({580.0f, 500.0f});
+void draw_test_primitives(renderer::buffer* buf) {
+	const auto id = dx11->register_buffer();
 
-	auto title_bar = std::make_shared<carbon::title_bar>();
-	menu->add_child(title_bar);
+	static renderer::timer rainbow_timer;
+	static renderer::color_rgba rainbow;
+
+	{
+		const auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
+		if (elapsed_ms > 5000)
+			rainbow_timer.reset();
+
+		// TODO: Should I macro start and end hsv?
+		rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000);
+	}
+
+	/*for (uint8_t i = 0; i < 255; i++) {
+		carbon::buf->draw_rect_filled({i * 2, 10, 2, 10}, {i, i, i});
+	}*/
+
+	const glm::vec4 scissor_bounds = {
+		static_cast<float>(mouse_pos.x) - 50.0f,
+		static_cast<float>(mouse_pos.y) - 50.0f,
+		100.0f,
+		100.0f};
+
+	buf->push_key(COLOR_RED);
+
+	{
+		glm::vec2 cube_offset = {50.0f, 50.0f};
+		const auto cube_size = 20.0f;
+		const auto cube_half = cube_size / 2.0f;
+		const auto cube_double = cube_size * 2.0f;
+		const auto cube_space = cube_size * 2.5f;
+
+		buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
+
+		buf->push_scissor(scissor_bounds);
+		buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
+		buf->pop_scissor();
+
+		buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
+		buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
+	}
+
+	buf->pop_key();
+
+	// TODO: Fix circle polyline
+	//buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
+	//buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
+
+	std::vector<glm::vec2> points = {
+		{400.0f, 500.0f},
+		{700.0f, 500.0f},
+		{600.0f, 350.0f},
+		{700.0f, 300.0f},
+		{500.0f, 200.0f},
+		{500.0f, 600.0f},
+		{600.0f, 600.0f}};
+
+	buf->push_scissor(scissor_bounds, true);
+	buf->draw_polyline(points, rainbow, 20.0f, renderer::joint_miter);
+	buf->pop_scissor();
+
+	const std::string test_string = "Hello World!";
+	buf->draw_text({250.0f, 250.0f}, test_string, segoe);
+	buf->draw_rect({250.0f, 250.0f, dx11->get_text_size(test_string, segoe)}, COLOR_RED);
+
+	buf->draw_rect(scissor_bounds, COLOR_WHITE);
+
+	// TODO: Fix inconsistent sizes
+	buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
+	buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
+}
+
+void draw_thread() {
+	// We are using shared_t`1	`1	crs where not needed since I should only need unique_ptrs >:)
+	/*auto menu = std::make_unique<carbon::window>();
+    menu->set_pos({500.0f, 400.0f});
+    menu->set_size({300.0f, 200.0f});
+
+	auto title_bar = menu->add_child<carbon::title_bar>();
 
 	// Container just used for flex positioning are just named containerX until I set up a builder
-	auto container1 = std::make_shared<carbon::widget>();
+	auto container1 = menu->add_child<carbon::widget_flex_container>();
 	container1->set_grow(1.0f);
 	{
-		auto tab_bar = std::make_shared<carbon::tab_bar>();
-		container1->add_child(tab_bar);
+		auto tab_bar = container1->add_child<carbon::tab_bar>();
 
-		auto container2 = std::make_shared<carbon::widget>();
+		auto container2 = container1->add_child<carbon::widget_flex_container>();
 		container2->set_grow(1.0f);
 		container2->set_axis(carbon::flex_axis_column);
 		{
-			auto sub_tab_bar = std::make_shared<carbon::sub_tab_bar>();
-			container2->add_child(sub_tab_bar);
-			/*auto snap_grid = std::make_shared<carbon::snap_grid_container>();
+			auto sub_tab_bar = container2->add_child<carbon::sub_tab_bar>();
+			auto snap_grid = container2->add_child<carbon::widget_grid_container>();
 			snap_grid->set_grow(1.0f);
 			snap_grid->set_margin(10.0f);
-			container2->add_child(snap_grid);*/
 		}
-
-		container1->add_child(container2);
 	}
-
-	menu->add_child(container1);
 
 	menu->compute();
 
-	auto print_tree_impl = [](std::shared_ptr<carbon::flex_item> item, auto& self_ref, size_t indent = 0) -> void { // NOLINT(misc-no-recursion)
+	auto print_tree_impl = [](carbon::flex_item* item, auto& self_ref, size_t indent = 0) -> void { // NOLINT(misc-no-recursion)
 		const auto pos = item->get_pos();
 		const auto size = item->get_size();
 
 		fmt::print("{:{}}", "", indent);
-		fmt::print("({}, {}), ({}, {})\n", pos.x, pos.y, size.x, size.y);
+		fmt::print("{}: ({}, {}), ({}, {})\n", typeid(*item).name(), pos.x, pos.y, size.x, size.y);
 
 		for (auto& child : item->get_children()) {
-			self_ref(child, self_ref, indent + 4);
+			self_ref(child.get(), self_ref, indent + 4);
 		}
 	};
 
-	//print_tree_impl(menu, print_tree_impl);
+	print_tree_impl(menu.get(), print_tree_impl);*/
+
+	auto container1 = std::make_unique<carbon::widget_flex_container>();
+	container1->set_pos({200.0f, 200.0f});
+	container1->set_size({500.0f, 350.0f});
+	container1->set_padding(5.0f);
+	container1->set_axis(carbon::flex_axis_row);
+	auto container11 = container1->add_child<carbon::widget_flex_container>();
+	container11->set_grow(1.0f);
+	container11->set_margin(10.0f);
+	container11->set_max({10.0f, FLT_MAX});
+	auto container12 = container1->add_child<carbon::widget_flex_container>();
+	container12->set_grow(1.0f);
+	auto container13 = container1->add_child<carbon::widget_flex_container>();
+	container13->set_grow(1.0f);
+	auto container14 = container1->add_child<carbon::widget_flex_container>();
+	container14->set_grow(1.0f);
+	container14->set_margin(10.0f);
+	container14->set_max({10.0f, FLT_MAX});
+
+	container1->compute();
 
     const auto id = dx11->register_buffer();
 
     while (msg.message != WM_QUIT) {
-		carbon::buf = dx11->get_buffer_node(id).working;
+		updated_draw.wait();
 
-        menu->draw();
+		carbon::buf = dx11->get_working_buffer(id);
 
-		for (uint8_t i = 0; i < 255; i++) {
-			carbon::buf->draw_rect_filled({i * 2, 10, 2, 10}, {i, i, i});
-		}
+		//draw_test_primitives(carbon::buf);
+		container1->draw_contents();
 
         dx11->swap_buffers(id);
-        sync.notify();
+        updated_buf.notify();
     }
 }
 
 int main() {
-    window = std::make_shared<renderer::win32_window>();
+    window = std::make_unique<renderer::win32_window>();
     window->set_title("DX11 Renderer");
     window->set_size({1280, 720});
 
@@ -132,21 +221,21 @@ int main() {
 
     window->set_visibility(true);
 
-    auto device = std::make_shared<renderer::pipeline>(window);
+    auto device = std::make_unique<renderer::pipeline>(window.get());
 
     if (!device->init()) {
         MessageBoxA(nullptr, "Failed to initialize pipeline.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
 
-    dx11 = std::make_unique<renderer::d3d11_renderer>(device);
+    dx11 = std::make_unique<renderer::d3d11_renderer>(device.get());
 
     if (!dx11->init()) {
         MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
 
-    dx11->set_vsync(false);
+    dx11->set_vsync(true);
 
     segoe = dx11->register_font({"Segoe UI", 10, FW_NORMAL, true});
 
@@ -168,7 +257,8 @@ int main() {
 
         dx11->draw();
 
-        sync.wait();
+		updated_draw.notify();
+        updated_buf.wait();
     }
 
     msg.message = WM_QUIT;

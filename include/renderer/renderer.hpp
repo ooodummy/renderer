@@ -13,26 +13,26 @@ namespace renderer {
 	class buffer;
 
 	struct buffer_node {
-		std::shared_ptr<buffer> active;
-		std::shared_ptr<buffer> working;
+		std::unique_ptr<buffer> active;
+		std::unique_ptr<buffer> working;
 	};
 
 	class pipeline;
 
-	class d3d11_renderer : public std::enable_shared_from_this<d3d11_renderer> {
-	public:
-		explicit d3d11_renderer(std::shared_ptr<pipeline> pipeline) :
-		pipeline_(std::move(pipeline)) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+	class d3d11_renderer {
+		friend class buffer;
 
-		size_t register_buffer([[maybe_unused]] size_t priority = 0);
-		buffer_node get_buffer_node(size_t id);
+	public:
+		explicit d3d11_renderer(pipeline* pipeline) :
+			pipeline_(pipeline) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+
+		size_t register_buffer(size_t priority = 0);
+		buffer* get_working_buffer(size_t id);
 
 		void swap_buffers(size_t id);
 
 		size_t register_font(const font& font);
 		glm::vec2 get_text_size(const std::string& text, size_t id);
-
-		glyph get_font_glyph(size_t id, char c);
 
 		bool init();
 		void set_vsync(bool vsync);
@@ -45,14 +45,15 @@ namespace renderer {
 		void draw();
 
 	private:
-		// Might want to just store as object ref
-		std::shared_ptr<pipeline> pipeline_;
-
-		std::shared_mutex buffer_list_mutex_;
-		std::vector<buffer_node> buffers_;
+		glyph get_font_glyph(size_t id, char c);
 
 		void update_buffers();
 		void render_buffers();
+
+		pipeline* pipeline_;
+
+		std::shared_mutex buffer_list_mutex_;
+		std::vector<buffer_node> buffers_;
 
 		bool vsync_ = false;
 

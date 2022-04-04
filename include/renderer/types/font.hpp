@@ -31,10 +31,10 @@ namespace renderer {
 
 	struct font {
 		font(std::string family, int size, int weight, bool anti_aliased = true) :
-		family(std::move(family)),
-		size(size),
-		weight(weight),
-		anti_aliased(anti_aliased) {
+			family(std::move(family)),
+			size(size),
+			weight(weight),
+			anti_aliased(anti_aliased) {
 			path = get_font_path(this->family);
 		}
 

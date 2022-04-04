@@ -11,7 +11,6 @@ std::string renderer::get_font_path(const std::string& family) {
 
 	for (size_t i = 0;; i++) {
 		memset(buf, 0, MAX_PATH);
-
 		DWORD buf_size = MAX_PATH;
 
 		// Export font name as a name of the value

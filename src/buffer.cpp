@@ -3,9 +3,10 @@
 #include "renderer/renderer.hpp"
 
 #define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
-#include <math.h>
 
 void renderer::buffer::clear() {
 	vertices_ = {};
@@ -78,7 +79,8 @@ void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRI
 	add_vertices(vertices);
 }
 
-void renderer::buffer::draw_polyline(const std::vector<glm::vec2>& points, color_rgba col, float thickness, joint_type joint, cap_type cap) {
+// TODO: Heap array class w/ SSO
+void renderer::buffer::draw_polyline(std::vector<glm::vec2>& points, color_rgba col, float thickness, joint_type joint, cap_type cap) {
 	polyline line;
 	line.set_thickness(thickness);
 	line.set_joint(joint);
@@ -208,7 +210,7 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t 
 		if (!isprint(c) || c == ' ')
 			continue;
 
-		auto glyph = renderer_.get_font_glyph(font_id, c);
+		auto glyph = renderer_->get_font_glyph(font_id, c);
 		draw_glyph(pos, glyph, col);
 
 		pos.x += static_cast<float>(glyph.advance) / 64.0f;

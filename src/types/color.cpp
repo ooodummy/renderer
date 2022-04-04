@@ -5,9 +5,9 @@
 #include <algorithm>
 
 renderer::color_hsv::color_hsv(float h, float s, float v) :
-h(h),
-s(s),
-v(v) {}
+	h(h),
+	s(s),
+	v(v) {}
 
 renderer::color_rgba renderer::color_hsv::get_rgb() const {
 	const auto c = v * s;
@@ -77,16 +77,16 @@ renderer::color_hsv::operator renderer::color_rgba() const {
 }
 
 renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) :
-r(r),
-g(g),
-b(b),
-a(a) {}
+	r(r),
+	g(g),
+	b(b),
+	a(a) {}
 
 renderer::color_rgba::color_rgba(uint32_t color) :
-a((color >> 24) & 0xff),
-b((color >> 16) & 0xff),
-g((color >> 8) & 0xff),
-r(color & 0xff) {}
+	a((color >> 24) & 0xff),
+	b((color >> 16) & 0xff),
+	g((color >> 8) & 0xff),
+	r(color & 0xff) {}
 
 renderer::color_rgba::operator uint32_t() const {
 	return static_cast<uint32_t>((((a)&0xff) << 24) |

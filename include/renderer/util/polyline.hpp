@@ -23,7 +23,7 @@ namespace renderer {
 
 	class line_segment {
 	public:
-		line_segment(const glm::vec2& a, const glm::vec2& b);
+		line_segment(glm::vec2 a, glm::vec2 b);
 
 		line_segment operator+(const glm::vec2& o) const;
 		line_segment operator-(const glm::vec2& o) const;
@@ -35,6 +35,26 @@ namespace renderer {
 
 		glm::vec2 a, b;
 	};
+
+	/*constexpr size_t vec2_array_size = 100;
+	struct vec2_array {
+	    // Sizeof
+	    vec2_array() {
+	        ptr = new glm::vec2[vec2_array_size];
+	        size = vec2_array_size;
+	    }
+	    ~vec2_array() {
+	        delete ptr;
+	    }
+
+	    union {
+	        glm::vec2* ptr;
+	        glm::vec2 buf[vec2_array_size];
+	    };
+
+	    bool is_sso;
+	    size_t size;
+	};*/
 
 	class poly_segment {
 	public:
@@ -55,8 +75,8 @@ namespace renderer {
 		void set_joint(joint_type type);
 		void set_cap(cap_type cap);
 
-		void set_points(const std::vector<glm::vec2>& points);
-		void add(const glm::vec2& point);
+		void set_points(std::vector<glm::vec2>& points);
+		void add(glm::vec2 point);
 
 	private:
 		void create_joint(std::vector<glm::vec2>& vertices, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false) const;
@@ -66,7 +86,7 @@ namespace renderer {
 		cap_type cap_ = cap_square;
 		float thickness_ = 1.0f;
 
-		std::vector<glm::vec2> points_;
+		std::vector<glm::vec2>* points_ = nullptr;
 	};
 }// namespace renderer
 

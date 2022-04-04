@@ -4,9 +4,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-renderer::line_segment::line_segment(const glm::vec2& a, const glm::vec2& b) :
-a(a),
-b(b) {}
+renderer::line_segment::line_segment(glm::vec2 a, glm::vec2 b) :
+	a(a),
+	b(b) {}
 
 renderer::line_segment renderer::line_segment::operator+(const glm::vec2& o) const {
 	return { a + o, b + o };
@@ -59,22 +59,26 @@ std::optional<glm::vec2> renderer::line_segment::intersection(const renderer::li
 }
 
 renderer::poly_segment::poly_segment(const renderer::line_segment& _center, float thickness) :
-center(_center),
-edge1(center + center.normal() * thickness),
-edge2(center - center.normal() * thickness) {}
+	center(_center),
+	edge1(center + center.normal() * thickness),
+	edge2(center - center.normal() * thickness) {}
 
 std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
-	if (points_.empty())
+	assert(points_);
+
+	// TODO: Kinda don't want to use at() since it does a bounds check and I have no point in checking that
+
+	if (points_->empty())
 		return {};
 
 	const auto half_thickness_ = thickness_ / 2.0f;
 
 	// Create segments
 	std::vector<poly_segment> segments;
-	segments.reserve(points_.size());
-	for (size_t i = 0; i < points_.size() - 1; i++) {
-		const auto& a = points_[i];
-		const auto& b = points_[i + 1];
+	segments.reserve(points_->size());
+	for (size_t i = 0; i < points_->size() - 1; i++) {
+		const auto a = points_->at(i);
+		const auto b = points_->at(i + 1);
 
 		if (a != b) {
 			segments.emplace_back(line_segment(a, b), half_thickness_);
@@ -86,8 +90,8 @@ std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
 
 	// Connect cap joint
 	if (cap_ == cap_joint) {
-		const auto& a = points_[points_.size() - 1];
-		const auto& b = points_[0];
+		const auto a = points_->at(points_->size() - 1);
+		const auto b = points_->at(0);
 
 		if (a != b) {
 			segments.emplace_back(line_segment(a, b), half_thickness_);
@@ -169,12 +173,12 @@ void renderer::polyline::set_cap(renderer::cap_type type) {
 	cap_ = type;
 }
 
-void renderer::polyline::set_points(const std::vector<glm::vec2>& points) {
-	points_.assign(points.begin(), points.end());
+void renderer::polyline::set_points(std::vector<glm::vec2>& points) {
+	points_ = &points;
 }
 
-void renderer::polyline::add(const glm::vec2& point) {
-	points_.push_back(point);
+void renderer::polyline::add(glm::vec2 point) {
+	points_->push_back(point);
 }
 
 void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const renderer::poly_segment& segment1, const renderer::poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap) const {

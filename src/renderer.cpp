@@ -20,23 +20,23 @@ void renderer::d3d11_renderer::set_vsync(bool vsync) {
 }
 
 // TODO: Buffer priority
-size_t renderer::d3d11_renderer::register_buffer([[maybe_unused]] size_t priority) {
+size_t renderer::d3d11_renderer::register_buffer(size_t priority) {
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	const auto id = buffers_.size();
 	buffers_.emplace_back(buffer_node{
-	std::make_shared<buffer>(*this),
-	std::make_shared<buffer>(*this) });
+	std::make_unique<buffer>(this),
+	std::make_unique<buffer>(this) });
 
 	return id;
 }
 
-renderer::buffer_node renderer::d3d11_renderer::get_buffer_node(const size_t id) {
+renderer::buffer* renderer::d3d11_renderer::get_working_buffer(const size_t id) {
 	std::shared_lock lock_guard(buffer_list_mutex_);
 
 	assert(id < buffers_.size());
 
-	return buffers_[id];
+	return buffers_[id].working.get();
 }
 
 void renderer::d3d11_renderer::swap_buffers(size_t id) {
@@ -338,9 +338,6 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	texture_desc.MiscFlags = 0;
 
-	auto test = sizeof(UINT);
-	auto test2 = sizeof(float);
-
 	ID3D11Texture2D* texture;
 	auto hr = pipeline_->device_->CreateTexture2D(&texture_desc, &texture_data, &texture);
 	assert(SUCCEEDED(hr));
@@ -385,7 +382,7 @@ glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_
 
 		auto glyph = get_font_glyph(id, c);
 
-		size.x += glyph.advance / 64.0f;
+		size.x += static_cast<float>(glyph.advance) / 64.0f;
 		size.y = std::max(size.y, static_cast<float>(glyph.size.y));
 	}
 

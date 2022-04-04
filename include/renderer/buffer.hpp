@@ -19,18 +19,19 @@
 namespace renderer {
 	class d3d11_renderer;
 
-	class buffer : public std::enable_shared_from_this<buffer> {
+	class buffer {
 	public:
-		explicit buffer(d3d11_renderer& renderer) :
-		renderer_(renderer) {}
+		explicit buffer(d3d11_renderer* renderer) :
+			renderer_(renderer) {}
 		~buffer() = default;
 
 		void clear();
 
+		// TODO: Static array impl
 		void add_vertices(const std::vector<vertex>& vertices);
 		void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
 
-		void draw_polyline(const std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
+		void draw_polyline(std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 
 		void draw_point(glm::vec2 pos, color_rgba col = COLOR_WHITE);
 		void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col = COLOR_WHITE);
@@ -43,7 +44,6 @@ namespace renderer {
 		void draw_circle(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
 		void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
-		void draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col = COLOR_WHITE);
 		void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = text_align_left, text_align v_align = text_align_bottom);
 
 		void push_scissor(glm::vec4 bounds, bool in = false, bool circle = false);
@@ -58,14 +58,13 @@ namespace renderer {
 		const std::vector<vertex>& get_vertices();
 		const std::vector<batch>& get_batches();
 
-	protected:
-		d3d11_renderer& renderer_;
-
 	private:
+		d3d11_renderer* renderer_;
+
 		std::vector<vertex> vertices_;
 		std::vector<batch> batches_;
 
-		// Needs to split the next batch because the active command isn't the same because there are special draw features being used
+		// Used when active command has changed because of a special effect being used
 		bool split_batch_ = false;
 
 		// Commands that will then be used when
@@ -78,6 +77,8 @@ namespace renderer {
 		void update_blur();
 
 		command_buffer active_command{};
+
+		void draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col = COLOR_WHITE);
 	};
 }// namespace renderer
 
