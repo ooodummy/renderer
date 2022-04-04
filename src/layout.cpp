@@ -116,19 +116,37 @@ void carbon::flex_item::set_max(glm::vec2 max) {
 	max_ = max;
 }
 
-float carbon::flex_item::get_grow() const {
+void carbon::flex_item::set_basis(float basis, carbon::flex_unit unit, flex_item* relative_item) {
+	basis_ = basis;
+	basis_unit_ = unit;
+	basis_relative_item_ = relative_item;
+}
+
+carbon::flex_unit carbon::flex_item::get_basis_unit() const {
+	return basis_unit_;
+}
+
+float carbon::flex_item::get_basis() const {
+	return basis_;
+}
+
+carbon::flex_item* carbon::flex_item::get_basis_relative_item() const {
+	return basis_relative_item_;
+}
+
+uint8_t carbon::flex_item::get_grow() const {
 	return grow_;
 }
 
-void carbon::flex_item::set_grow(float grow) {
+void carbon::flex_item::set_grow(uint8_t grow) {
 	grow_ = grow;
 }
 
-float carbon::flex_item::get_shrink() const {
+uint8_t carbon::flex_item::get_shrink() const {
 	return shrink_;
 }
 
-void carbon::flex_item::set_shrink(float shrink) {
+void carbon::flex_item::set_shrink(uint8_t shrink) {
 	shrink_ = shrink;
 }
 
@@ -228,15 +246,11 @@ void carbon::base_container::set_axes(glm::vec4& dst, glm::vec4 src) {
 void carbon::grid_container::compute() {
 	cell_bounds_list_ = {};
 
-	// TODO: Check if grid resize is needed before calculating cell size
-	//	Use padding in calculation
-	/*const auto main_size = get(size_);
-	const auto cross_size = get_axis(flex_axis_column, size_);
-	const auto padding_axes = get_axes(padding_);
+	// No need of using axes functions because it's not really relevant in grid_container
+	const auto main_size_padded = size_.x - padding_.x * 2.0f;
+	const auto cross_size_padded = size_.y - padding_.y * 2.0f;
 
-	//const auto main_size_padded = main_size - padding_axes.x - padding_axes.y;
-	//const auto cross_size_padded = cross_size - padding_axes.z - padding_axes.w;*/
-
+	// TODO: Resize grid if too many children
 	switch (resize_) {
 		case flex_grid_resize_none:
 			assert(false);
@@ -252,9 +266,9 @@ void carbon::grid_container::compute() {
 			break;
 	}
 
-	const glm::vec2 size = {
-		size_.x / static_cast<float>(grid_size_.x),
-		size_.y / static_cast<float>(grid_size_.y)
+	const glm::vec2 grid_size = {
+		main_size_padded / static_cast<float>(grid_size_.x),
+		cross_size_padded / static_cast<float>(grid_size_.y)
 	};
 
 	const auto grid_start = get_grid_start();
@@ -264,13 +278,13 @@ void carbon::grid_container::compute() {
 		const auto margin = child->get_margin();
 
 		glm::vec2 child_pos = {
-			pos_.x + size.x * static_cast<float>(grid_pos.x) + margin.x,
-			pos_.y + size.y * static_cast<float>(grid_pos.y) + margin.y
+			pos_.x + grid_size.x * static_cast<float>(grid_pos.x) + margin.x,
+			pos_.y + grid_size.y * static_cast<float>(grid_pos.y) + margin.y
 		};
 
 		glm::vec2 child_size = {
-			size.x - margin.x * 2,
-			size.y - margin.y * 2
+			grid_size.x - margin.x * 2.0f,
+			grid_size.y - margin.y * 2.0f
 		};
 
 		child->set_pos(child_pos);
@@ -328,66 +342,108 @@ void carbon::grid_container::set_resize(carbon::flex_grid_resize resize) {
 void carbon::flex_container::compute() {
 	const auto padding_axes = get_axes(padding_);
 
-	const auto main_size_padded = get_main(size_) - padding_axes.x * 2.0f;
 	const auto cross_size_padded = get_cross(size_) - padding_axes.y * 2.0f;
 
+	// Subtract padding space that is taken from space between items
+	auto main_free_space = get_main(size_) - (static_cast<float>(children_.size()) + 1.0f) * padding_axes.x;
+
+	float total_min = 0.0f;
+	float total_basis = 0.0f;
+	size_t basis_count = 0;
+	size_t total_grow = 0;
 	size_t grow_count = 0;
-	auto max_grow_remaining = main_size_padded;
+	size_t total_shrink = 0;
+	size_t shrink_count = 0;
 
 	for (auto& child : children_) {
-		if (child->get_grow() > 0.0f)
-			grow_count++;
+		total_min += get_main(child->get_min());
 
-		// Do we actually need to go by axes for children?
-		max_grow_remaining -= get_main(child->get_min());
+		const auto basis = child->get_basis();
+		const auto grow = child->get_grow();
+		const auto shrink = child->get_shrink();
+
+		if (basis > 0.0f) {
+			basis_count++;
+			total_basis += basis;
+		}
+
+		if (grow > 0) {
+			grow_count++;
+			total_grow += grow;
+		}
+		else if (shrink <= 0) {
+			// Item is inflexible if grow and shrink are 0
+			assert(false);
+		}
+
+		if (shrink > 0) {
+			shrink_count++;
+			total_shrink += grow;
+		}
 	}
 
-	auto grow_size = max_grow_remaining / static_cast<float>(grow_count);
+	main_free_space -= total_min;
+
+	// This is probably actually much more complex
+	auto basis_factor = main_free_space / static_cast<float>(total_basis);
+	auto grow_factor = main_free_space / static_cast<float>(total_grow);
+	auto shrink_factor = main_free_space / static_cast<float>(total_shrink);
 
 	auto pos_axes = get_axes(pos_);
 	pos_axes.x += padding_axes.x;
 	pos_axes.y += padding_axes.y;
 
-	auto get_child_axes_size = [this, cross_size_padded, &grow_size](flex_item* item) -> glm::vec2 {
-		if (item->override_size_axes != glm::vec2{})
-			return item->override_size_axes;
+	auto total_scaled_grow = 0.0f;
+	auto total_scaled_shrink = 0.0f;
 
+	// This also handles changing the remaining max grow and rel size
+	// TODO: Store data inside flex item that gets cleared on running compute and stores stuff like total scaled factors
+	auto get_child_axes = [&](flex_item* item) -> glm::vec2 {
 		glm::vec2 size_axes = {
 			get_main(item->get_min()),
 			cross_size_padded
 		};
 
-		const auto grow = item->get_grow();
+		const auto basis = item->get_basis();
+		auto basis_size = 0.0f;
 
-		if (grow > 0.0f)
-			size_axes.x += (grow * grow_size);
+		switch (item->get_basis_unit()) {
+			case flex_unit_pixel:
+				basis_size = std::max(size_axes.x, basis);
+				break;
+			case flex_unit_percentage:
+				basis_size = (static_cast<float>(basis) * basis_factor);
+				break;
+			case flex_unit_relative:
+				break;
+			default:
+				break;
+		}
 
-		// TODO: Fix this please :(
+		total_scaled_grow += basis_size * static_cast<float>(item->get_grow());
+		total_scaled_shrink += basis_size * static_cast<float>(item->get_shrink());
+
+		size_axes.x += basis_size;
+
 		return size_axes - get_axes(item->get_margin()) * 2.0f;
 	};
 
 	// Check if items exceed maximum size and resize the available growth area
 	for (auto& child : children_) {
-		child->override_size_axes = {};
-
-		auto child_size_axes = get_child_axes_size(child.get());
+		auto child_size_axes = get_child_axes(child.get());
 
 		const auto main_max = get_main(child->get_max());
 		if (child_size_axes.x > main_max) {
-			child->override_size_axes = { main_max, child_size_axes.y };
-
-			grow_count--;
-			max_grow_remaining += child_size_axes.x - main_max - grow_size;
+			basis_count--;
+			main_free_space += child_size_axes.x - main_max - basis_factor;
 		}
 	}
 
-	grow_size = max_grow_remaining / static_cast<float>(grow_count);
+	basis_factor = main_free_space / static_cast<float>(basis_count);
 
 	for (auto& child : children_) {
 		const auto min = child->get_min();
 		const auto max = child->get_max();
-
-		auto child_size_axes = get_child_axes_size(child.get());
 
 		const auto margin_axes = get_axes(child->get_margin());
 
@@ -397,6 +453,8 @@ void carbon::flex_container::compute() {
 		glm::vec2 child_pos;
 		set_axes(child_pos, pos_axes);
 
+		auto child_size_axes = get_child_axes(child.get());
+
 		glm::vec2 child_size;
 		set_axes(child_size, child_size_axes);
 
@@ -405,13 +463,16 @@ void carbon::flex_container::compute() {
 
 		child_size_axes = get_axes(child_size);
 
-		pos_axes.x += child_size_axes.x + margin_axes.x;
-		pos_axes.y -= margin_axes.y;
-
 		child->set_size(child_size);
 		child->set_pos(child_pos);
 
 		child->compute();
+
+		// Next child cursor pos
+		pos_axes.x += child_size_axes.x + margin_axes.x;
+		pos_axes.y -= margin_axes.y;
+
+		pos_axes.x += padding_axes.x;
 	}
 }
 

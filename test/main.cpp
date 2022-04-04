@@ -161,20 +161,17 @@ void draw_thread() {
 	auto container1 = std::make_unique<carbon::widget_flex_container>();
 	container1->set_pos({200.0f, 200.0f});
 	container1->set_size({500.0f, 350.0f});
-	container1->set_padding(5.0f);
+	container1->set_padding(15.0f);
 	container1->set_axis(carbon::flex_axis_row);
 	auto container11 = container1->add_child<carbon::widget_flex_container>();
-	container11->set_grow(1.0f);
-	container11->set_margin(10.0f);
-	container11->set_max({10.0f, FLT_MAX});
+	container11->set_basis(1.0f);
 	auto container12 = container1->add_child<carbon::widget_flex_container>();
-	container12->set_grow(1.0f);
+	container12->set_basis(1.0f);
 	auto container13 = container1->add_child<carbon::widget_flex_container>();
-	container13->set_grow(1.0f);
+	container13->set_basis(1.0f);
+	container13->set_grow(5);
 	auto container14 = container1->add_child<carbon::widget_flex_container>();
-	container14->set_grow(1.0f);
-	container14->set_margin(10.0f);
-	container14->set_max({10.0f, FLT_MAX});
+	container14->set_basis(1.0f);
 
 	container1->compute();
 

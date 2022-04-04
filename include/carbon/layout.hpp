@@ -7,7 +7,9 @@
 #include <vector>
 
 // Concepts found at
+// https://www.youtube.com/watch?v=t_I4HWMEtyw
 // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Basic_Concepts_of_Flexbox
+// https://www.w3.org/TR/css-flexbox-1
 
 namespace carbon {
 	enum flex_axis {
@@ -21,10 +23,11 @@ namespace carbon {
 	};
 
 	enum flex_align {
-		flex_align_stretch,
 		flex_align_start,
 		flex_align_end,
-		flex_align_center
+		flex_align_center,
+		flex_align_stretch,
+		flex_align_baseline
 	};
 
 	enum flex_justify_content {
@@ -36,7 +39,6 @@ namespace carbon {
 		flex_justify_space_evenly
 	};
 
-	// TODO: Handle auto
 	enum flex_grid_resize {
 		flex_grid_resize_none,
 		flex_grid_resize_row,
@@ -47,6 +49,12 @@ namespace carbon {
 	enum flex_wrap {
 		flex_nowrap,
 		flex_warp
+	};
+
+	enum flex_unit {
+		flex_unit_pixel,
+		flex_unit_percentage,
+		flex_unit_relative
 	};
 
 	class flex_item {
@@ -97,16 +105,19 @@ namespace carbon {
 		void set_max(glm::vec2 max);
 		[[nodiscard]] glm::vec2 get_max() const;
 
-		void set_grow(float grow);
-		[[nodiscard]] float get_grow() const;
+		void set_basis(float basis, flex_unit unit = flex_unit_percentage, flex_item* relative_item = nullptr);
+		[[nodiscard]] flex_unit get_basis_unit() const;
+		[[nodiscard]] float get_basis() const;
+		[[nodiscard]] flex_item* get_basis_relative_item() const;
 
-		void set_shrink(float shrink);
-		[[nodiscard]] float get_shrink() const;
+		void set_grow(uint8_t grow);
+		[[nodiscard]] uint8_t get_grow() const;
 
-		glm::vec2 override_size_axes = { 0.0f, 0.0f };
+		void set_shrink(uint8_t shrink);
+		[[nodiscard]] uint8_t get_shrink() const;
 
 	protected:
-		flex_item* parent_;
+		flex_item* parent_ = nullptr;
 		std::vector<std::unique_ptr<flex_item>> children_;
 
 		glm::vec2 pos_{};
@@ -121,14 +132,17 @@ namespace carbon {
 		glm::vec2 min_ = { 0.0f, 0.0f };
 		glm::vec2 max_ = { FLT_MAX, FLT_MAX };
 
-		// TODO: Understand flex basis better and impl shrink
-		float grow_ = 0.0f;
+		flex_unit basis_unit_ = flex_unit_percentage;
+		float basis_ = 0.0f;
+		flex_item* basis_relative_item_ = nullptr;
 
-		float shrink_ = 0.0f;
+		uint8_t grow_ = 1;
+		uint8_t shrink_ = 1;
 	};
 
 	class base_container : public flex_item {
 	protected:
+		// TODO: I feel that some of my axis functions have no purpose
 		static float get_sum(glm::vec2 src);
 		static glm::vec2 get_axes_sum(glm::vec4 src);
 
@@ -179,6 +193,7 @@ namespace carbon {
 
 		// TODO: Row scales and mins
 		//  Functions to get cell at pos
+		//  How should cell handles be handled when getting hovered cells?
 		std::vector<glm::vec4> cell_bounds_list_;
 	};
 
