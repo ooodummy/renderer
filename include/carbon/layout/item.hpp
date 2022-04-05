@@ -103,6 +103,10 @@ namespace carbon {
 		[[nodiscard]] flex_item* get_basis_relative_item() const;
 		void set_basis_relative_item(flex_item* item);
 
+		// Data used for compute
+		float base_size;
+		float main_size;
+
 	protected:
 		flex_item* parent_ = nullptr;
 		std::vector<std::unique_ptr<flex_item>> children_;

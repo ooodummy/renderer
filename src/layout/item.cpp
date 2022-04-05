@@ -3,6 +3,8 @@
 void carbon::flex_item::compute() {
 	// No need to compute anything I just can't have flex_item be a pure virtual
 	//  since this could just be an item that has no need of computing any more information
+
+	compute_alignment();
 }
 
 void carbon::flex_item::draw() {

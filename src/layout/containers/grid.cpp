@@ -1,8 +1,8 @@
 #include "carbon/layout/containers/grid.hpp"
 
 void carbon::grid_container::compute() {
-	const auto main_size_padded = size_.x - padding_.get_width() * 2.0f;
-	const auto cross_size_padded = size_.y - padding_.get_height() * 2.0f;
+	const auto main_size_padded = size_.x - padding_.get_alignment_width() * 2.0f;
+	const auto cross_size_padded = size_.y - padding_.get_alignment_height() * 2.0f;
 
 	const glm::vec2 grid_size = {
 		main_size_padded / static_cast<float>(grid_size_.x),
@@ -21,8 +21,8 @@ void carbon::grid_container::compute() {
 		};
 
 		glm::vec2 child_size = {
-			grid_size.x - margin.get_width(),
-			grid_size.y - margin.get_height()
+			grid_size.x - margin.get_alignment_width(),
+			grid_size.y - margin.get_alignment_height()
 		};
 
 		child->set_pos(child_pos);

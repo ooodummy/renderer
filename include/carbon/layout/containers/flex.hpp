@@ -45,13 +45,23 @@ namespace carbon {
 		flex_justify_content justify_content = flex_justify_start;
 	};
 
+	template <typename T = glm::vec4>
+	class axes {
+		axes(const T& main, const T& cross, flex_axis axis) : main(main), cross(cross), axis(axis) {
+
+		}
+
+		T main;
+		T cross;
+		flex_axis axis;
+	};
+
 	struct axes_bounds {
-		axes_bounds(glm::vec2 main, glm::vec2 cross, flex_axis axis) : main(main), cross(cross), axis(axis) {}
+		axes_bounds(glm::vec2 main, glm::vec2 cross, flex_axis axis);
 		~axes_bounds() = default;
 
-		axes_bounds operator+(const axes_bounds& o) const {
-			return {main + o.main, cross + o.cross, axis};
-		}
+		[[nodiscard]] operator glm::vec4() const; // NOLINT(google-explicit-constructor)
+		axes_bounds operator+(const axes_bounds& o) const;
 
 		[[nodiscard]] glm::vec4 get_bounds() const;
 
@@ -60,9 +70,11 @@ namespace carbon {
 		flex_axis axis;
 	};
 
-	struct axes_size {
-		axes_size(float main, float cross, flex_axis axis) : main(main), cross(cross), axis(axis) {}
-		~axes_size() = default;
+	struct axes_vec2 {
+		axes_vec2(float main, float cross, flex_axis axis);
+		~axes_vec2() = default;
+
+		[[nodiscard]] operator glm::vec2() const;
 
 		[[nodiscard]] glm::vec2 get_bounds() const;
 
@@ -98,7 +110,7 @@ namespace carbon {
 		[[nodiscard]] static float get_axis(flex_axis axis, glm::vec2 src);
 
 		[[nodiscard]] axes_bounds get_axes(glm::vec4 src) const;
-		[[nodiscard]] axes_size get_axes(glm::vec2 src) const;
+		[[nodiscard]] axes_vec2 get_axes(glm::vec2 src) const;
 
 		[[nodiscard]] glm::vec2 get_main(glm::vec4 src) const;
 		[[nodiscard]] float get_main(glm::vec2 src) const;

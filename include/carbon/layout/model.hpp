@@ -14,16 +14,26 @@ namespace carbon {
 		box_alignment(float top, float horizontal, float bottom);
 		box_alignment(float top, float right, float bottom, float left);
 
-		[[nodiscard]] glm::vec4 get_bounds() const;
-		operator glm::vec4() const; // NOLINT(google-explicit-constructor)
+		void compute(const glm::vec4& container);
 
-		[[nodiscard]] float get_width() const;
-		[[nodiscard]] float get_height() const;
+		[[nodiscard]] glm::vec4 get_alignment() const;
+
+		[[nodiscard]] float get_alignment_width() const;
+		[[nodiscard]] float get_alignment_height() const;
 
 		float top;
 		float right;
 		float bottom;
 		float left;
+
+		[[nodiscard]] glm::vec4 get_bounds() const;
+		[[nodiscard]] glm::vec4 get_inner_bounds() const;
+
+		glm::vec2 pos;
+		glm::vec2 size;
+
+		glm::vec2 inner_pos;
+		glm::vec2 inner_size;
 	};
 
 	// https://i.imgur.com/S3nJWLV.png
@@ -31,6 +41,8 @@ namespace carbon {
 	public:
 		box_model() = default;
 		~box_model() = default;
+
+		void compute_alignment();
 
 		[[nodiscard]] glm::vec2 get_pos() const;
 		void set_pos(glm::vec2 pos);
@@ -40,13 +52,17 @@ namespace carbon {
 
 		[[nodiscard]] glm::vec4 get_bounds() const;
 
-		box_alignment get_margin() const;
+		[[nodiscard]] glm::vec2 get_content_pos() const;
+		[[nodiscard]] glm::vec2 get_content_size() const;
+		[[nodiscard]] glm::vec4 get_content_bounds() const;
+
+		[[nodiscard]] box_alignment get_margin() const;
 		void set_margin(box_alignment margin);
 
-		box_alignment get_border() const;
+		[[nodiscard]] box_alignment get_border() const;
 		void set_border(box_alignment border);
 
-		box_alignment get_padding() const;
+		[[nodiscard]] box_alignment get_padding() const;
 		void set_padding(box_alignment padding);
 
 	protected:
