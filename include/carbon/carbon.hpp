@@ -2,7 +2,6 @@
 #define _CARBON_CARBON_HPP_
 
 #include "global.hpp"
-#include "layout.hpp"
 #include "widgets/widget.hpp"
 #include "widgets/window.hpp"
 

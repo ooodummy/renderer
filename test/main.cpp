@@ -142,7 +142,25 @@ void draw_thread() {
 		}
 	}
 
-	menu->compute();
+	menu->compute();*/
+
+	auto container1 = std::make_unique<carbon::widget_flex_container>();
+	container1->set_pos({200.0f, 200.0f});
+	container1->set_size({500.0f, 350.0f});
+	container1->set_padding({10.0f});
+	container1->set_axis(carbon::flex_axis_row);
+	auto container11 = container1->add_child<carbon::widget_flex_container>();
+	container11->set_basis(1.5f);
+	auto container12 = container1->add_child<carbon::widget_flex_container>();
+	container12->set_basis(0.5f);
+	auto container13 = container1->add_child<carbon::widget_flex_container>();
+	container13->set_basis(1.0f);
+	//container13->set_grow(5);
+	auto container14 = container1->add_child<carbon::widget_flex_container>();
+	container14->set_basis(1.0f);
+	container14->set_margin({15.0f});
+
+	container1->compute();
 
 	auto print_tree_impl = [](carbon::flex_item* item, auto& self_ref, size_t indent = 0) -> void { // NOLINT(misc-no-recursion)
 		const auto pos = item->get_pos();
@@ -156,24 +174,7 @@ void draw_thread() {
 		}
 	};
 
-	print_tree_impl(menu.get(), print_tree_impl);*/
-
-	auto container1 = std::make_unique<carbon::widget_flex_container>();
-	container1->set_pos({200.0f, 200.0f});
-	container1->set_size({500.0f, 350.0f});
-	container1->set_padding(15.0f);
-	container1->set_axis(carbon::flex_axis_row);
-	auto container11 = container1->add_child<carbon::widget_flex_container>();
-	container11->set_basis(1.0f);
-	auto container12 = container1->add_child<carbon::widget_flex_container>();
-	container12->set_basis(1.0f);
-	auto container13 = container1->add_child<carbon::widget_flex_container>();
-	container13->set_basis(1.0f);
-	container13->set_grow(5);
-	auto container14 = container1->add_child<carbon::widget_flex_container>();
-	container14->set_basis(1.0f);
-
-	container1->compute();
+	print_tree_impl(container1.get(), print_tree_impl);
 
     const auto id = dx11->register_buffer();
 
