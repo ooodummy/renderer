@@ -45,44 +45,6 @@ namespace carbon {
 		flex_justify_content justify_content = flex_justify_start;
 	};
 
-	template <typename T = glm::vec4>
-	class axes {
-		axes(const T& main, const T& cross, flex_axis axis) : main(main), cross(cross), axis(axis) {
-
-		}
-
-		T main;
-		T cross;
-		flex_axis axis;
-	};
-
-	struct axes_bounds {
-		axes_bounds(glm::vec2 main, glm::vec2 cross, flex_axis axis);
-		~axes_bounds() = default;
-
-		[[nodiscard]] operator glm::vec4() const; // NOLINT(google-explicit-constructor)
-		axes_bounds operator+(const axes_bounds& o) const;
-
-		[[nodiscard]] glm::vec4 get_bounds() const;
-
-		glm::vec2 main;
-		glm::vec2 cross;
-		flex_axis axis;
-	};
-
-	struct axes_vec2 {
-		axes_vec2(float main, float cross, flex_axis axis);
-		~axes_vec2() = default;
-
-		[[nodiscard]] operator glm::vec2() const;
-
-		[[nodiscard]] glm::vec2 get_bounds() const;
-
-		float main;
-		float cross;
-		flex_axis axis;
-	};
-
 	class flex_container : public flex_item {
 	public:
 		void compute() override;
@@ -109,7 +71,7 @@ namespace carbon {
 		[[nodiscard]] static glm::vec2 get_axis(flex_axis axis, glm::vec4 src);
 		[[nodiscard]] static float get_axis(flex_axis axis, glm::vec2 src);
 
-		[[nodiscard]] axes_bounds get_axes(glm::vec4 src) const;
+		[[nodiscard]] axes_vec4 get_axes(glm::vec4 src) const;
 		[[nodiscard]] axes_vec2 get_axes(glm::vec2 src) const;
 
 		[[nodiscard]] glm::vec2 get_main(glm::vec4 src) const;
@@ -118,6 +80,9 @@ namespace carbon {
 		[[nodiscard]] float get_cross(glm::vec2 src) const;
 
 		flex_flow flow_;
+
+		axes_vec2 start;
+		axes_vec2 end;
 
 		// TODO: Setup line
 		float main_start_;

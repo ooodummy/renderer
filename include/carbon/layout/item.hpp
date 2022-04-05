@@ -1,6 +1,7 @@
 #ifndef _CARBON_LAYOUT_ITEM_HPP_
 #define _CARBON_LAYOUT_ITEM_HPP_
 
+#include "axis.hpp"
 #include "model.hpp"
 
 #include <vector>
@@ -9,11 +10,6 @@
 #include <glm/glm.hpp>
 
 namespace carbon {
-	enum flex_axis {
-		flex_axis_row,
-		flex_axis_column
-	};
-
 	enum flex_direction {
 		flex_direction_forward,
 		flex_direction_reversed

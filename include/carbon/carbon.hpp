@@ -3,6 +3,5 @@
 
 #include "global.hpp"
 #include "widgets/widget.hpp"
-#include "widgets/window.hpp"
 
 #endif

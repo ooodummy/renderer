@@ -3,39 +3,6 @@
 
 carbon::flex_flow::flex_flow(carbon::flex_axis axis, carbon::flex_direction direction, carbon::flex_wrap_mode wrap) : main(axis), cross(axis == flex_axis_row ? flex_axis_column : flex_axis_row), direction(direction), wrap(wrap) {}
 
-carbon::axes_bounds::axes_bounds(glm::vec2 main, glm::vec2 cross, carbon::flex_axis axis) : main(main), cross(cross), axis(axis) {}
-
-carbon::axes_bounds::operator glm::vec4() const { // NOLINT(google-explicit-constructor)
-	return get_bounds();
-}
-carbon::axes_bounds carbon::axes_bounds::operator+(const carbon::axes_bounds& o) const {
-	return {main + o.main, cross + o.cross, axis};
-}
-
-glm::vec4 carbon::axes_bounds::get_bounds() const {
-	if (axis == flex_axis_row) {
-		return {main.x, cross.x, main.y, cross.y};
-	}
-	else {
-		return {main.y, cross.y, main.x, cross.x};
-	}
-}
-
-carbon::axes_vec2::axes_vec2(float main, float cross, carbon::flex_axis axis) : main(main), cross(cross), axis(axis) {}
-
-carbon::axes_vec2::operator glm::vec2() const { // NOLINT(google-explicit-constructor)
-	return get_bounds();
-}
-
-glm::vec2 carbon::axes_vec2::get_bounds() const {
-	if (axis == flex_axis_row) {
-		return {main, cross};
-	}
-	else {
-		return {cross, main};
-	}
-}
-
 void carbon::flex_container::compute() {
 	compute_alignment();
 
@@ -90,24 +57,25 @@ void carbon::flex_container::compute() {
 		const auto max_main = get_main(child->get_max());
 
 		// Only rescale all the ones that did not get clamped
-		if (child->base_size < max_main) {
+		if (child->base_size > max_main) {
 			if (child->get_basis_unit() == unit_aspect) {
 				child->base_size = child->get_basis() * basis_factor;
 			}
 		}
 
-		child->main_size = std::clamp(base_size, min_main, max_main);
+		child->main_size = std::clamp(child->base_size, min_main, max_main);
 	}
 
-	axes_
+	auto pos = get_axes(pos_);
 
 	for (auto& child : children_) {
 		axes_vec2 size = { child->main_size, available_content.cross, flow_.main };
-
 		child->set_size(size);
-
+		child->set_pos(pos);
 
 		child->compute();
+
+		pos.main += size.main;
 	}
 }
 
@@ -178,7 +146,7 @@ float carbon::flex_container::get_axis(carbon::flex_axis axis, glm::vec2 src) {
 	}
 }
 
-carbon::axes_bounds carbon::flex_container::get_axes(glm::vec4 src) const {
+carbon::axes_vec4 carbon::flex_container::get_axes(glm::vec4 src) const {
 	return {get_main(src), get_cross(src), flow_.main};
 }
 

@@ -15,8 +15,8 @@ void carbon::box_alignment::compute(const glm::vec4& container) {
 	};
 
 	inner_size = {
-		size.z - get_alignment_width(),
-		size.w - get_alignment_height()
+		size.x - get_alignment_width(),
+		size.y - get_alignment_height()
 	};
 }
 
