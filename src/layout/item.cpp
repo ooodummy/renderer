@@ -1,5 +1,7 @@
 #include "carbon/layout/item.hpp"
 
+#include "carbon/global.hpp"
+
 void carbon::flex_item::compute() {
 	// No need to compute anything I just can't have flex_item be a pure virtual
 	//  since this could just be an item that has no need of computing any more information
@@ -8,6 +10,20 @@ void carbon::flex_item::compute() {
 }
 
 void carbon::flex_item::draw() {
+	const auto bounds = get_border().get_bounds();
+	const auto content = get_basis_content();
+
+	if (content != glm::vec2{}) {
+		const glm::vec4 draw_content{
+			bounds.x + (bounds.z / 2.0f) - (content.x / 2.0f),
+			bounds.y + bounds.w / 2.0f - content.y / 2.0f,
+			content.x,
+			content.y
+		};
+		buf->draw_rect(draw_content, COLOR_GREEN);
+	}
+
+	buf->draw_rect(get_border().get_bounds(), COLOR_RED);
 }
 
 void carbon::flex_item::input() {

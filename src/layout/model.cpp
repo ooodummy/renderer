@@ -25,7 +25,7 @@ glm::vec4 carbon::box_alignment::get_alignment() const {
 }
 
 float carbon::box_alignment::get_alignment_width() const {
-	return right + left;
+	return left + right;
 }
 
 float carbon::box_alignment::get_alignment_height() const {
@@ -43,7 +43,7 @@ glm::vec4 carbon::box_alignment::get_inner_bounds() const {
 void carbon::box_model::compute_alignment() {
 	margin_.compute(get_bounds());
 	border_.compute(margin_.get_inner_bounds());
-	padding_.compute(margin_.get_inner_bounds());
+	padding_.compute(border_.get_inner_bounds());
 
 	content_bounds_ = padding_.get_inner_bounds();
 }

@@ -39,6 +39,13 @@ namespace carbon {
 
 	using axes_vec4 = axes<glm::vec2, glm::vec4>;
 	using axes_vec2 = axes<float, glm::vec2>;
+
+	// Idc to make another file for this but this needs to change
+	// why can't glm just have a vector sum function?
+	[[nodiscard]] static float sum(glm::vec2 src);
+
+	[[nodiscard]] static glm::vec2 get_axis(flex_axis axis, glm::vec4 src);
+	[[nodiscard]] static float get_axis(flex_axis axis, glm::vec2 src);
 }
 
 #endif
