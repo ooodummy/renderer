@@ -90,8 +90,8 @@ void carbon::flex_line::compute() {
 
 	const auto remaining_space = available_space.main - hypothetical_space;
 
-	const auto grow_scale = ((static_cast<float>(grow_items) / grow_remaining) * remaining_space) / static_cast<float>(grow_items);
-	const auto shrink_scale = ((static_cast<float>(shrink_items) / shrink_remaining) * remaining_space) / static_cast<float>(shrink_items);
+	const auto grow_scale = remaining_space / grow_remaining;
+	const auto shrink_scale = remaining_space / shrink_remaining;
 
 	for (auto& child : children_) {
 		// TODO: This math is wrong
