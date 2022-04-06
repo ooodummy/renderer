@@ -105,6 +105,8 @@ namespace carbon {
 		// Can be put somewhere else later
 		float base_size{};
 		float hypothetical_size{};
+		float final_size{};
+		bool clamped = false;
 
 	protected:
 		flex_item* parent_ = nullptr;

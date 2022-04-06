@@ -11,7 +11,7 @@ namespace carbon {
 	private:
 		bool can_use_cached();
 
-		static float clamp(flex_item* item, float src, float& dst);
+		static bool clamp(flex_item* item, float src, float& dst);
 		float get_base_size(flex_item* item, float scale);
 	};
 

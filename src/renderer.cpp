@@ -283,10 +283,10 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 
 	glyph.advance = font.face->glyph->advance.x;
 
-	UINT* data = new UINT[glyph.size.x * glyph.size.y];
+	uint8_t* data = new uint8_t[glyph.size.x * glyph.size.y];
 
 	auto src_pixels = font.face->glyph->bitmap.buffer;
-	UINT* dest_pixels = data;
+	uint8_t* dest_pixels = data;
 
 	switch (font.face->glyph->bitmap.pixel_mode) {
 		case FT_PIXEL_MODE_MONO:

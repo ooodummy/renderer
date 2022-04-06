@@ -122,10 +122,38 @@ void draw_thread() {
 	auto container1 = std::make_unique<carbon::flex_line>();
 	container1->set_pos({100.0f, 100.0f});
 	container1->set_size({500.0f, 600.0f});
-	container1->set_axis(carbon::flex_axis_column);
+	container1->set_axis(carbon::flex_axis_row);
 	container1->set_padding({10.0f});
+	//auto container11 = container1->add_child<carbon::flex_line>();
+	//container11->set_grow(1.0f);
+	//container11->set_margin({2.0f});
+	auto container111 = container1->add_child<carbon::flex_item>();
+	container111->set_grow(1.0f);
+	container111->set_min_width(100.0f);
+	container111->set_max_width(150.0f);
+	container111->set_margin({2.0f});
+	auto container112 = container1->add_child<carbon::flex_item>();
+	container112->set_grow(1.0f);
+	container112->set_margin({2.0f});
+	auto container113 = container1->add_child<carbon::flex_item>();
+	container113->set_grow(1.0f);
+	container113->set_margin({2.0f});
+	auto container114 = container1->add_child<carbon::flex_item>();
+	container114->set_grow(1.0f);
+	container114->set_min_width(50.0f);
+	container114->set_margin({2.0f});
+	auto container115 = container1->add_child<carbon::flex_item>();
+	container115->set_grow(1.0f);
+	container115->set_margin({2.0f});
+	/*auto container12 = container1->add_child<carbon::flex_line>();
+	container12->set_grow(1.0f);
+	container12->set_margin({2.0f});
+	auto container13 = container1->add_child<carbon::flex_line>();
+	container13->set_grow(1.0f);
+	container13->set_margin({2.0f});*/
+
 	// top
-	auto container11 = container1->add_child<carbon::flex_line>();
+	/*auto container11 = container1->add_child<carbon::flex_line>();
 	//container11->set_min_width(50.0f);
 	container11->set_grow(1.0f);
 	container11->set_margin({2.0f});
@@ -175,8 +203,8 @@ void draw_thread() {
 	container141->set_margin({2.0f});
 	auto container142 = container14->add_child<carbon::flex_line>();
 	container142->set_basis(1.25f);
-	container142->set_shrink(3.0f);
-	container142->set_margin({2.0f});
+	container142->set_shrink(2.0f);
+	container142->set_margin({2.0f});*/
 
     const auto id = dx11->register_buffer();
 
@@ -185,7 +213,7 @@ void draw_thread() {
 
 		carbon::buf = dx11->get_working_buffer(id);
 
-		//draw_test_primitives(carbon::buf);
+		draw_test_primitives(carbon::buf);
 
 		const auto pos = container1->get_pos();
 		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
@@ -242,7 +270,7 @@ int main() {
 
     dx11->set_vsync(true);
 
-    segoe = dx11->register_font({"Segoe UI", 10, FW_NORMAL, true});
+    segoe = dx11->register_font({"Segoe UI", 20, FW_NORMAL, true});
 
     std::thread draw(draw_thread);
 

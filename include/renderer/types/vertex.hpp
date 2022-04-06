@@ -9,8 +9,7 @@ namespace renderer {
 	struct vertex {
 		vertex() = default;
 		vertex(float x, float y, color_rgba col) :
-			pos(x, y, 0.0f),
-			col(col) {}
+			pos(x, y, 0.0f), col(col) {}
 		vertex(glm::vec2 pos, color_rgba col) :
 			pos(pos.x, pos.y, 0.0f),
 			col(col) {}

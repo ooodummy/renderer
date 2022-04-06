@@ -22,7 +22,7 @@ void carbon::flex_item::draw() {
 	buf->draw_rect(get_padding().get_bounds(), COLOR_YELLOW);*/
 	buf->draw_rect(get_content_bounds(), COLOR_BLUE);
 
-	/*const auto content = get_basis_content();
+	const auto content = get_basis_content();
 
 	if (content != glm::vec2{}) {
 		const glm::vec4 draw_content{
@@ -32,7 +32,7 @@ void carbon::flex_item::draw() {
 			content.y
 		};
 		buf->draw_rect(draw_content, COLOR_PURPLE);
-	}*/
+	}
 }
 
 void carbon::flex_item::input() {
