@@ -118,64 +118,65 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	// We are using shared_t`1	`1	crs where not needed since I should only need unique_ptrs >:)
-	/*auto menu = std::make_unique<carbon::window>();
-    menu->set_pos({500.0f, 400.0f});
-    menu->set_size({300.0f, 200.0f});
-
-	auto title_bar = menu->add_child<carbon::title_bar>();
-
-	// Container just used for flex positioning are just named containerX until I set up a builder
-	auto container1 = menu->add_child<carbon::widget_flex_container>();
-	container1->set_grow(1.0f);
-	{
-		auto tab_bar = container1->add_child<carbon::tab_bar>();
-
-		auto container2 = container1->add_child<carbon::widget_flex_container>();
-		container2->set_grow(1.0f);
-		container2->set_axis(carbon::flex_axis_column);
-		{
-			auto sub_tab_bar = container2->add_child<carbon::sub_tab_bar>();
-			auto snap_grid = container2->add_child<carbon::widget_grid_container>();
-			snap_grid->set_grow(1.0f);
-			snap_grid->set_margin(10.0f);
-		}
-	}
-
-	menu->compute();*/
-
-	auto container1 = std::make_unique<carbon::widget_flex_container>();
-	//container1->set_pos({200.0f, 200.0f});
-	container1->set_size({500.0f, 350.0f});
-	container1->set_axis(carbon::flex_axis_row);
-	//container1->set_padding({10.0f});
-	auto container11 = container1->add_child<carbon::widget_flex_container>();
-	container11->set_basis(1.0f);
-	//container11->set_basis_content({100.0f, 50.0f});
-	container11->set_margin({5.0f});
-	auto container12 = container1->add_child<carbon::widget_flex_container>();
-	container12->set_basis(100.0f);
-	container12->set_basis_unit(carbon::unit_pixel);
-	container12->set_margin({5.0f});
-	auto container13 = container1->add_child<carbon::widget_flex_container>();
-	container13->set_basis(1.0f);
-	container13->set_margin({5.0f});
-
-	container1->compute();
-
-	auto print_tree_impl = [](carbon::flex_item* item, auto& self_ref, size_t indent = 0) -> void { // NOLINT(misc-no-recursion)
-		const auto pos = item->get_pos();
-		const auto size = item->get_size();
-
-		fmt::print("{:{}}", "", indent);
-		fmt::print("{}: ({}, {}), ({}, {})\n", typeid(*item).name(), pos.x, pos.y, size.x, size.y);
-
-		for (auto& child : item->get_children()) {
-			self_ref(child.get(), self_ref, indent + 4);
-		}
-	};
-
-	print_tree_impl(container1.get(), print_tree_impl);
+	// primary
+	auto container1 = std::make_unique<carbon::flex_line>();
+	container1->set_pos({100.0f, 100.0f});
+	container1->set_size({500.0f, 600.0f});
+	container1->set_axis(carbon::flex_axis_column);
+	container1->set_padding({10.0f});
+	// top
+	auto container11 = container1->add_child<carbon::flex_line>();
+	//container11->set_min_width(50.0f);
+	container11->set_grow(1.0f);
+	container11->set_margin({2.0f});
+	// middle
+	auto container12 = container1->add_child<carbon::flex_line>();
+	container12->set_grow(2.0f);
+	//container12->set_max_width(100.0f);
+	container12->set_margin({2.0f});
+	// bottom
+	auto container13 = container1->add_child<carbon::flex_line>();
+	container13->set_grow(1.0f);
+	container13->set_margin({2.0f});
+	// bottom left
+	auto container131 = container13->add_child<carbon::flex_line>();
+	container131->set_axis(carbon::flex_axis_column);
+	container131->set_grow(1.0f);
+	container131->set_margin({2.0f});
+	// bottom left top
+	auto container1311 = container131->add_child<carbon::flex_line>();
+	container1311->set_grow(1.0f);
+	container1311->set_margin({2.0f});
+	// bottom left top children
+	auto container13111 = container1311->add_child<carbon::flex_item>();
+	container13111->set_grow(1.0f);
+	container13111->set_margin({2.0f});
+	auto container13112 = container1311->add_child<carbon::flex_item>();
+	container13112->set_grow(1.0f);
+	container13112->set_margin({2.0f});
+	auto container13113 = container1311->add_child<carbon::flex_item>();
+	container13113->set_grow(2.0f);
+	container13113->set_margin({2.0f});
+	// bottom left bottom
+	auto container1312 = container131->add_child<carbon::flex_item>();
+	container1312->set_grow(1.0f);
+	container1312->set_margin({2.0f});
+	// bottom right
+	auto container122 = container13->add_child<carbon::flex_item>();
+	container122->set_basis(0.25f);
+	container122->set_margin({2.0f});
+	// very bottom
+	auto container14 = container1->add_child<carbon::flex_line>();
+	container14->set_grow(1.0f);
+	container14->set_margin({2.0f});
+	auto container141 = container14->add_child<carbon::flex_line>();
+	container141->set_basis(0.5f);
+	container141->set_shrink(1.0f);
+	container141->set_margin({2.0f});
+	auto container142 = container14->add_child<carbon::flex_line>();
+	container142->set_basis(1.25f);
+	container142->set_shrink(3.0f);
+	container142->set_margin({2.0f});
 
     const auto id = dx11->register_buffer();
 
@@ -185,6 +186,11 @@ void draw_thread() {
 		carbon::buf = dx11->get_working_buffer(id);
 
 		//draw_test_primitives(carbon::buf);
+
+		const auto pos = container1->get_pos();
+		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
+		container1->compute();
+
 		container1->draw_contents();
 
         dx11->swap_buffers(id);

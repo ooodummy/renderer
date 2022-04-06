@@ -1,7 +1,7 @@
 #ifndef _CARBON_LAYOUT_CONTAINERS_BASE_FLEX_HPP_
 #define _CARBON_LAYOUT_CONTAINERS_BASE_FLEX_HPP_
 
-#include "../item.hpp"
+#include "base.hpp"
 
 namespace carbon {
 	enum flex_wrap_mode {
@@ -42,7 +42,7 @@ namespace carbon {
 		flex_justify_content justify_content = flex_justify_start;
 	};
 
-	class base_flex_container : public flex_item {
+	class base_flex_container : public base_container {
 	public:
 		[[nodiscard]] flex_axis get_main() const;
 		[[nodiscard]] flex_axis get_cross() const;

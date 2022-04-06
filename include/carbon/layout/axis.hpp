@@ -23,7 +23,12 @@ namespace carbon {
 		}
 
 		operator RetT() const { // NOLINT(google-explicit-constructor)
-			return RetT(main, cross);
+			if (axis == flex_axis_row) {
+				return RetT(main, cross);
+			}
+			else {
+				return RetT(cross, main);
+			}
 		}
 
 		void  set_axis(flex_axis _axis) {
@@ -42,10 +47,10 @@ namespace carbon {
 
 	// Idc to make another file for this but this needs to change
 	// why can't glm just have a vector sum function?
-	[[nodiscard]] static float sum(glm::vec2 src);
+	[[nodiscard]] float sum(glm::vec2 src);
 
-	[[nodiscard]] static glm::vec2 get_axis(flex_axis axis, glm::vec4 src);
-	[[nodiscard]] static float get_axis(flex_axis axis, glm::vec2 src);
+	[[nodiscard]] glm::vec2 get_axis(flex_axis axis, glm::vec4 src);
+	[[nodiscard]] float get_axis(flex_axis axis, glm::vec2 src);
 }
 
 #endif

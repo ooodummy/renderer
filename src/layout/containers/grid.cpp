@@ -1,6 +1,8 @@
 #include "carbon/layout/containers/grid.hpp"
 
 void carbon::grid_container::compute() {
+	compute_alignment();
+
 	const auto main_size_padded = size_.x - padding_.get_alignment_width() * 2.0f;
 	const auto cross_size_padded = size_.y - padding_.get_alignment_height() * 2.0f;
 

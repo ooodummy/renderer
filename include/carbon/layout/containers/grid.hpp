@@ -1,7 +1,7 @@
 #ifndef _CARBON_LAYOUT_CONTAINERS_GRID_HPP_
 #define _CARBON_LAYOUT_CONTAINERS_GRID_HPP_
 
-#include "../item.hpp"
+#include "base.hpp"
 
 namespace carbon {
 	enum grid_resize {
@@ -11,7 +11,7 @@ namespace carbon {
 		grid_resize_auto
 	};
 
-	class grid_container : public flex_item {
+	class grid_container : public base_container {
 	public:
 		void compute() override;
 
