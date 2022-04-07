@@ -17,6 +17,7 @@ namespace renderer {
 		alignas(16) DirectX::XMFLOAT4 key_color;
 		alignas(4) float blur_strength;
 		alignas(4) bool textured;
+		alignas(8) DirectX::XMINT2 textureSize;
 	};
 }// namespace renderer
 

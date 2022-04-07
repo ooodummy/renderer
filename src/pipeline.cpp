@@ -155,11 +155,11 @@ void renderer::pipeline::create_depth_stencil_view() {
 	depth_desc.Height = size.y;
 	depth_desc.MipLevels = 1;
 	depth_desc.ArraySize = 1;
-	depth_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depth_desc.SampleDesc.Count = 1;
 	depth_desc.SampleDesc.Quality = 0;
 	depth_desc.Usage = D3D11_USAGE_DEFAULT;
-	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depth_desc.CPUAccessFlags = 0;
 	depth_desc.MiscFlags = 0;
 
@@ -167,12 +167,7 @@ void renderer::pipeline::create_depth_stencil_view() {
 	HRESULT hr = device_->CreateTexture2D(&depth_desc, nullptr, &depth_stencil);
 	assert(SUCCEEDED(hr));
 
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
-	dsv_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-	dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	dsv_desc.Flags = 0;
-
-	// hr = device_->CreateDepthStencilView(depth_stencil, &dsv_desc, &depth_stencil_view_);
+	// hr = device_->CreateDepthStencilView(depth_stencil, NULL, &depth_stencil_view_);
 	assert(SUCCEEDED(hr));
 
 	depth_stencil->Release();
@@ -240,25 +235,17 @@ void renderer::pipeline::create_states() {
 	HRESULT hr = device_->CreateBlendState(&blend_desc, &blend_state_);
 	assert(SUCCEEDED(hr));
 
-	D3D11_SAMPLER_DESC sampler_desc;
+	D3D11_SAMPLER_DESC sampler_desc{};
 	sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_desc.MipLODBias = 0.0f;
-	sampler_desc.MaxAnisotropy = 1;
 	sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	sampler_desc.BorderColor[0] = 0;
-	sampler_desc.BorderColor[1] = 0;
-	sampler_desc.BorderColor[2] = 0;
-	sampler_desc.BorderColor[3] = 0;
 	sampler_desc.MinLOD = 0;
 	sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	hr = device_->CreateSamplerState(&sampler_desc, &sampler_state_);
 	assert(SUCCEEDED(hr));
-
-	context_->PSSetSamplers(0, 1, &sampler_state_);
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
 	rasterizer_desc.FillMode = D3D11_FILL_SOLID;

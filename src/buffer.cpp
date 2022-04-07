@@ -140,9 +140,11 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
-void renderer::buffer::draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, color_rgba col) {
+void renderer::buffer::draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, glm::u32vec2 size, color_rgba col) {
 	split_batch_ = true;
 	active_command.textured = true;
+	active_command.textureSize.x = size.x;
+	active_command.textureSize.y = size.y;
 
 	std::vector<vertex> vertices = {
 		{ rect.x,          rect.y,          col, 0.0f, 0.0f },
@@ -206,7 +208,7 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
 }
 
 void renderer::buffer::draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col) {
-	draw_textured_quad({ pos.x + glyph.bearing.x, pos.y + glyph.bearing.y, glyph.size }, glyph.rv, col);
+	draw_textured_quad({ pos.x + glyph.bearing.x, pos.y + glyph.bearing.y, glyph.size }, glyph.rv, glyph.size, col);
 }
 
 void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {

@@ -114,7 +114,10 @@ void renderer::d3d11_renderer::begin() {
 	pipeline_->context_->OMSetRenderTargets(1, &pipeline_->frame_buffer_view_, nullptr);// pipeline_->depth_stencil_view_);
 
 	pipeline_->context_->VSSetShader(pipeline_->vertex_shader_, nullptr, 0);
+
+	pipeline_->context_->PSSetSamplers(0, 1, &pipeline_->sampler_state_);
 	pipeline_->context_->PSSetShader(pipeline_->pixel_shader_, nullptr, 0);
+
 
 	update_buffers();
 	render_buffers();
@@ -144,20 +147,12 @@ void renderer::d3d11_renderer::populate() {
 				pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->command_buffer_);
 			}
 
-			ID3D11ShaderResourceView* rv;
-
-			if (batch.rv) {
-				//pipeline_->context_->PSGetShaderResources(0, 1, &rv);
+			if (batch.rv)
 				pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
-			}
 
 			pipeline_->context_->IASetPrimitiveTopology(batch.type);
 			pipeline_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
 			
-			if (batch.rv) {
-				//pipeline_->context_->PSSetShaderResources(0, 1, &rv);
-			}
-
 			offset += batch.size;
 		}
 	}
@@ -326,7 +321,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	texture_data.SysMemPitch = glyph.size.x;
 	texture_data.SysMemSlicePitch = 0;
 
-	D3D11_TEXTURE2D_DESC texture_desc;
+	D3D11_TEXTURE2D_DESC texture_desc{};
 	texture_desc.Width = glyph.size.x;
 	texture_desc.Height = glyph.size.y;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
@@ -335,7 +330,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.Usage = D3D11_USAGE_DEFAULT;
 	texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	texture_desc.CPUAccessFlags = 0;
 	texture_desc.MiscFlags = 0;
 
 	ID3D11Texture2D* texture;
@@ -348,7 +343,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	srv_desc.Format = texture_desc.Format;
 	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srv_desc.Texture2D.MostDetailedMip = 0;
-	srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+	srv_desc.Texture2D.MipLevels = 1;
 
 	// TODO: Creating the shader resource view is killing RenderDoc for some reason
 	hr = pipeline_->device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);

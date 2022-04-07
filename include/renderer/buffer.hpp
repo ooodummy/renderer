@@ -39,7 +39,7 @@ namespace renderer {
 		void draw_rect(glm::vec4 rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 		void draw_rect_filled(glm::vec4 rect, color_rgba col = COLOR_WHITE);
 
-		void draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, color_rgba col = COLOR_WHITE);
+		void draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, glm::u32vec2 size, color_rgba col = COLOR_WHITE);
 
 		void draw_circle(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
 		void draw_circle_filled(glm::vec2 pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
