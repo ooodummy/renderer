@@ -14,8 +14,8 @@ cbuffer command : register(b1)
     bool key_enable;
     float4 key_color;
     float blur_strength;
-    bool textured;
-    int2 textureSize;
+    bool isGlyph;
+    int2 glyphSize;
 }
 
 Texture2D<uint> tex : TEXTURE : register(t0);
@@ -32,7 +32,7 @@ float4 ps_main(VS_Output input) : SV_TARGET
         {
             return float4(0.0f, 0.0f, 0.0f, 0.0f);
         }
-   }
+    }
 
     if (scissor_enable)
     {
@@ -53,20 +53,15 @@ float4 ps_main(VS_Output input) : SV_TARGET
         }
         else if (!inside)
             return float4(0.0f, 0.0f, 0.0f, 0.0f);
-   }
+    }
 
-   /*if (blur_strength > 0.0f)
-   {
-        
-   }*/
-
-    if (textured)
+    if (isGlyph)
     {
-        uint value = tex.Load(int3(input.uv * textureSize, 0));
+        uint value = tex.Load(int3(input.uv * glyphSize, 0));
         if (value == 0)
             return float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-        return float4(float(tex.Load(int3(input.uv * textureSize, 0))), 0.0f, 0.0f, 1.0f);
+        return float4(float(tex.Load(int3(input.uv * glyphSize, 0))), 0.0f, 0.0f, 1.0f);
     }
 
     return input.color;
