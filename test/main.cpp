@@ -213,13 +213,14 @@ void draw_thread() {
 
 		carbon::buf = dx11->get_working_buffer(id);
 
-		draw_test_primitives(carbon::buf);
+		//draw_test_primitives(carbon::buf);
+		carbon::buf->draw_text(glm::vec2(100.0f, 100.0f), "whats up every guys", segoe);
 
 		const auto pos = container1->get_pos();
 		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
 		container1->compute();
 
-		container1->draw_contents();
+		//container1->draw_contents();
 
         dx11->swap_buffers(id);
         updated_buf.notify();
@@ -247,10 +248,10 @@ int main() {
         return 1;
     }
 
-    {
+    /*{
         auto attribute = DWMWCP_DONOTROUND;
         DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
-    }
+    }*/
 
     window->set_visibility(true);
 
@@ -284,6 +285,7 @@ int main() {
 
         if (update_size) {
             device->resize();
+			dx11->reset();
 
             update_size = false;
         }

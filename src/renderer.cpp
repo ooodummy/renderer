@@ -147,15 +147,15 @@ void renderer::d3d11_renderer::populate() {
 			ID3D11ShaderResourceView* rv;
 
 			if (batch.rv) {
-				pipeline_->context_->PSGetShaderResources(0, 1, &rv);
+				//pipeline_->context_->PSGetShaderResources(0, 1, &rv);
 				pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
 			}
 
 			pipeline_->context_->IASetPrimitiveTopology(batch.type);
 			pipeline_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
-
+			
 			if (batch.rv) {
-				pipeline_->context_->PSSetShaderResources(0, 1, &rv);
+				//pipeline_->context_->PSSetShaderResources(0, 1, &rv);
 			}
 
 			offset += batch.size;

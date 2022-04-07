@@ -141,14 +141,20 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
 }
 
 void renderer::buffer::draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, color_rgba col) {
+	split_batch_ = true;
+	active_command.textured = true;
+
 	std::vector<vertex> vertices = {
-		{rect.x,           rect.y,          col},
-		{ rect.x + rect.z, rect.y,          col},
-		{ rect.x,          rect.y + rect.w, col},
-		{ rect.x + rect.z, rect.y + rect.w, col}
+		{ rect.x,          rect.y,          col, 0.0f, 0.0f },
+		{ rect.x + rect.z, rect.y,          col, 1.0f, 0.0f },
+		{ rect.x,          rect.y + rect.w, col, 0.0f, 1.0f },
+		{ rect.x + rect.z, rect.y + rect.w, col, 1.0f, 1.0f }
 	};
 
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, rv, col);
+
+	active_command.textured = false;
+	split_batch_ = true;
 }
 
 void renderer::buffer::draw_circle(glm::vec2 pos, float radius, color_rgba col, float thickness, size_t segments) {

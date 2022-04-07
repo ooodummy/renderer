@@ -14,7 +14,11 @@ cbuffer command : register(b1)
     bool key_enable;
     float4 key_color;
     float blur_strength;
+    bool textured;
 }
+
+Texture2D tex : TEXTURE : register(t0);
+SamplerState samplerState : SAMPLER : register(s0);
 
 float4 ps_main(VS_Output input) : SV_TARGET
 {
@@ -46,17 +50,17 @@ float4 ps_main(VS_Output input) : SV_TARGET
             if (inside)
                 return float4(0.0f, 0.0f, 0.0f, 0.0f);
         }
-        else
-        {
-            if (!inside)
-                return float4(0.0f, 0.0f, 0.0f, 0.0f);
-        }
+        else if (!inside)
+            return float4(0.0f, 0.0f, 0.0f, 0.0f);
    }
 
    /*if (blur_strength > 0.0f)
    {
         
    }*/
+   
+    if (textured)
+        return tex.Sample(samplerState, input.uv);
 
-   return input.color;
+    return input.color;
 }
