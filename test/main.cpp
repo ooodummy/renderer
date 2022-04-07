@@ -14,16 +14,17 @@ size_t segoe;
 renderer::sync_manager updated_draw;
 renderer::sync_manager updated_buf;
 
-MSG msg {};
+MSG msg{};
 bool update_size = false;
+bool closeRequested = false;
 glm::i32vec2 mouse_pos {};
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CREATE:
             break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
+        case WM_CLOSE:
+			closeRequested = true;
             return 0;
         case WM_MOVE:
             break;
@@ -208,7 +209,7 @@ void draw_thread() {
 
     const auto id = dx11->register_buffer();
 
-    while (msg.message != WM_QUIT) {
+    while (!closeRequested) {
 		updated_draw.wait();
 
 		carbon::buf = dx11->get_working_buffer(id);
@@ -275,13 +276,18 @@ int main() {
 
     std::thread draw(draw_thread);
 
-    while (msg.message != WM_QUIT) {
-        if (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+	MSG msg{};
+    while (!closeRequested) {
+        while (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-
-            continue;
         }
+
+		if (msg.message == WM_NULL && !IsWindow(window->get_hwnd()))
+		{
+			closeRequested = true;
+			break;
+		}
 
         if (update_size) {
             device->resize();
@@ -296,7 +302,6 @@ int main() {
         updated_buf.wait();
     }
 
-    msg.message = WM_QUIT;
     draw.join();
 
     window->destroy();
