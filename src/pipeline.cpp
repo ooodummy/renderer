@@ -157,7 +157,7 @@ void renderer::pipeline::create_depth_stencil_view() {
 	depth_desc.ArraySize = 1;
 	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depth_desc.SampleDesc.Count = 4;
-	depth_desc.SampleDesc.Quality = 1;
+	depth_desc.SampleDesc.Quality = 0;
 	depth_desc.Usage = D3D11_USAGE_DEFAULT;
 	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depth_desc.CPUAccessFlags = 0;
