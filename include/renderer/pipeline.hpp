@@ -52,6 +52,7 @@ namespace renderer {
 
 		ID3D11SamplerState* sampler_state_;
 		ID3D11RasterizerState* rasterizer_state_;
+		ID3D11DepthStencilState* depth_stencil_state_;
 
 		// Shaders
 		ID3D11VertexShader* vertex_shader_;

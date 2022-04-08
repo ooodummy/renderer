@@ -232,10 +232,10 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t 
 
 void renderer::buffer::push_scissor(glm::vec4 bounds, bool in, bool circle) {
 	scissor_commands_.emplace_back(
-	DirectX::XMFLOAT4{
-	bounds.x, bounds.y, bounds.z, bounds.w },
-	in,
-	circle);
+		DirectX::XMFLOAT4{
+		bounds.x, bounds.y, bounds.z, bounds.w },
+		in,
+		circle);
 	update_scissor();
 }
 

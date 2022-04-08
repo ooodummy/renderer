@@ -124,7 +124,7 @@ void renderer::pipeline::create_swap_chain() {
 	swap_chain_desc.Height = size.y;
 	swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 	swap_chain_desc.Stereo = FALSE;
-	swap_chain_desc.SampleDesc.Count = 1;
+	swap_chain_desc.SampleDesc.Count = 4;
 	swap_chain_desc.SampleDesc.Quality = 0;
 	/*UINT max_quality;
 	hr = device_->CheckMultisampleQualityLevels(swap_chain_desc.Format, swap_chain_desc.SampleDesc.Count, &max_quality);
@@ -156,8 +156,8 @@ void renderer::pipeline::create_depth_stencil_view() {
 	depth_desc.MipLevels = 1;
 	depth_desc.ArraySize = 1;
 	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depth_desc.SampleDesc.Count = 1;
-	depth_desc.SampleDesc.Quality = 0;
+	depth_desc.SampleDesc.Count = 4;
+	depth_desc.SampleDesc.Quality = 1;
 	depth_desc.Usage = D3D11_USAGE_DEFAULT;
 	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depth_desc.CPUAccessFlags = 0;
@@ -167,7 +167,10 @@ void renderer::pipeline::create_depth_stencil_view() {
 	HRESULT hr = device_->CreateTexture2D(&depth_desc, nullptr, &depth_stencil);
 	assert(SUCCEEDED(hr));
 
-	//hr = device_->CreateDepthStencilView(depth_stencil, nullptr, &depth_stencil_view_);
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+	dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+
+	hr = device_->CreateDepthStencilView(depth_stencil, &dsv_desc, &depth_stencil_view_);
 	assert(SUCCEEDED(hr));
 
 	depth_stencil->Release();
@@ -180,8 +183,8 @@ void renderer::pipeline::create_frame_buffer_view() {
 
 	D3D11_RENDER_TARGET_VIEW_DESC frame_buffer_desc{};
 	frame_buffer_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-	frame_buffer_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-
+	frame_buffer_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+	
 	hr = device_->CreateRenderTargetView(frame_buffer, &frame_buffer_desc, &frame_buffer_view_);
 	assert(SUCCEEDED(hr));
 
@@ -235,6 +238,17 @@ void renderer::pipeline::create_states() {
 	HRESULT hr = device_->CreateBlendState(&blend_desc, &blend_state_);
 	assert(SUCCEEDED(hr));
 
+	D3D11_DEPTH_STENCIL_DESC depth_stencil_state_desc{};
+	depth_stencil_state_desc.DepthEnable = true;
+	depth_stencil_state_desc.DepthWriteMask = 
+		D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_stencil_state_desc.DepthFunc = 
+		D3D11_COMPARISON_FUNC::D3D11_COMPARISON_LESS_EQUAL;
+
+	hr = device_->CreateDepthStencilState(&depth_stencil_state_desc, 
+		&depth_stencil_state_);
+	assert(SUCCEEDED(hr));
+
 	D3D11_SAMPLER_DESC sampler_desc{};
 	sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -256,8 +270,8 @@ void renderer::pipeline::create_states() {
 	rasterizer_desc.SlopeScaledDepthBias = 0.0f;
 	rasterizer_desc.DepthClipEnable = FALSE;
 	rasterizer_desc.ScissorEnable = FALSE;
-	rasterizer_desc.MultisampleEnable = FALSE;
-	rasterizer_desc.AntialiasedLineEnable = FALSE;
+	rasterizer_desc.MultisampleEnable = TRUE;
+	rasterizer_desc.AntialiasedLineEnable = TRUE;
 
 	hr = device_->CreateRasterizerState(&rasterizer_desc, &rasterizer_state_);
 	assert(SUCCEEDED(hr));
@@ -353,6 +367,7 @@ void renderer::pipeline::release_buffers() {
 
 void renderer::pipeline::resize() {
 	context_->OMSetRenderTargets(0, nullptr, nullptr);
+	context_->OMSetDepthStencilState(nullptr, NULL);
 	frame_buffer_view_->Release();
 
 	const auto size = window_->get_size();
@@ -363,9 +378,15 @@ void renderer::pipeline::resize() {
 	res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&frame_buffer);
 	assert(SUCCEEDED(res));
 
-	res = device_->CreateRenderTargetView(frame_buffer, nullptr, &frame_buffer_view_);
+	D3D11_RENDER_TARGET_VIEW_DESC rtv_desc{};
+	rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+
+	res = device_->CreateRenderTargetView(frame_buffer, &rtv_desc, &frame_buffer_view_);
 	assert(SUCCEEDED(res));
 	frame_buffer->Release();
+
+	depth_stencil_view_->Release();
+	create_depth_stencil_view();
 }
 
 renderer::win32_window* renderer::pipeline::get_window() {

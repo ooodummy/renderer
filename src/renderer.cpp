@@ -111,7 +111,9 @@ void renderer::d3d11_renderer::begin() {
 
 	pipeline_->context_->OMSetBlendState(pipeline_->blend_state_, nullptr, 0xffffffff);
 
-	pipeline_->context_->OMSetRenderTargets(1, &pipeline_->frame_buffer_view_, nullptr);//pipeline_->depth_stencil_view_);
+	pipeline_->context_->OMSetRenderTargets(1, &pipeline_->frame_buffer_view_, pipeline_->depth_stencil_view_);//pipeline_->depth_stencil_view_);
+
+	pipeline_->context_->OMSetDepthStencilState(pipeline_->depth_stencil_state_, NULL);
 
 	pipeline_->context_->VSSetShader(pipeline_->vertex_shader_, nullptr, 0);
 
