@@ -105,6 +105,8 @@ namespace carbon {
 		// Can be put somewhere else later
 		float base_size{};
 		float hypothetical_size{};
+		float shrink_scaled{};
+		float shrink_ratio{};
 		float final_size{};
 		bool clamped = false;
 
