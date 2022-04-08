@@ -167,7 +167,7 @@ void renderer::pipeline::create_depth_stencil_view() {
 	HRESULT hr = device_->CreateTexture2D(&depth_desc, nullptr, &depth_stencil);
 	assert(SUCCEEDED(hr));
 
-	// hr = device_->CreateDepthStencilView(depth_stencil, NULL, &depth_stencil_view_);
+	//hr = device_->CreateDepthStencilView(depth_stencil, nullptr, &depth_stencil_view_);
 	assert(SUCCEEDED(hr));
 
 	depth_stencil->Release();

@@ -2,6 +2,8 @@
 
 #include "carbon/global.hpp"
 
+#include <fmt/format.h>
+
 carbon::flex_value::flex_value(float value) : value(value), unit(unit_aspect), relative(nullptr) {}
 carbon::flex_value::flex_value(carbon::flex_unit unit) : unit(unit), value(0.0f), relative(nullptr) {}
 carbon::flex_value::flex_value(float value, flex_unit unit) : value(value), unit(unit), relative(nullptr) {}
@@ -15,6 +17,7 @@ void carbon::flex_item::compute() {
 
 void carbon::flex_item::draw() {
 	const auto bounds = get_border().get_bounds();
+	const glm::vec2 center = { bounds.x + (bounds.z / 2.0f), bounds.y + bounds.w / 2.0f };
 
 	/*buf->draw_rect(bounds, COLOR_WHITE);
 	buf->draw_rect(get_margin().get_bounds(), COLOR_RED);
@@ -26,13 +29,17 @@ void carbon::flex_item::draw() {
 
 	if (content != glm::vec2{}) {
 		const glm::vec4 draw_content{
-			bounds.x + (bounds.z / 2.0f) - (content.x / 2.0f),
-			bounds.y + bounds.w / 2.0f - content.y / 2.0f,
+			center.x - content.x / 2.0f,
+			center.y - content.y / 2.0f,
 			content.x,
 			content.y
 		};
 		buf->draw_rect(draw_content, COLOR_PURPLE);
 	}
+
+	buf->draw_text({bounds.x, center.y}, fmt::format("base {}", base_size), 0);
+	buf->draw_text(glm::vec2{bounds.x, center.y} + glm::vec2{0.0f, 15.0f}, fmt::format("hyp {}", hypothetical_size), 0);
+	buf->draw_text(glm::vec2{bounds.x, center.y} + glm::vec2{0.0f, 30.0f}, fmt::format("final {}", final_size), 0);
 }
 
 void carbon::flex_item::input() {

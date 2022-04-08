@@ -111,13 +111,12 @@ void renderer::d3d11_renderer::begin() {
 
 	pipeline_->context_->OMSetBlendState(pipeline_->blend_state_, nullptr, 0xffffffff);
 
-	pipeline_->context_->OMSetRenderTargets(1, &pipeline_->frame_buffer_view_, nullptr);// pipeline_->depth_stencil_view_);
+	pipeline_->context_->OMSetRenderTargets(1, &pipeline_->frame_buffer_view_, nullptr);//pipeline_->depth_stencil_view_);
 
 	pipeline_->context_->VSSetShader(pipeline_->vertex_shader_, nullptr, 0);
 
 	pipeline_->context_->PSSetSamplers(0, 1, &pipeline_->sampler_state_);
 	pipeline_->context_->PSSetShader(pipeline_->pixel_shader_, nullptr, 0);
-
 
 	update_buffers();
 	render_buffers();
@@ -382,4 +381,27 @@ glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_
 	}
 
 	return size;
+}
+
+glm::vec4 renderer::d3d11_renderer::get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) {
+	glm::vec4 bounds{};
+	bounds.y = pos.y;
+
+	bool set_bearing = false;
+
+	for (char c : text) {
+		if (!isprint(c) || c == ' ')
+			continue;
+
+		auto glyph = get_font_glyph(id, c);
+
+		if (!set_bearing) {
+			bounds.x = pos.x + glyph.bearing.x;
+		}
+
+		bounds.z += static_cast<float>(glyph.advance) / 64.0f;
+		bounds.w = std::max(bounds.w, static_cast<float>(glyph.size.y));
+	}
+
+	return bounds;
 }

@@ -9,6 +9,8 @@
 #include <shared_mutex>
 #include <vector>
 
+#include <glm/vec4.hpp>
+
 namespace renderer {
 	class buffer;
 
@@ -33,6 +35,7 @@ namespace renderer {
 
 		size_t register_font(const font& font);
 		glm::vec2 get_text_size(const std::string& text, size_t id);
+		glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id);
 
 		bool init();
 		void set_vsync(bool vsync);

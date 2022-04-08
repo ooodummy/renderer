@@ -143,6 +143,10 @@ void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
 void renderer::buffer::draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceView* rv, color_rgba col) {
 	split_batch_ = true;
 
+	active_command.is_glyph = true;
+	active_command.glyph_size.x = rect.z;
+	active_command.glyph_size.y = rect.w;
+
 	std::vector<vertex> vertices = {
 		{ rect.x,          rect.y,          col, 0.0f, 0.0f },
 		{ rect.x + rect.z, rect.y,          col, 1.0f, 0.0f },
@@ -151,6 +155,8 @@ void renderer::buffer::draw_textured_quad(glm::vec4 rect, ID3D11ShaderResourceVi
 	};
 
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, rv, col);
+
+	active_command.is_glyph = false;
 
 	split_batch_ = true;
 }
@@ -204,17 +210,14 @@ void renderer::buffer::draw_circle_filled(glm::vec2 pos, float radius, color_rgb
 }
 
 void renderer::buffer::draw_glyph(glm::vec2 pos, const glyph& glyph, color_rgba col) {
-	active_command.isGlyph = true;
-	active_command.glyphSize.x = glyph.size.x;
-	active_command.glyphSize.y = glyph.size.y;
-
-	draw_textured_quad({ pos.x + glyph.bearing.x, pos.y + glyph.bearing.y, glyph.size }, glyph.rv, col);
-
-	active_command.isGlyph = true;
+	draw_textured_quad({ pos.x + glyph.bearing.x, pos.y - glyph.bearing.y, glyph.size }, glyph.rv, col);
 }
 
 void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {
 	// TODO: Handle alignment
+	const auto size = renderer_->get_text_size(text, font_id);
+
+	pos.y += size.y;
 
 	for (char c : text) {
 		if (!isprint(c) || c == ' ')

@@ -109,7 +109,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	const std::string test_string = "Hello World!";
 	buf->draw_text({250.0f, 250.0f}, test_string, segoe);
-	buf->draw_rect({250.0f, 250.0f, dx11->get_text_size(test_string, segoe)}, COLOR_RED);
+	buf->draw_rect(dx11->get_text_bounds({250.0f, 250.0f}, test_string, segoe), COLOR_YELLOW);
 
 	buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
@@ -129,9 +129,11 @@ void draw_thread() {
 	//container11->set_grow(1.0f);
 	//container11->set_margin({2.0f});
 	auto container111 = container1->add_child<carbon::flex_item>();
-	container111->set_grow(1.0f);
-	container111->set_min_width(100.0f);
-	container111->set_max_width(150.0f);
+	//container111->set_min_width(100.0f);
+	//container111->set_max_width(150.0f);
+	container111->set_basis(100.0f);
+	container111->set_basis_unit(carbon::unit_pixel);
+	//container111->set_grow(1.0f);
 	container111->set_margin({2.0f});
 	auto container112 = container1->add_child<carbon::flex_item>();
 	container112->set_grow(1.0f);
@@ -139,13 +141,7 @@ void draw_thread() {
 	auto container113 = container1->add_child<carbon::flex_item>();
 	container113->set_grow(1.0f);
 	container113->set_margin({2.0f});
-	auto container114 = container1->add_child<carbon::flex_item>();
-	container114->set_grow(1.0f);
-	container114->set_min_width(50.0f);
-	container114->set_margin({2.0f});
-	auto container115 = container1->add_child<carbon::flex_item>();
-	container115->set_grow(1.0f);
-	container115->set_margin({2.0f});
+
 	/*auto container12 = container1->add_child<carbon::flex_line>();
 	container12->set_grow(1.0f);
 	container12->set_margin({2.0f});
@@ -215,13 +211,13 @@ void draw_thread() {
 		carbon::buf = dx11->get_working_buffer(id);
 
 		//draw_test_primitives(carbon::buf);
-		carbon::buf->draw_text(glm::vec2(100.0f, 100.0f), "whats up every guys", segoe);
+		//carbon::buf->draw_text(glm::vec2(100.0f, 100.0f), "whats up every guys", segoe);
 
 		const auto pos = container1->get_pos();
 		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
 		container1->compute();
 
-		//container1->draw_contents();
+		container1->draw_contents();
 
         dx11->swap_buffers(id);
         updated_buf.notify();
@@ -272,7 +268,7 @@ int main() {
 
     dx11->set_vsync(true);
 
-    segoe = dx11->register_font({"Segoe UI", 20, FW_NORMAL, true});
+    segoe = dx11->register_font({"Segoe UI", 16, FW_NORMAL, true});
 
     std::thread draw(draw_thread);
 
