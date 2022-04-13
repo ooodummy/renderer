@@ -108,7 +108,7 @@ namespace carbon {
 		float shrink_scaled{};
 		float shrink_ratio{};
 		float final_size{};
-		bool clamped = false;
+		bool flexible = false;
 
 	protected:
 		flex_item* parent_ = nullptr;

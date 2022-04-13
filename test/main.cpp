@@ -113,6 +113,17 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
+	/*const auto size = window->get_size();
+	int i = 0;
+	int j = size.y;
+
+	while (i < size.x || j > 0) {
+		i += 15;
+		j -= 15;
+
+		buf->draw_line({i, 0.0f}, {0.0f, j});
+	}*/
+
 	// TODO: Fix inconsistent sizes
 	buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
 	buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
@@ -130,11 +141,11 @@ void draw_thread() {
 	//container11->set_margin({2.0f});
 	auto container11 = container1->add_child<carbon::flex_item>();
 	//container11->set_min_width(100.0f);
-	//container11->set_basis_unit(carbon::unit_pixel);
-	//container11->set_basis(100.0f);
+	container11->set_basis_unit(carbon::unit_pixel);
+	container11->set_basis(100.0f);
 	//container11->set_min_width(150.0f);
 	//container11->set_min_width(50.0f);
-	container11->set_max_width(100.0f);
+	container11->set_max_width(200.0f);
 	container11->set_grow(1.0f);
 	container11->set_margin({2.0f});
 	auto container12 = container1->add_child<carbon::flex_item>();
@@ -143,13 +154,6 @@ void draw_thread() {
 	auto container13 = container1->add_child<carbon::flex_item>();
 	container13->set_grow(1.0f);
 	container13->set_margin({2.0f});
-	auto container14 = container1->add_child<carbon::flex_item>();
-	container14->set_grow(1.0f);
-	//container14->set_min_width(100.0f);
-	container14->set_margin({2.0f});
-	auto container15 = container1->add_child<carbon::flex_item>();
-	container15->set_grow(1.0f);
-	container15->set_margin({2.0f});
 
 	// top
 	/*auto container11 = container1->add_child<carbon::flex_line>();
@@ -212,8 +216,8 @@ void draw_thread() {
 
 		carbon::buf = dx11->get_working_buffer(id);
 
-		draw_test_primitives(carbon::buf);
-		carbon::buf->draw_text(glm::vec2(100.0f, 100.0f), "whats up every guys", segoe);
+		//draw_test_primitives(carbon::buf);
+		//carbon::buf->draw_text(glm::vec2(100.0f, 100.0f), "whats up every guys", segoe);
 
 		const auto pos = container1->get_pos();
 		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});

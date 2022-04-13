@@ -37,6 +37,7 @@ void carbon::flex_item::draw() {
 	buf->draw_text({bounds.x, center.y}, fmt::format("base {}", base_size), 0);
 	buf->draw_text(glm::vec2{bounds.x, center.y} + glm::vec2{0.0f, 15.0f}, fmt::format("hyp {}", hypothetical_size), 0);
 	buf->draw_text(glm::vec2{bounds.x, center.y} + glm::vec2{0.0f, 30.0f}, fmt::format("final {}", final_size), 0);
+	buf->draw_text(glm::vec2{bounds.x, center.y} + glm::vec2{0.0f, 45.0f}, fmt::format("flex {}", flexible), 0);
 }
 
 void carbon::flex_item::input() {
