@@ -15,11 +15,11 @@ void carbon::flex_line::draw() {
 	buf->draw_rect(get_padding().get_bounds(), COLOR_YELLOW);
 	buf->draw_rect(get_content_bounds(), COLOR_BLUE);
 
-	buf->draw_text({center.x, bounds.y + bounds.w}, fmt::format("main {}", available_space.main), 0);
+	/*buf->draw_text({center.x, bounds.y + bounds.w}, fmt::format("main {}", available_space.main), 0);
 	buf->draw_text({center.x, bounds.y + bounds.w + 15.0f}, fmt::format("hyp {}", hypothetical_space), 0);
 	buf->draw_text({center.x, bounds.y + bounds.w + 30.0f}, fmt::format("grow {}", grow_total), 0);
 	buf->draw_text({center.x, bounds.y + bounds.w + 45.0f}, fmt::format("shrink {}", shrink_total), 0);
-	buf->draw_text({center.x, bounds.y + bounds.w + 60.0f}, fmt::format("free {}", free_space), 0);
+	buf->draw_text({center.x, bounds.y + bounds.w + 60.0f}, fmt::format("free {}", free_space), 0);*/
 }
 
 float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
@@ -70,11 +70,13 @@ void carbon::flex_line::measure() {
 			shrink_total += child->get_shrink();
 
 			hypothetical_space += child->base_size;
+			child->hypothetical_size = child->base_size;
 		}
 		else {
 			child->flexible = false;
 
 			hypothetical_space -= child->base_size;
+			child->final_size = child->base_size;
 		}
 	}
 
@@ -83,9 +85,6 @@ void carbon::flex_line::measure() {
 
 void carbon::flex_line::arrange() {
 	auto resolve_flexible_lengths = [&]() -> void {
-		/*
-		 * Resolve the flexible lengths in the children and
-		 */
 		auto resolve_flexible_lengths_impl = [&](auto& self_ref) -> bool {
 			auto ret = true;
 			float new_free_space = free_space;
@@ -94,7 +93,9 @@ void carbon::flex_line::arrange() {
 				if (!child->flexible)
 					continue;
 
-				child->hypothetical_size = child->base_size + resolve_flexible_length(child.get());
+				const auto flexible_length = resolve_flexible_length(child.get());
+
+				child->hypothetical_size = child->base_size + flexible_length;
 				auto extra = clamp(child.get(), child->hypothetical_size, child->final_size);
 
 				if (extra != 0.0f) {
@@ -105,7 +106,7 @@ void carbon::flex_line::arrange() {
 					grow_total -= child->get_grow();
 					shrink_total -= child->get_shrink();
 
-					new_free_space += extra / 2;
+					new_free_space -= flexible_length + extra;
 				}
 			}
 
@@ -114,7 +115,7 @@ void carbon::flex_line::arrange() {
 		};
 
 		// Only will allow 5 deep adjustments probably can never be more than like 2
-		for (size_t i = 0; i < 2; i++) {
+		for (size_t i = 0;;i++) {
 			grow_factor = free_space / grow_total;
 			shrink_factor = free_space / shrink_total;
 
@@ -124,7 +125,7 @@ void carbon::flex_line::arrange() {
 				const auto shrink = child->get_shrink();
 
 				if (shrink > 0.0f) {
-					child->shrink_scaled = child->hypothetical_size * free_space -  child->get_shrink();
+					child->shrink_scaled = child->hypothetical_size * free_space - child->get_shrink();
 					total_shrink_scaled += child->shrink_scaled;
 				}
 			}
@@ -134,19 +135,30 @@ void carbon::flex_line::arrange() {
 		}
 	};
 
+	// TODO: We actually need to compute the minimum size of children to determine minimum content size
 	resolve_flexible_lengths();
 }
 
 float carbon::flex_line::resolve_flexible_length(flex_item* item) {
 	if (free_space > 0.0f) {
-		return item->get_grow() * grow_factor;
+		const auto grow = item->get_grow();
+
+		if (grow <= 0.0f)
+			return 0.0f;
+
+		return grow * grow_factor;
 	}
 	else {
+		const auto shrink = item->get_shrink();
+
+		if (shrink <= 0.0f)
+			return 0.0f;
+
 		if (shrink_total < 1.0f) {
 			return free_space * shrink_factor;
 		}
 		else {
-			item->shrink_ratio = shrink_scaled / total_shrink_scaled;
+			item->shrink_ratio = item->shrink_scaled / total_shrink_scaled;
 			return free_space * item->shrink_ratio;
 		}
 	}
@@ -181,5 +193,8 @@ void carbon::flex_line::compute() {
 }
 
 bool carbon::flex_line::can_use_cached() {
+	// Mark children as dirty and their propagate downwards
+	// when computing we can mark them as not being dirty
+
 	return false;
 }

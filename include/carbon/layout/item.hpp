@@ -113,10 +113,10 @@ namespace carbon {
 	protected:
 		flex_item* parent_ = nullptr;
 
-		float grow_;
-		float shrink_;
+		float grow_ = 0.0f;
+		float shrink_ = 0.0f;
 
-		bool basis_auto_;
+		bool basis_auto_ = false;
 		glm::vec2 basis_content_{};
 		flex_value basis_ = flex_value{ unit_aspect };
 
