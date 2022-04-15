@@ -20,6 +20,7 @@ namespace carbon {
 
 		void measure();
 		void arrange();
+		bool calculate_flex();
 		float resolve_flexible_length(flex_item* item);
 		void position();
 

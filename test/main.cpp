@@ -129,44 +129,12 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	// primary
-	auto container1 = std::make_unique<carbon::flex_line>();
-	container1->set_pos({100.0f, 100.0f});
-	container1->set_size({500.0f, 600.0f});
-	container1->set_padding({10.0f});
-	auto container11 = container1->add_child<carbon::flex_line>();
-	container11->set_basis(100.0f);
-	container11->set_basis_unit(carbon::unit_pixel);
-	container11->set_shrink(1.0f);
-	container11->set_margin({2.0f});
-	auto container12 = container1->add_child<carbon::flex_line>();
-	container12->set_basis(100.0f);
-	container12->set_basis_unit(carbon::unit_pixel);
-	container12->set_shrink(3.0f);
-	container12->set_margin({2.0f});
-	/*auto container131 = container1->add_child<carbon::flex_line>();
-	container131->set_grow(1.0f);
-	container131->set_margin({2.0f});
-	auto container1311 = container131->add_child<carbon::flex_line>();
-	container1311->set_grow(1.0f);
-	container1311->set_margin({2.0f});
-	auto container13111 = container1311->add_child<carbon::flex_item>();
-	container13111->set_grow(1.0f);
-	container13111->set_margin({2.0f});
-	auto container13112 = container1311->add_child<carbon::flex_item>();
-	container13112->set_grow(1.0f);
-	container13112->set_margin({2.0f});
-	auto container13113 = container1311->add_child<carbon::flex_item>();
-	container13113->set_grow(2.0f);
-	container13113->set_margin({2.0f});
-	container13113->set_min_width(50.0f);
-	auto container1312 = container131->add_child<carbon::flex_item>();
-	container1312->set_grow(1.0f);
-	container1312->set_margin({2.0f});
-	auto container122 = container1->add_child<carbon::flex_item>();
-	container122->set_grow(1.0f);
-	container122->set_margin({2.0f});
-	container122->set_max_width(200.0f);*/
+	auto menu = std::make_unique<carbon::window>();
+	menu->set_pos({100.0f, 100.0f});
+	menu->set_size({500.0f, 300.0f});
+
+	//auto container1 = std::make_unique<carbon::flex_line>();
+	//container1->set_pos({50.0f, 50.0f});
 
     const auto id = dx11->register_buffer();
 
@@ -176,13 +144,16 @@ void draw_thread() {
 		carbon::buf = dx11->get_working_buffer(id);
 
 		//draw_test_primitives(carbon::buf);
-		//carbon::buf->draw_text(glm::vec2(100.0f, 100.0f), "whats up every guys", segoe);
 
-		const auto pos = container1->get_pos();
+		/*const auto pos = container1->get_pos();
 		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
 		container1->compute();
+		container1->draw_contents();*/
 
-		container1->draw_contents();
+		const auto pos = menu->get_pos();
+		menu->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
+		menu->compute();
+		menu->draw_contents();
 
         dx11->swap_buffers(id);
         updated_buf.notify();

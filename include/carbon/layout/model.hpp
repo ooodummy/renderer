@@ -69,7 +69,8 @@ namespace carbon {
 		glm::vec2 pos_{};
 		glm::vec2 size_{};
 
-		box_alignment margin_{};
+		// TODO: Remember this default for testing
+		box_alignment margin_ = {4.0f};
 		box_alignment border_{};
 		box_alignment padding_{};
 

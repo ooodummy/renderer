@@ -10,9 +10,9 @@ void carbon::flex_line::draw() {
 	const auto bounds = get_border().get_bounds();
 	const glm::vec2 center = { bounds.x + (bounds.z / 2.0f), bounds.y + bounds.w / 2.0f };
 
-	buf->draw_rect(get_margin().get_bounds(), COLOR_RED);
-	buf->draw_rect(bounds, COLOR_GREEN);
-	buf->draw_rect(get_padding().get_bounds(), COLOR_YELLOW);
+	//buf->draw_rect(get_margin().get_bounds(), COLOR_RED);
+	//buf->draw_rect(bounds, COLOR_GREEN);
+	//buf->draw_rect(get_padding().get_bounds(), COLOR_YELLOW);
 	buf->draw_rect(get_content_bounds(), COLOR_BLUE);
 
 	/*buf->draw_text({center.x, bounds.y + bounds.w}, fmt::format("main {}", available_space.main), 0);
@@ -75,7 +75,7 @@ void carbon::flex_line::measure() {
 		else {
 			child->flexible = false;
 
-			hypothetical_space -= child->base_size;
+			hypothetical_space += child->base_size;
 			child->final_size = child->base_size;
 		}
 	}
@@ -84,59 +84,58 @@ void carbon::flex_line::measure() {
 }
 
 void carbon::flex_line::arrange() {
-	auto resolve_flexible_lengths = [&]() -> void {
-		auto resolve_flexible_lengths_impl = [&](auto& self_ref) -> bool {
-			auto ret = true;
-			float new_free_space = free_space;
+	// TODO: Test maximum needed depth might only ever be two but is sometimes 1
+	for (size_t i = 0;;i++) {
+		// May actually never be able to happen
+		// More testing needs to be done since this logic is kinda hard to think about
+		assert(i < 2);
 
-			for (auto& child : children_) {
-				if (!child->flexible)
-					continue;
+		grow_factor = free_space / grow_total;
+		shrink_factor = free_space / shrink_total;
 
-				const auto flexible_length = resolve_flexible_length(child.get());
+		total_shrink_scaled = 0.0f;
 
-				child->hypothetical_size = child->base_size + flexible_length;
-				auto extra = clamp(child.get(), child->hypothetical_size, child->final_size);
+		for (auto& child : children_) {
+			const auto shrink = child->get_shrink();
 
-				if (extra != 0.0f) {
-					ret = false;
-
-					child->flexible = false;
-
-					grow_total -= child->get_grow();
-					shrink_total -= child->get_shrink();
-
-					new_free_space -= flexible_length + extra;
-				}
+			if (shrink > 0.0f) {
+				child->shrink_scaled = child->hypothetical_size * free_space - child->get_shrink();
+				total_shrink_scaled += child->shrink_scaled;
 			}
-
-			free_space = new_free_space;
-			return ret;
-		};
-
-		// Only will allow 5 deep adjustments probably can never be more than like 2
-		for (size_t i = 0;;i++) {
-			grow_factor = free_space / grow_total;
-			shrink_factor = free_space / shrink_total;
-
-			total_shrink_scaled = 0.0f;
-
-			for (auto& child : children_) {
-				const auto shrink = child->get_shrink();
-
-				if (shrink > 0.0f) {
-					child->shrink_scaled = child->hypothetical_size * free_space - child->get_shrink();
-					total_shrink_scaled += child->shrink_scaled;
-				}
-			}
-
-			if (resolve_flexible_lengths_impl(resolve_flexible_lengths_impl))
-				break;
 		}
-	};
 
-	// TODO: We actually need to compute the minimum size of children to determine minimum content size
-	resolve_flexible_lengths();
+		if (calculate_flex())
+			break;
+	}
+}
+
+bool carbon::flex_line::calculate_flex() {
+	auto ret = true;
+	float new_free_space = free_space;
+
+	for (auto& child : children_) {
+		if (!child->flexible)
+			continue;
+
+		const auto flexible_length = resolve_flexible_length(child.get());
+
+		child->hypothetical_size = child->base_size + flexible_length;
+		auto extra = clamp(child.get(), child->hypothetical_size, child->final_size);
+
+		if (extra != 0.0f) {
+			ret = false;
+
+			child->flexible = false;
+
+			grow_total -= child->get_grow();
+			shrink_total -= child->get_shrink();
+
+			new_free_space -= flexible_length + extra;
+		}
+	}
+
+	free_space = new_free_space;
+	return ret;
 }
 
 float carbon::flex_line::resolve_flexible_length(flex_item* item) {
@@ -185,6 +184,8 @@ void carbon::flex_line::position() {
 
 void carbon::flex_line::compute() {
 	compute_alignment();
+
+	// TODO: Measure minimum content size of children first so we can set parent minimum
 
 	measure();
 	arrange();

@@ -1,6 +1,6 @@
 #include "carbon/layout/containers/base_flex.hpp"
 
-carbon::flex_flow::flex_flow(carbon::flex_axis axis, carbon::flex_direction direction, carbon::flex_wrap_mode wrap) : main(axis), cross(axis == flex_axis_row ? flex_axis_column : flex_axis_row), direction(direction), wrap(wrap) {}
+carbon::flex_flow::flex_flow(carbon::flex_axis axis, carbon::flex_direction direction, carbon::flex_wrap_mode wrap) : main(axis), cross(axis == axis_row ? axis_column : axis_row), direction(direction), wrap(wrap) {}
 
 carbon::flex_axis carbon::base_flex_container::get_main() const {
 	return flow_.main;
@@ -12,7 +12,7 @@ carbon::flex_axis carbon::base_flex_container::get_cross() const {
 
 void carbon::base_flex_container::set_axis(carbon::flex_axis axis) {
 	flow_.main = axis;
-	flow_.cross = axis == flex_axis_row ? flex_axis_column : flex_axis_row;
+	flow_.cross = axis == axis_row ? axis_column : axis_row;
 }
 
 carbon::flex_direction carbon::base_flex_container::get_direction() const {

@@ -33,21 +33,21 @@ void carbon::grid_container::compute() {
 		child->compute();
 
 		// Increment grid position
-		if (row_direction_ == flex_direction_forward)
+		if (row_direction_ == direction_normal)
 			grid_pos.x++;
 		else
 			grid_pos.x--;
 
-		if (row_direction_ == flex_direction_forward ? grid_pos.x >= grid_size_.x : grid_pos.x < 0) {
+		if (row_direction_ == direction_normal ? grid_pos.x >= grid_size_.x : grid_pos.x < 0) {
 			grid_pos.x = grid_start.x;
 
-			if (column_direction_ == flex_direction_forward)
+			if (column_direction_ == direction_normal)
 				grid_pos.y++;
 			else
 				grid_pos.y--;
 
 			// Resized before here if there is no resizing assert
-			if (column_direction_ == flex_direction_forward ? grid_pos.y >= grid_size_.y : grid_pos.y < 0) {
+			if (column_direction_ == direction_normal ? grid_pos.y >= grid_size_.y : grid_pos.y < 0) {
 				assert(false);
 			}
 		}
@@ -68,8 +68,8 @@ void carbon::grid_container::set_row_direction(flex_direction direction) {
 
 glm::i16vec2 carbon::grid_container::get_grid_start() {
 	return {
-		row_direction_ == flex_direction_forward ? 0 : grid_size_.x - 1,
-		column_direction_ == flex_direction_forward ? 0 : grid_size_.y - 1
+		row_direction_ == direction_normal ? 0 : grid_size_.x - 1,
+		column_direction_ == direction_normal ? 0 : grid_size_.y - 1
 	};
 }
 

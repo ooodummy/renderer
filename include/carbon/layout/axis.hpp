@@ -6,8 +6,8 @@
 
 namespace carbon {
 	enum flex_axis {
-		flex_axis_row,
-		flex_axis_column
+		axis_row,
+		axis_column
 	};
 
 	template <typename T, typename RetT>
@@ -23,7 +23,7 @@ namespace carbon {
 		}
 
 		operator RetT() const { // NOLINT(google-explicit-constructor)
-			if (axis == flex_axis_row) {
+			if (axis == axis_row) {
 				return RetT(main, cross);
 			}
 			else {

@@ -27,8 +27,8 @@ namespace carbon {
 
 		glm::i16vec2 grid_size_ = { 0, 0 };
 
-		flex_direction row_direction_ = flex_direction_forward;
-		flex_direction column_direction_ = flex_direction_forward;
+		flex_direction row_direction_ = direction_normal;
+		flex_direction column_direction_ = direction_normal;
 
 		grid_resize resize_ = grid_resize_none;
 	};

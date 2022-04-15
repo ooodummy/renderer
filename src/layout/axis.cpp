@@ -5,7 +5,7 @@ float carbon::sum(glm::vec2 src) {
 }
 
 glm::vec2 carbon::get_axis(carbon::flex_axis axis, glm::vec4 src) {
-	if (axis == flex_axis_row) {
+	if (axis == axis_row) {
 		return {src.x, src.z};
 	}
 	else {
@@ -14,7 +14,7 @@ glm::vec2 carbon::get_axis(carbon::flex_axis axis, glm::vec4 src) {
 }
 
 float carbon::get_axis(carbon::flex_axis axis, glm::vec2 src) {
-	if (axis == flex_axis_row) {
+	if (axis == axis_row) {
 		return src.x;
 	}
 	else {

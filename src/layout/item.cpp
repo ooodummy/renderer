@@ -19,7 +19,7 @@ void carbon::flex_item::draw() {
 	const auto bounds = get_border().get_bounds();
 	const glm::vec2 center = { bounds.x + (bounds.z / 2.0f), bounds.y + bounds.w / 2.0f };
 
-	buf->draw_rect(get_border().get_bounds(), COLOR_GREEN);
+	//buf->draw_rect(get_border().get_bounds(), COLOR_GREEN);
 	buf->draw_rect(get_content_bounds(), COLOR_BLUE);
 
 	const auto content = get_basis_content();

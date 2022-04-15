@@ -5,32 +5,32 @@
 
 namespace carbon {
 	enum flex_wrap_mode {
-		flex_no_wrap,
-		flex_wrap,
-		flex_wrap_reverse
+		no_wrap,
+		wrap,
+		wrap_reverse
 	};
 
 	// Alignment within flex lines on the cross axis
 	enum flex_align {
-		flex_align_start,
-		flex_align_end,
-		flex_align_center,
-		flex_align_stretch,
-		flex_align_baseline
+		align_start,
+		align_end,
+		align_center,
+		align_stretch,
+		align_baseline
 	};
 
 	// Spacing on the main axis
 	enum flex_justify_content {
-		flex_justify_start,
-		flex_justify_end,
-		flex_justify_center,
-		flex_justify_space_around,
-		flex_justify_space_between,
-		flex_justify_space_evenly
+		justify_start,
+		justify_end,
+		justify_center,
+		justify_space_around,
+		justify_space_between,
+		justify_space_evenly
 	};
 
 	struct flex_flow {
-		explicit flex_flow(flex_axis axis = flex_axis_row, flex_direction direction = flex_direction_forward, flex_wrap_mode wrap = flex_no_wrap);
+		explicit flex_flow(flex_axis axis = axis_row, flex_direction direction = direction_normal, flex_wrap_mode wrap = no_wrap);
 
 		flex_axis main;
 		flex_axis cross;
@@ -38,8 +38,8 @@ namespace carbon {
 		flex_direction direction;
 		flex_wrap_mode wrap;
 
-		flex_align align = flex_align_start;
-		flex_justify_content justify_content = flex_justify_start;
+		flex_align align = align_start;
+		flex_justify_content justify_content = justify_start;
 	};
 
 	class base_flex_container : public base_container {

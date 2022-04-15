@@ -18,13 +18,13 @@ namespace carbon {
 	};
 
 	enum flex_basis_size {
-		flex_basis_width,
-		flex_basis_percentage,
-		flex_basis_auto,
-		flex_basis_content,
-		flex_basis_fit_content,
-		flex_basis_max_content,
-		flex_basis_min_content
+		basis_width,
+		basis_percentage,
+		basis_auto,
+		basis_content,
+		basis_fit_content,
+		basis_max_content,
+		basis_min_content
 	};
 
 	class flex_item;

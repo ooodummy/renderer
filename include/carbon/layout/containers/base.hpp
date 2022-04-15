@@ -5,8 +5,8 @@
 
 namespace carbon {
 	enum flex_direction {
-		flex_direction_forward,
-		flex_direction_reversed
+		direction_normal,
+		direction_reversed
 	};
 
 	class base_container : public flex_item {
