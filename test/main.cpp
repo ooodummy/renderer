@@ -16,29 +16,22 @@ renderer::sync_manager updated_buf;
 
 bool update_size = false;
 bool close_requested = false;
-glm::i32vec2 mouse_pos {};
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
-        case WM_CREATE:
-            break;
         case WM_CLOSE:
 			close_requested = true;
             return 0;
-        case WM_MOVE:
-            break;
         case WM_SIZE:
             window->set_size({LOWORD(lParam), HIWORD(lParam)});
             update_size = true;
             break;
-        case WM_MOUSEMOVE:
-            mouse_pos = {
-                GET_X_LPARAM(lParam),
-                GET_Y_LPARAM(lParam)};
-            break;
         default:
             break;
     }
+
+	if (carbon::impl_win32_winproc_handler(hWnd, msg, wParam, lParam))
+		return 1;
 
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
@@ -63,8 +56,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 	}*/
 
 	const glm::vec4 scissor_bounds = {
-		static_cast<float>(mouse_pos.x) - 50.0f,
-		static_cast<float>(mouse_pos.y) - 50.0f,
+		static_cast<float>(carbon::mouse_pos.x) - 50.0f,
+		static_cast<float>(carbon::mouse_pos.y) - 50.0f,
 		100.0f,
 		100.0f};
 
@@ -129,12 +122,44 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	auto menu = std::make_unique<carbon::window>();
+	/*auto menu = std::make_unique<carbon::window>();
 	menu->set_pos({100.0f, 100.0f});
-	menu->set_size({500.0f, 300.0f});
+	menu->set_size({500.0f, 300.0f});*/
 
-	//auto container1 = std::make_unique<carbon::flex_line>();
-	//container1->set_pos({50.0f, 50.0f});
+	const auto container1 = std::make_unique<carbon::flex_line>();
+	container1->set_pos({50.0f, 50.0f});
+	/*const auto container11 = container1->add_child<carbon::flex_line>();
+	container11->set_basis(100.0f);
+	container11->set_basis_unit(carbon::unit_pixel);
+	container11->set_grow(1.0f);
+	const auto container12 = container1->add_child<carbon::flex_line>();
+	container12->set_basis(100.0f);
+	container12->set_basis_unit(carbon::unit_pixel);
+	container12->set_grow(2.0f);*/
+
+	const auto container11 = container1->add_child<carbon::flex_line>();
+	container11->set_basis(100.0f);
+	container11->set_basis_unit(carbon::unit_pixel);
+	container11->set_shrink(1.0f);
+	container11->set_min_width(50.0f);
+	const auto container12 = container1->add_child<carbon::flex_line>();
+	container12->set_shrink(1.0f);
+	container12->set_basis(100.0f);
+	container12->set_basis_unit(carbon::unit_pixel);
+	const auto container13= container1->add_child<carbon::flex_line>();
+	container13->set_shrink(1.0f);
+	container13->set_grow(1.0f);
+	container13->set_min_width(50.0f);
+	container13->set_max_width(200.0f);
+	const auto container14= container1->add_child<carbon::flex_line>();
+	container14->set_shrink(1.0f);
+	container14->set_grow(2.0f);
+	container14->set_min_width(50.0f);
+	container14->set_max_width(200.0f);
+	const auto container15 = container1->add_child<carbon::flex_line>();
+	container15->set_shrink(1.0f);
+	container15->set_basis(100.0f);
+	container15->set_basis_unit(carbon::unit_pixel);
 
     const auto id = dx11->register_buffer();
 
@@ -145,15 +170,15 @@ void draw_thread() {
 
 		//draw_test_primitives(carbon::buf);
 
-		/*const auto pos = container1->get_pos();
-		container1->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
+		const auto pos = container1->get_pos();
+		container1->set_size({carbon::mouse_pos.x - pos.x, carbon::mouse_pos.y - pos.y});
 		container1->compute();
-		container1->draw_contents();*/
+		container1->draw_contents();
 
-		const auto pos = menu->get_pos();
+		/*const auto pos = menu->get_pos();
 		menu->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
 		menu->compute();
-		menu->draw_contents();
+		menu->draw_contents();*/
 
         dx11->swap_buffers(id);
         updated_buf.notify();

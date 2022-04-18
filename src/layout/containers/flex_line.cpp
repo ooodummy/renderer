@@ -88,7 +88,7 @@ void carbon::flex_line::arrange() {
 	for (size_t i = 0;;i++) {
 		// May actually never be able to happen
 		// More testing needs to be done since this logic is kinda hard to think about
-		assert(i < 2);
+		assert(i < 3);
 
 		grow_factor = free_space / grow_total;
 		shrink_factor = free_space / shrink_total;
@@ -138,7 +138,7 @@ bool carbon::flex_line::calculate_flex() {
 	return ret;
 }
 
-float carbon::flex_line::resolve_flexible_length(flex_item* item) {
+float carbon::flex_line::resolve_flexible_length(flex_item* item) const {
 	if (free_space > 0.0f) {
 		const auto grow = item->get_grow();
 

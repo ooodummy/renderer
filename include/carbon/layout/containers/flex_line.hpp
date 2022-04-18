@@ -21,7 +21,7 @@ namespace carbon {
 		void measure();
 		void arrange();
 		bool calculate_flex();
-		float resolve_flexible_length(flex_item* item);
+		float resolve_flexible_length(flex_item* item) const;
 		void position();
 
 		axes_vec2 available_space;
