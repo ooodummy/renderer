@@ -6,6 +6,7 @@
 #include <DirectXMath.h>
 
 #define COLOR_BLACK renderer::color_rgba(0, 0, 0)
+#define COLOR_GREY renderer::color_rgba(128, 128, 128)
 #define COLOR_WHITE renderer::color_rgba(255, 255, 255)
 #define COLOR_RED renderer::color_rgba(255, 0, 0)
 #define COLOR_GREEN renderer::color_rgba(0, 255, 0)

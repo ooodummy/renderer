@@ -255,7 +255,7 @@ void renderer::polyline::create_joint(std::vector<glm::vec2>& vertices, const re
 			next_start2 = outer2->a;
 		}
 
-		// TODO: Fix for triangle strip
+		// TODO: Fix for triangle strip :(
 		if (override_joint == joint_bevel) {
 			vertices.push_back(outer1->b);
 			vertices.push_back(outer2->a);
@@ -279,12 +279,12 @@ void renderer::polyline::create_triangle_fan(std::vector<glm::vec2>& vertices, c
 
 	if (clockwise) {
 		if (angle2 > angle1) {
-			angle2 -= 2 * M_PI;
+			angle2 -= 2.0f * M_PI;
 		}
 	}
 	else {
 		if (angle1 > angle2) {
-			angle1 -= 2 * M_PI;
+			angle1 -= 2.0f * M_PI;
 		}
 	}
 

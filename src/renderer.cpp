@@ -58,8 +58,8 @@ size_t renderer::d3d11_renderer::register_font(const font& font) {
 }
 
 bool renderer::d3d11_renderer::init() {
-	if (FT_Init_FreeType(&library_))
-		return false;
+	//if (FT_Init_FreeType(&library_))
+	//	return false;
 
 	return true;
 }
@@ -148,8 +148,8 @@ void renderer::d3d11_renderer::populate() {
 				pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->command_buffer_);
 			}
 
-			if (batch.rv)
-				pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
+			//if (batch.rv)
+			//	pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
 
 			pipeline_->context_->IASetPrimitiveTopology(batch.type);
 			pipeline_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
@@ -244,16 +244,16 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	auto& font = fonts_[id];
 
 	if (!font.face) {
-		if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
-			return false;
+		//if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
+		//	return false;
 
 		const auto dpi = GetDpiForWindow(pipeline_->get_window()->get_hwnd());
 
-		if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
-			return false;
+		//if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
+		//	return false;
 
-		if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
-			return false;
+		//if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
+		//	return false;
 	}
 
 	FT_Int32 load_flags = FT_LOAD_RENDER;
@@ -262,8 +262,8 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 		load_flags |= FT_LOAD_TARGET_MONO | FT_LOAD_MONOCHROME;
 	}
 
-	if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
-		return false;
+	//if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
+	//	return false;
 
 	auto& glyph = font.char_set[c];
 

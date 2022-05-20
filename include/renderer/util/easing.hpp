@@ -1,6 +1,8 @@
 #ifndef _RENDERER_UTIL_EASING_HPP_
 #define _RENDERER_UTIL_EASING_HPP_
 
+#include <glm/vec2.hpp>
+
 namespace renderer {
 	enum ease_type {
 		linear,
@@ -39,7 +41,10 @@ namespace renderer {
 	 * @param type Type
 	 * @return Eased point
 	 */
-	float ease(float a, float b, float t, float d, ease_type type = linear);
+	float ease(float a, float b, float t, float d = 1.0f, ease_type type = linear);
+
+	// Other types
+	glm::vec2 ease(glm::vec2 a, glm::vec2 b, float t, float d = 1.0f, ease_type type = linear);
 }// namespace renderer
 
 #endif

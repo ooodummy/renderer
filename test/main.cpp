@@ -6,6 +6,7 @@
 #include <windowsx.h>
 
 #include <fmt/core.h>
+#include <glm/gtx/rotate_vector.hpp>
 
 std::unique_ptr<renderer::win32_window> window;
 std::unique_ptr<renderer::d3d11_renderer> dx11;
@@ -37,8 +38,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 void draw_test_primitives(renderer::buffer* buf) {
-	const auto id = dx11->register_buffer();
-
 	static renderer::timer rainbow_timer;
 	static renderer::color_rgba rainbow;
 
@@ -121,67 +120,147 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
 }
 
+void draw_test_bezier(renderer::buffer* buf) {
+	static renderer::timer timer;
+
+	constexpr size_t steps = 256 * 2;
+	const auto step = 1.0f / steps;
+	static size_t current;
+
+	if (timer.get_elapsed_duration() > std::chrono::milliseconds(10)) {
+		timer.reset();
+
+		current++;
+
+		if (current > steps)
+			current = 0;
+	}
+
+	static renderer::bezier_curve<3> bezier;
+	bezier[0] = {200.0f, 300.0f};
+	bezier[1] = carbon::mouse_pos;
+	bezier[2] = {400.0f, 400.0f};
+	bezier[3] = {500.0f, 300.0f};
+
+	glm::vec2 prev{};
+	for (size_t i = 0; i < bezier.size(); i++) {
+		const auto& point = bezier[i];
+
+		buf->draw_circle_filled(point, 5.0f, COLOR_WHITE);
+
+		if (prev != glm::vec2{})
+			buf->draw_line(prev, point, COLOR_GREY);
+
+		prev = point;
+	}
+
+	std::vector<glm::vec2> points;
+
+	for (size_t i = 0; i <= steps; i++) {
+		const auto t = static_cast<float>(i) * step;
+
+		const auto& point = points.emplace_back(bezier.at(t));
+
+		if (i == current) {
+			const auto triangle = bezier.tangent_at(t);
+			const auto angle = atan2f(triangle.y, triangle.x);
+
+			glm::vec2 test = glm::rotate(glm::vec2(10.0f, 0.0f), angle);
+			test += point;
+
+			buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
+			buf->draw_line(point, test, COLOR_GREEN);
+		}
+	}
+
+	//buf->draw_polyline(line, COLOR_YELLOW);
+
+	prev = {};
+	for (auto& point : points) {
+		if (prev != glm::vec2{})
+			buf->draw_line(prev, point, COLOR_RED);
+
+		prev = point;
+	}
+
+	const auto t = step * static_cast<float>(current);
+
+	const auto point = bezier.at(t);
+
+	const auto triangle = bezier.tangent_at(t);
+	const auto angle = atan2f(triangle.y, triangle.x);
+
+	buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
+	buf->draw_line(point, glm::rotate(glm::vec2(60.0f, 0.0f), angle) + point, COLOR_GREEN);
+}
+
+void draw_test_flex(renderer::buffer* buf) {
+	static bool init = false;
+	static auto container1 = std::make_unique<carbon::flex_line>();
+
+	if (!init) {
+		container1->set_pos({50.0f, 50.0f});
+		/*const auto container11 = container1->add_child<carbon::flex_line>();
+		container11->set_basis(100.0f);
+		container11->set_basis_unit(carbon::unit_pixel);
+		container11->set_grow(1.0f);
+		const auto container12 = container1->add_child<carbon::flex_line>();
+		container12->set_basis(100.0f);
+		container12->set_basis_unit(carbon::unit_pixel);
+		container12->set_grow(2.0f);*/
+
+		const auto container11 = container1->add_child<carbon::flex_line>();
+		container11->set_basis(100.0f);
+		container11->set_basis_unit(carbon::unit_pixel);
+		container11->set_shrink(1.0f);
+		container11->set_min_width(50.0f);
+		const auto container12 = container1->add_child<carbon::flex_line>();
+		container12->set_shrink(1.0f);
+		container12->set_basis(100.0f);
+		container12->set_basis_unit(carbon::unit_pixel);
+		const auto container13= container1->add_child<carbon::flex_line>();
+		container13->set_shrink(1.0f);
+		container13->set_grow(1.0f);
+		container13->set_min_width(50.0f);
+		container13->set_max_width(200.0f);
+		const auto container14 = container1->add_child<carbon::flex_line>();
+		container14->set_shrink(1.0f);
+		container14->set_grow(1.0f);
+		container14->set_min_width(50.0f);
+		container14->set_max_width(200.0f);
+		const auto container15= container1->add_child<carbon::flex_line>();
+		container15->set_shrink(1.0f);
+		container15->set_grow(2.0f);
+		container15->set_min_width(50.0f);
+		container15->set_max_width(200.0f);
+		const auto container16 = container1->add_child<carbon::flex_line>();
+		container16->set_shrink(1.0f);
+		container16->set_basis(100.0f);
+		container16->set_basis_unit(carbon::unit_pixel);
+
+		init = true;
+	}
+
+	const auto pos = container1->get_pos();
+	container1->set_size({carbon::mouse_pos.x - pos.x, carbon::mouse_pos.y - pos.y});
+	container1->compute();
+	container1->draw_contents();
+}
+
 void draw_thread() {
-	/*auto menu = std::make_unique<carbon::window>();
-	menu->set_pos({100.0f, 100.0f});
-	menu->set_size({500.0f, 300.0f});*/
-
-	const auto container1 = std::make_unique<carbon::flex_line>();
-	container1->set_pos({50.0f, 50.0f});
-	/*const auto container11 = container1->add_child<carbon::flex_line>();
-	container11->set_basis(100.0f);
-	container11->set_basis_unit(carbon::unit_pixel);
-	container11->set_grow(1.0f);
-	const auto container12 = container1->add_child<carbon::flex_line>();
-	container12->set_basis(100.0f);
-	container12->set_basis_unit(carbon::unit_pixel);
-	container12->set_grow(2.0f);*/
-
-	const auto container11 = container1->add_child<carbon::flex_line>();
-	container11->set_basis(100.0f);
-	container11->set_basis_unit(carbon::unit_pixel);
-	container11->set_shrink(1.0f);
-	container11->set_min_width(50.0f);
-	const auto container12 = container1->add_child<carbon::flex_line>();
-	container12->set_shrink(1.0f);
-	container12->set_basis(100.0f);
-	container12->set_basis_unit(carbon::unit_pixel);
-	const auto container13= container1->add_child<carbon::flex_line>();
-	container13->set_shrink(1.0f);
-	container13->set_grow(1.0f);
-	container13->set_min_width(50.0f);
-	container13->set_max_width(200.0f);
-	const auto container14= container1->add_child<carbon::flex_line>();
-	container14->set_shrink(1.0f);
-	container14->set_grow(2.0f);
-	container14->set_min_width(50.0f);
-	container14->set_max_width(200.0f);
-	const auto container15 = container1->add_child<carbon::flex_line>();
-	container15->set_shrink(1.0f);
-	container15->set_basis(100.0f);
-	container15->set_basis_unit(carbon::unit_pixel);
-
     const auto id = dx11->register_buffer();
 
     while (!close_requested) {
-		updated_draw.wait();
+		//updated_draw.wait();
 
 		carbon::buf = dx11->get_working_buffer(id);
 
 		//draw_test_primitives(carbon::buf);
-
-		const auto pos = container1->get_pos();
-		container1->set_size({carbon::mouse_pos.x - pos.x, carbon::mouse_pos.y - pos.y});
-		container1->compute();
-		container1->draw_contents();
-
-		/*const auto pos = menu->get_pos();
-		menu->set_size({mouse_pos.x - pos.x, mouse_pos.y - pos.y});
-		menu->compute();
-		menu->draw_contents();*/
+		draw_test_bezier(carbon::buf);
+		//draw_test_flex(carbon::buf);
 
         dx11->swap_buffers(id);
-        updated_buf.notify();
+        //updated_buf.notify();
     }
 }
 
@@ -227,7 +306,7 @@ int main() {
         return 1;
     }
 
-    dx11->set_vsync(true);
+    dx11->set_vsync(false);
 
     segoe = dx11->register_font({"Segoe UI", 12, FW_THIN, true});
 
@@ -254,8 +333,8 @@ int main() {
 
         dx11->draw();
 
-		updated_draw.notify();
-        updated_buf.wait();
+		//updated_draw.notify();
+        //updated_buf.wait();
     }
 
     draw.join();

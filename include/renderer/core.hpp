@@ -5,6 +5,7 @@
 #include "pipeline.hpp"
 #include "renderer.hpp"
 #include "types/color.hpp"
+#include "util/bezier.hpp"
 #include "util/easing.hpp"
 #include "util/util.hpp"
 #include "util/window.hpp"
