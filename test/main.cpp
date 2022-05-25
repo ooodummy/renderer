@@ -6,7 +6,6 @@
 #include <windowsx.h>
 
 #include <fmt/core.h>
-#include <glm/gtx/rotate_vector.hpp>
 
 std::unique_ptr<renderer::win32_window> window;
 std::unique_ptr<renderer::d3d11_renderer> dx11;
@@ -123,72 +122,42 @@ void draw_test_primitives(renderer::buffer* buf) {
 void draw_test_bezier(renderer::buffer* buf) {
 	static renderer::timer timer;
 
-	constexpr size_t steps = 256 * 2;
+	constexpr size_t steps = 24;
 	const auto step = 1.0f / steps;
-	static size_t current;
+	static auto t = 0.0f;
 
 	if (timer.get_elapsed_duration() > std::chrono::milliseconds(10)) {
 		timer.reset();
 
-		current++;
+		t += 0.005f;
 
-		if (current > steps)
-			current = 0;
+		if (t > 1.0f)
+			t = 0.0f;
 	}
 
 	static renderer::bezier_curve<3> bezier;
 	bezier[0] = {200.0f, 300.0f};
 	bezier[1] = carbon::mouse_pos;
 	bezier[2] = {400.0f, 400.0f};
-	bezier[3] = {500.0f, 300.0f};
+	bezier[3] = {500.0f, 200.0f};
 
 	glm::vec2 prev{};
 	for (size_t i = 0; i < bezier.size(); i++) {
-		const auto& point = bezier[i];
+		const auto& control_point = bezier[i];
 
-		buf->draw_circle_filled(point, 5.0f, COLOR_WHITE);
+		buf->draw_circle_filled(control_point, 5.0f, {255, 255, 255, 100});
 
 		if (prev != glm::vec2{})
-			buf->draw_line(prev, point, COLOR_GREY);
+			buf->draw_line(prev, control_point, COLOR_GREY);
 
-		prev = point;
+		prev = control_point;
 	}
 
-	std::vector<glm::vec2> points;
+	buf->draw_bezier_curve(bezier, {255, 0, 0, 155}, 5.0f);
 
-	for (size_t i = 0; i <= steps; i++) {
-		const auto t = static_cast<float>(i) * step;
-
-		const auto& point = points.emplace_back(bezier.at(t));
-
-		if (i == current) {
-			const auto triangle = bezier.tangent_at(t);
-			const auto angle = atan2f(triangle.y, triangle.x);
-
-			glm::vec2 test = glm::rotate(glm::vec2(10.0f, 0.0f), angle);
-			test += point;
-
-			buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
-			buf->draw_line(point, test, COLOR_GREEN);
-		}
-	}
-
-	//buf->draw_polyline(line, COLOR_YELLOW);
-
-	prev = {};
-	for (auto& point : points) {
-		if (prev != glm::vec2{})
-			buf->draw_line(prev, point, COLOR_RED);
-
-		prev = point;
-	}
-
-	const auto t = step * static_cast<float>(current);
-
-	const auto point = bezier.at(t);
-
-	const auto triangle = bezier.tangent_at(t);
-	const auto angle = atan2f(triangle.y, triangle.x);
+	const auto point = bezier.position_at(t);
+	const auto tangent = bezier.tangent_at(t);
+	const auto angle = atan2f(tangent.y, tangent.x);
 
 	buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
 	buf->draw_line(point, glm::rotate(glm::vec2(60.0f, 0.0f), angle) + point, COLOR_GREEN);

@@ -4,22 +4,12 @@
 #include "easing.hpp"
 
 #include <array>
+#include <vector>
+#include <glm/geometric.hpp>
 
 // https://www.youtube.com/watch?v=aVwxzDHniEw
 namespace renderer {
-	static std::map<float, float[4]> weight_map;
-
-	size_t binomial(size_t n, size_t k) {
-		assert(k <= n);
-		size_t val = 1;
-
-		for (size_t i = 1; i <= k; i++) {
-			val *= n + 1 - i;
-			val /= i;
-		}
-
-		return val;
-	}
+	size_t binomial(size_t n, size_t k);
 
     template <size_t N>
 	class binomial_coefficients {
@@ -56,9 +46,7 @@ namespace renderer {
 		size_t t = 0;
 		size_t one_minus_t = 0;
 
-		[[nodiscard]] float at(float t) const {
-			return float(pow(1.0f - t, one_minus_t) * pow(t, float(this->t)));
-		}
+		[[nodiscard]] float at(float t) const;
 	};
 
 	template<size_t N>
@@ -89,19 +77,6 @@ namespace renderer {
 
 	private:
 		polynomial_pair pairs_[size()];
-	};
-
-	struct bezier_point {
-		glm::vec2 pos;
-		glm::vec2 vel;
-		float acc;
-		float curvature;
-	};
-
-	template <size_t N>
-	class bezier_line {
-		bezier_point points[N];
-		glm::vec2 jerk;
 	};
 
 	template <size_t N>
@@ -139,7 +114,7 @@ namespace renderer {
 			return bezier_curve<N-1>(derivative_weights);
 		}
 
-		[[nodiscard]] float at(float t, size_t axis) const {
+		[[nodiscard]] float position_at(float t, size_t axis) const {
 			assert(axis < 2);
 			float sum = 0.0f;
 			for (size_t n = 0; n < N+1; n++) {
@@ -148,33 +123,37 @@ namespace renderer {
 			return sum;
 		}
 
-		[[nodiscard]] glm::vec2 at(float t) const {
+		[[nodiscard]] glm::vec2 position_at(float t) const {
 			glm::vec2 p;
-			for (size_t i = 0; i < 2; i++)
-			{
-				p[i] = at(t, i);
+			for (size_t i = 0; i < 2; i++) {
+				p[i] = position_at(t, i);
 			}
 			return p;
 		}
 
-		[[nodiscard]] glm::vec2 tangent_at(float t, bool normalize = true) const
-		{
+		[[nodiscard]] glm::vec2 tangent_at(float t, bool normalize = true) const {
 			glm::vec2 p;
 			bezier_curve<N-1> derivative = this->derivative();
-			p = derivative.at(t);
+			p = derivative.position_at(t);
 			if (normalize)
 				return glm::normalize(p);
 			return p;
 		}
 
-		glm::vec2& operator[](size_t idx)
-		{
+		[[nodiscard]] glm::vec2 normal_at(float t, bool normalize = true) const {
+			const auto tangent = tangent_at(t, normalize);
+			glm::vec2 normal = {-tangent.y, tangent.x};
+			if (normalize)
+				return glm::normalize(normal);
+			return normal;
+		}
+
+		glm::vec2& operator[](size_t idx) {
 			assert(idx < size());
 			return control_points_[idx];
 		}
 
-		glm::vec2 operator[](size_t idx) const
-		{
+		glm::vec2 operator[](size_t idx) const {
 			assert(idx < size());
 			return control_points_[idx];
 		}

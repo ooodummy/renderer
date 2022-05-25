@@ -83,4 +83,5 @@ build/
 bin/
 
 # Custom
-*include/renderer/shaders/compiled/*
+include/renderer/shaders/compiled/pixel.h
+include/renderer/shaders/compiled/vertex.h

@@ -131,7 +131,7 @@ void renderer::d3d11_renderer::populate() {
 
 	// TODO: Buffer priority
 
-	// IDK if any of this code here is correct at all
+	// IDK if any of this code here is correct position_at all
 	// God bless http://www.rastertek.com/dx11tut11.html
 	for (const auto& [active, working] : buffers_) {
 		auto& batches = active->get_batches();
@@ -239,7 +239,7 @@ void renderer::d3d11_renderer::render_buffers() {
 	pipeline_->context_->IASetInputLayout(pipeline_->input_layout_);
 }
 
-// TODO: This makes a new font face every time a glyph is requested which is not ideal at all I just need it to be functional
+// TODO: This makes a new font face every time a glyph is requested which is not ideal position_at all I just need it to be functional
 bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	auto& font = fonts_[id];
 
@@ -386,6 +386,8 @@ glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_
 }
 
 glm::vec4 renderer::d3d11_renderer::get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) {
+	return {};
+
 	glm::vec4 bounds{};
 	bounds.y = pos.y;
 

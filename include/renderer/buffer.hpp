@@ -1,13 +1,19 @@
 #ifndef _RENDERER_BUFFER_HPP_
 #define _RENDERER_BUFFER_HPP_
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include "types/batch.hpp"
 #include "types/font.hpp"
 #include "types/vertex.hpp"
+
+#include "util/bezier.hpp"
 #include "util/polyline.hpp"
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <memory>
 
 // TODO: Things I need to optimize
@@ -30,6 +36,30 @@ namespace renderer {
 		// TODO: Static array impl
 		void add_vertices(const std::vector<vertex>& vertices);
 		void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
+
+		// TODO: Add cap types
+		template <size_t N>
+		void draw_bezier_curve(const bezier_curve<N>& bezier, color_rgba col = COLOR_WHITE, float thickness = 1.0f, cap_type cap = cap_butt, size_t segments = 32) {
+			thickness /= 2.0f;
+
+			const auto step = 1.0f / static_cast<float>(segments);
+
+			// All my homies hate heap allocations >:(
+			std::vector<vertex> vertices;
+
+			for (size_t i = 0; i <= segments; i++) {
+				const auto t = static_cast<float>(i) * step;
+				const auto point = bezier.position_at(t);
+				const auto normal = bezier.normal_at(t);
+
+				const auto angle = atan2f(normal.y, normal.x);
+
+				vertices.emplace_back(glm::rotate(glm::vec2(thickness, 0.0f), angle) + point, col);
+				vertices.emplace_back(glm::rotate(glm::vec2(thickness, 0.0f), angle + static_cast<float>(M_PI)) + point, col);
+			}
+
+			add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		}
 
 		void draw_polyline(std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 

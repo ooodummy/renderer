@@ -66,7 +66,7 @@ renderer::poly_segment::poly_segment(const renderer::line_segment& _center, floa
 std::vector<glm::vec2> renderer::polyline::compute(bool allow_overlap) const {
 	assert(points_);
 
-	// TODO: Kinda don't want to use at() since it does a bounds check and I have no point in checking that
+	// TODO: Kinda don't want to use position_at() since it does a bounds check and I have no point in checking that
 
 	if (points_->empty())
 		return {};

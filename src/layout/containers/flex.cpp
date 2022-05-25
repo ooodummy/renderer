@@ -5,5 +5,4 @@
 // TODO: Convert to flex line approach so all flex containers
 //  do is compute the flex lines which do this logic
 void carbon::flex_container::compute() {
-
 }

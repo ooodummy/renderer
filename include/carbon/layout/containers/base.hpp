@@ -22,7 +22,6 @@ namespace carbon {
 		[[nodiscard]] std::vector<std::unique_ptr<flex_item>>& get_children();
 
 	protected:
-
 		std::vector<std::unique_ptr<flex_item>> children_;
 	};
 }
