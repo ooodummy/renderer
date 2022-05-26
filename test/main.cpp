@@ -225,8 +225,12 @@ void draw_thread() {
 		carbon::buf = dx11->get_working_buffer(id);
 
 		//draw_test_primitives(carbon::buf);
-		draw_test_bezier(carbon::buf);
+		//draw_test_bezier(carbon::buf);
 		//draw_test_flex(carbon::buf);
+
+		carbon::buf->draw_rect_rounded_filled({300.0f, 300.0f, 300.0f, 300.0f}, 0.5f, {255, 255, 255, 100});
+		carbon::buf->draw_circle_filled({450.0f, 450.0f}, 100.0f, {255, 0, 0, 255});
+		//carbon::buf->draw_arc({300.0f, 300.0f}, 3 * M_PI / 2.0f, 7 * M_PI / 2.0f, 100.0f, {255, 0, 0, 150}, 0.0f, 5, true);
 
         dx11->swap_buffers(id);
         //updated_buf.notify();

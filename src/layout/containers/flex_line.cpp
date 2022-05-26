@@ -31,7 +31,7 @@ float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
 float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
 	const auto basis = item->get_basis();
 
-	float base = 0.0f;
+	float base;
 
 	// If its auto we can just let it get clamped to the content size
 	if (!item->get_basis_auto()) {
@@ -43,6 +43,7 @@ float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
 				base = basis * scale;
 				break;
 			default:
+				assert(false);
 				break;
 		}
 	}
