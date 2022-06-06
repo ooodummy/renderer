@@ -169,35 +169,60 @@ void draw_test_flex(renderer::buffer* buf) {
 
 	if (!init) {
 		flex_container->pos = {50.0f, 50.0f};
-		const auto growable1 = flex_container->add_child<carbon::flex_item>();
+		const auto growable1 = flex_container->add_child<carbon::flex_line>();
 		growable1->flex = {1.0f, 0.0f};
+		growable1->min = 50.0f;
+		growable1->max = 150.0f;
+		const auto growable11 = growable1->add_child<carbon::flex_line>();
+		growable11->flow = {carbon::column};
+		growable11->flex = {1.0f, 0.0f};
+		const auto growable111 = growable11->add_child<carbon::flex_line>();
+		growable111->flex = {1.0f, 0.0f};
+		const auto growable112 = growable11->add_child<carbon::flex_line>();
+		growable112->flex = {1.0f, 0.0f};
+		const auto growable2 = flex_container->add_child<carbon::flex_line>();
+		growable2->flex = {1.0f, 0.0f};
+		growable2->min = 50.0f;
+		growable2->max = 200.0f;
 
-		/*container1->padding = {25.0f};
-		const auto container11 = container1->add_child<carbon::flex_item>();
-		container11->flex = {carbon::flex_value(0.25f)};
-		const auto container12 = container1->add_child<carbon::flex_item>();
-		container12->flex = {carbon::flex_value(0.25f)};
-		const auto container13 = container1->add_child<carbon::flex_item>();
-		container13->flex = {carbon::flex_value(0.25f)};
-		const auto container11 = container1->add_child<carbon::flex_line>();
-		container11->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};
-		container11->min = 50.0f;
-		const auto container12 = container1->add_child<carbon::flex_line>();
-		container12->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};
-		const auto container13= container1->add_child<carbon::flex_line>();
-		container13->flex = {1.0f, 1.0f};
-		container13->min = 50.0f;
-		container13->max = 200.0f;
-		const auto container14 = container1->add_child<carbon::flex_line>();
-		container14->flex = {1.0f, 1.0f};
-		container14->min = 50.0f;
-		container14->max = 200.0f;
-		const auto container15= container1->add_child<carbon::flex_line>();
-		container15->flex = {2.0f, 1.0f};
-		container15->min = 50.0f;
-		container15->max = 200.0f;
-		const auto container16 = container1->add_child<carbon::flex_line>();
-		container16->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};*/
+		/*flex_container->flow.set_axis(carbon::column);
+		const auto justify_start_container = flex_container->add_child<carbon::flex_line>();
+		justify_start_container->flow.set_axis(carbon::row);
+		justify_start_container->flow.justify_content = carbon::justify_start;
+		justify_start_container->flex = {1.0f};
+		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.35f}};
+		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		const auto justify_end_container = flex_container->add_child<carbon::flex_line>();
+		justify_end_container->flow.justify_content = carbon::justify_end;
+		justify_end_container->flex = {1.0f};
+		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		const auto justify_center_container = flex_container->add_child<carbon::flex_line>();
+		justify_center_container->flow.justify_content = carbon::justify_center;
+		justify_center_container->flex = {1.0f};
+		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		const auto justify_space_around_container = flex_container->add_child<carbon::flex_line>();
+		justify_space_around_container->flow.justify_content = carbon::justify_space_around;
+		justify_space_around_container->flex = {1.0f};
+		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		const auto justify_space_between_container = flex_container->add_child<carbon::flex_line>();
+		justify_space_between_container->flow.justify_content = carbon::justify_space_between;
+		justify_space_between_container->flex = {1.0f};
+		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		const auto justify_space_evenly_container = flex_container->add_child<carbon::flex_line>();
+		justify_space_evenly_container->flow.justify_content = carbon::justify_space_evenly;
+		justify_space_evenly_container->flex = {1.0f};
+		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};
+		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_width{0.25f}};*/
 
 		init = true;
 	}

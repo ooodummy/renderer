@@ -34,6 +34,7 @@ namespace carbon {
 		~box_model() = default;
 
 		void compute_alignment();
+		[[nodiscard]] glm::vec2 get_thickness() const;
 
 		glm::vec2 pos{};
 		glm::vec2 size{};

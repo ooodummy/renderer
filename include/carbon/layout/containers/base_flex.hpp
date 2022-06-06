@@ -34,14 +34,14 @@ namespace carbon {
 		flex_flow() = default;
 		~flex_flow() = default;
 
-		flex_flow(flex_axis axis); // NOLINT(google-explicit-constructor)
+		flex_flow(flex_direction axis); // NOLINT(google-explicit-constructor)
 		flex_flow(flex_wrap wrap); // NOLINT(google-explicit-constructor)
-		flex_flow(flex_axis axis, flex_wrap wrap);
+		flex_flow(flex_direction axis, flex_wrap wrap);
 
-		void set_axis(carbon::flex_axis axis);
+		void set_axis(carbon::flex_direction axis);
 
-		flex_axis main = axis_row;
-		flex_axis cross = axis_column;
+		flex_direction main = row;
+		flex_direction cross = column;
 
 		flex_wrap wrap = no_wrap;
 
@@ -61,6 +61,8 @@ namespace carbon {
 		[[nodiscard]] float get_main(glm::vec2 src) const;
 		[[nodiscard]] glm::vec2 get_cross(glm::vec4 src) const;
 		[[nodiscard]] float get_cross(glm::vec2 src) const;
+
+		void set_main(glm::vec2& dst, float src) const;
 	};
 }
 

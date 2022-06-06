@@ -31,3 +31,10 @@ void carbon::box_model::compute_alignment() {
 
 	content_bounds = padding.padded_bounds;
 }
+
+glm::vec2 carbon::box_model::get_thickness() const {
+	return {
+		margin.get_spacing_width() + border.get_spacing_width() + padding.get_spacing_width(),
+		margin.get_spacing_height() + border.get_spacing_height() + padding.get_spacing_height()
+	};
+}

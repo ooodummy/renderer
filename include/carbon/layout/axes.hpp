@@ -5,11 +5,11 @@
 #include <glm/vec4.hpp>
 
 namespace carbon {
-	enum flex_axis {
-		axis_row,
-		axis_row_reversed,
-		axis_column,
-		axis_column_reversed
+	enum flex_direction {
+		row,
+		row_reversed,
+		column,
+		column_reversed
 	};
 
 	template <typename T, typename RetT>
@@ -18,14 +18,14 @@ namespace carbon {
 		axes() = default;
 		~axes() = default;
 
-		axes(const T& main, const T& cross, flex_axis main_axis) : main(main), cross(cross), axis(main_axis) {}
+		axes(const T& main, const T& cross, flex_direction main_axis) : main(main), cross(cross), axis(main_axis) {}
 
 		axes operator+(const axes& o) const {
 			return axes(main + o.main, cross - o.main, axis);
 		}
 
 		explicit operator RetT() const {
-			if (axis == axis_row || axis == axis_row_reversed) {
+			if (axis == row || axis == row_reversed) {
 				return RetT(main, cross);
 			}
 			else {
@@ -36,7 +36,7 @@ namespace carbon {
 		T main;
 		T cross;
 
-		flex_axis axis;
+		flex_direction axis;
 	};
 
 	using axes_vec4 = axes<glm::vec2, glm::vec4>;
@@ -48,8 +48,8 @@ namespace carbon {
 	// TODO: Why is this here? Why does GLM not have a sum function?
 	[[nodiscard]] float sum(glm::vec2 src);
 
-	[[nodiscard]] glm::vec2 get_axis(flex_axis axis, glm::vec4 src);
-	[[nodiscard]] float get_axis(flex_axis axis, glm::vec2 src);
+	[[nodiscard]] glm::vec2 get_axis(flex_direction axis, glm::vec4 src);
+	[[nodiscard]] float get_axis(flex_direction axis, glm::vec2 src);
 }
 
 #endif

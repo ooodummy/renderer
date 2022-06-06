@@ -7,7 +7,8 @@
 void carbon::flex_line::draw() {
 	const glm::vec2 center = { bounds.x + (bounds.z / 2.0f), bounds.y + bounds.w / 2.0f };
 
-	buf->draw_rect(margin.padded_bounds, COLOR_RED);
+	//buf->draw_rect(bounds, COLOR_RED);
+	buf->draw_rect(margin.padded_bounds, COLOR_PURPLE);
 	buf->draw_rect(border.padded_bounds, COLOR_GREEN);
 	buf->draw_rect(padding.padded_bounds, COLOR_YELLOW);
 	buf->draw_rect(content_bounds, COLOR_BLUE);
@@ -20,12 +21,12 @@ float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
 }
 
 float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
-	const auto basis = item->flex.basis.value;
+	const auto basis = item->flex.basis.width.value;
 
 	float base;
 
-	if (!item->flex.basis_auto) {
-		switch (item->flex.basis.unit) {
+	if (!item->flex.basis.minimum) {
+		switch (item->flex.basis.width.unit) {
 			case unit_pixel:
 				base = basis;
 				break;
@@ -38,7 +39,7 @@ float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
 		}
 	}
 
-	return std::max(base, get_main(item->flex.basis_content));
+	return std::max(base, get_main(item->flex.basis.content));
 }
 
 void carbon::flex_line::measure() {
@@ -160,7 +161,7 @@ void carbon::flex_line::position() {
 
 	free_space = content_size.main - final_space;
 
-	const auto reversed = flow.main == axis_row_reversed || flow.main == axis_column_reversed;
+	const auto reversed = flow.main == row_reversed || flow.main == column_reversed;
 
 	if (reversed) {
 		content_pos.main += content_size.main;
@@ -195,6 +196,11 @@ void carbon::flex_line::position() {
 }
 
 void carbon::flex_line::compute() {
+	measure_content_min(flow.main);
+
+	auto min_size = std::max(min, content_min_);
+	set_main(size, std::clamp(get_main(size), min_size, max));
+
 	compute_alignment();
 
 	const auto content_axes = get_axes(content_bounds);
