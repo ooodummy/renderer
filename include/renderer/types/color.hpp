@@ -22,7 +22,7 @@ namespace renderer {
 	public:
 		color_hsv(float h = 0.0f, float s = 1.0f, float v = 1.0f);// NOLINT(google-explicit-constructor)
 
-		[[nodiscard]] operator color_rgba() const;
+		[[nodiscard]] explicit operator color_rgba() const;
 
 		[[nodiscard]] color_rgba get_rgb() const;
 		[[nodiscard]] color_hsv ease(const color_hsv& o, float p, renderer::ease_type type = renderer::linear) const;

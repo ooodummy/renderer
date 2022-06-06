@@ -16,7 +16,9 @@
 // https://pugixml.org/
 
 namespace carbon {
-	std::unique_ptr<panel> window_panel;
+	extern panel window_panel;
+
+	void init();
 }
 
 #endif

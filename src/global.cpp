@@ -2,5 +2,5 @@
 
 namespace carbon {
 	renderer::buffer* buf;
-	style_sheet style;
+	style_sheet theme;
 }// namespace carbon

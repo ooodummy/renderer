@@ -6,7 +6,7 @@
 
 namespace carbon {
 	extern renderer::buffer* buf;
-	extern style_sheet style;
+	extern style_sheet theme;
 }// namespace carbon
 
 #endif

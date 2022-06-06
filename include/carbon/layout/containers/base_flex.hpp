@@ -57,10 +57,6 @@ namespace carbon {
 		[[nodiscard]] float get_main(glm::vec2 src) const;
 		[[nodiscard]] glm::vec2 get_cross(glm::vec4 src) const;
 		[[nodiscard]] float get_cross(glm::vec2 src) const;
-
-		// TODO: Will I ever use this? Maybe.
-		axes_vec2 start_;
-		axes_vec2 end_;
 	};
 }
 

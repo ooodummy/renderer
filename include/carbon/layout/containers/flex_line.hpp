@@ -18,23 +18,32 @@ namespace carbon {
 		// Get the base size of an item using its flex basis
 		float get_base_size(flex_item* item, float scale);
 
+		// Flexibility
 		void measure();
 		void arrange();
 		bool calculate_flex();
 		float resolve_flexible_length(flex_item* item) const;
 		void position();
 
-		axes_vec4 content_axes;
+		axes_vec2 content_pos;
+		axes_vec2 content_size;
 
-		float grow_total = 0.0f;
-		float shrink_total = 0.0f;
+		float grow_total;
+		float shrink_total;
 
-		float total_shrink_scaled = 0.0f;
-		float hypothetical_space = 0.0f;
-		float free_space = 0.0f;
+		float shrink_scaled_total;
+		float hypothetical_space;
+		float free_space;
 
-		float grow_factor = 0.0f;
-		float shrink_factor = 0.0f;
+		float grow_factor;
+		float shrink_factor;
+
+		// Alignment
+		void setup_justify_content();
+		void increment_justify_content(float item_size);
+
+		float final_space;
+		float justify_content_spacing;
 	};
 
 }

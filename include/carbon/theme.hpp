@@ -5,11 +5,13 @@
 
 namespace carbon {
 	struct style_sheet {
-		renderer::color_rgba body = { 26, 26, 28 };
-		renderer::color_rgba primary = { 233, 109, 109 };
-		renderer::color_rgba title_bar = { 36, 34, 37 };
-		renderer::color_rgba border = { 61, 59, 61 };
+		renderer::color_rgba body;
+		renderer::color_rgba primary;
+		renderer::color_rgba title_bar;
+		renderer::color_rgba border;
 	};
+
+	void init_default_theme();
 }// namespace carbon
 
 #endif

@@ -46,7 +46,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 			rainbow_timer.reset();
 
 		// TODO: Should I macro start and end hsv?
-		rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000);
+		rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000).get_rgb();
 	}
 
 	/*for (uint8_t i = 0; i < 255; i++) {
@@ -165,41 +165,81 @@ void draw_test_bezier(renderer::buffer* buf) {
 
 void draw_test_flex(renderer::buffer* buf) {
 	static bool init = false;
-	static auto container1 = std::make_unique<carbon::flex_line>();
+	static auto justify_content_demo_window = std::make_unique<carbon::flex_line>();
 
 	if (!init) {
-		container1->pos = {50.0f, 50.0f};
-		//container1->padding = {25.0f};
+		justify_content_demo_window->pos = {50.0f, 50.0f};
+		justify_content_demo_window->flow.set_axis(carbon::axis_column);
+		const auto justify_start_container = justify_content_demo_window->add_child<carbon::flex_line>();
+		justify_start_container->flow.justify_content = carbon::justify_start;
+		justify_start_container->flex = {1.0f};
+		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		const auto justify_end_container = justify_content_demo_window->add_child<carbon::flex_line>();
+		justify_end_container->flow.justify_content = carbon::justify_end;
+		justify_end_container->flex = {1.0f};
+		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		const auto justify_center_container = justify_content_demo_window->add_child<carbon::flex_line>();
+		justify_center_container->flow.justify_content = carbon::justify_center;
+		justify_center_container->flex = {1.0f};
+		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		const auto justify_space_around_container = justify_content_demo_window->add_child<carbon::flex_line>();
+		justify_space_around_container->flow.justify_content = carbon::justify_space_around;
+		justify_space_around_container->flex = {1.0f};
+		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		const auto justify_space_between_container = justify_content_demo_window->add_child<carbon::flex_line>();
+		justify_space_between_container->flow.justify_content = carbon::justify_space_between;
+		justify_space_between_container->flex = {1.0f};
+		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		const auto justify_space_evenly_container = justify_content_demo_window->add_child<carbon::flex_line>();
+		justify_space_evenly_container->flow.justify_content = carbon::justify_space_evenly;
+		justify_space_evenly_container->flex = {1.0f};
+		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+
+		/*container1->padding = {25.0f};
 		const auto container11 = container1->add_child<carbon::flex_item>();
-		container11->flex = {1.0f, 0.0f};
+		container11->flex = {carbon::flex_value(0.25f)};
 		const auto container12 = container1->add_child<carbon::flex_item>();
-		container12->flex = {1.0f, 0.0f};
-		/*const auto container11 = container1->add_child<carbon::flex_line>();
+		container12->flex = {carbon::flex_value(0.25f)};
+		const auto container13 = container1->add_child<carbon::flex_item>();
+		container13->flex = {carbon::flex_value(0.25f)};
+		const auto container11 = container1->add_child<carbon::flex_line>();
 		container11->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};
-		container11->min_width = 50.0f;
+		container11->min = 50.0f;
 		const auto container12 = container1->add_child<carbon::flex_line>();
 		container12->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};
 		const auto container13= container1->add_child<carbon::flex_line>();
 		container13->flex = {1.0f, 1.0f};
-		container13->min_width = 50.0f;
-		container13->max_width = 200.0f;
+		container13->min = 50.0f;
+		container13->max = 200.0f;
 		const auto container14 = container1->add_child<carbon::flex_line>();
 		container14->flex = {1.0f, 1.0f};
-		container14->min_width = 50.0f;
-		container14->max_width = 200.0f;
+		container14->min = 50.0f;
+		container14->max = 200.0f;
 		const auto container15= container1->add_child<carbon::flex_line>();
 		container15->flex = {2.0f, 1.0f};
-		container15->min_width = 50.0f;
-		container15->max_width = 200.0f;
+		container15->min = 50.0f;
+		container15->max = 200.0f;
 		const auto container16 = container1->add_child<carbon::flex_line>();
 		container16->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};*/
 
 		init = true;
 	}
 
-	container1->size = {carbon::mouse_pos.x - container1->pos.x, carbon::mouse_pos.y - container1->pos.y};
-	container1->compute();
-	container1->draw_contents();
+	justify_content_demo_window->size = {carbon::mouse_pos.x - justify_content_demo_window->pos.x, carbon::mouse_pos.y - justify_content_demo_window->pos.y};
+	justify_content_demo_window->compute();
+	justify_content_demo_window->draw_contents();
 }
 
 void draw_thread() {
@@ -222,7 +262,7 @@ void draw_thread() {
 
 int main() {
     window = std::make_unique<renderer::win32_window>();
-    window->set_title("DX11 Renderer");
+    window->set_title("D3D11 Renderer");
     window->set_size({1280, 720});
 
     // Center window position
@@ -265,6 +305,8 @@ int main() {
     dx11->set_vsync(false);
 
     segoe = dx11->register_font({"Segoe UI", 12, FW_THIN, true});
+
+	carbon::init();
 
     std::thread draw(draw_thread);
 

@@ -79,8 +79,8 @@ namespace carbon {
 		flex_item* parent = nullptr;
 		flex_attributes flex;
 		bool visible = true; // TODO: Check this when computing and drawing
-		float min_width = 0.0f;
-		float max_width = FLT_MAX;
+		float min = 0.0f;
+		float max = FLT_MAX;
 
 	protected:
 		// Variables used in flex_line::compute

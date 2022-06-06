@@ -14,7 +14,7 @@ void carbon::flex_line::draw() {
 }
 
 float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
-	dst = std::clamp(src, item->min_width, item->max_width);
+	dst = std::clamp(src, item->min, item->max);
 
 	return dst - src;
 }
@@ -42,8 +42,6 @@ float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
 }
 
 void carbon::flex_line::measure() {
-	const auto content_size = get_size(content_axes);
-
 	grow_total = 0.0f;
 	shrink_total = 0.0f;
 	hypothetical_space = 0.0f;
@@ -84,14 +82,14 @@ void carbon::flex_line::arrange() {
 		grow_factor = free_space / grow_total;
 		shrink_factor = free_space / shrink_total;
 
-		total_shrink_scaled = 0.0f;
+		shrink_scaled_total = 0.0f;
 
 		for (auto& child : children_) {
 			const auto shrink = child->flex.shrink;
 
 			if (shrink > 0.0f) {
 				child->shrink_scaled = child->hypothetical_size_ * free_space - child->flex.shrink;
-				total_shrink_scaled += child->shrink_scaled;
+				shrink_scaled_total += child->shrink_scaled;
 			}
 		}
 
@@ -148,19 +146,29 @@ float carbon::flex_line::resolve_flexible_length(flex_item* item) const {
 			return free_space * shrink_factor;
 		}
 		else {
-			item->shrink_ratio = item->shrink_scaled / total_shrink_scaled;
+			item->shrink_ratio = item->shrink_scaled / shrink_scaled_total;
 			return free_space * item->shrink_ratio;
 		}
 	}
 }
 
 void carbon::flex_line::position() {
-	auto content_pos = get_pos(content_axes);
+	if (children_.empty())
+		return;
+
+	final_space = 0.0f;
+	for (const auto& child : children_) {
+		final_space += child->final_size;
+	}
+
+	free_space = content_size.main - final_space;
+
+	setup_justify_content();
 
 	for (auto& child : children_) {
 		const axes_vec2 child_size = {
 			child->final_size,
-			content_axes.cross.y,
+			content_size.cross,
 			flow.main
 		};
 
@@ -169,14 +177,16 @@ void carbon::flex_line::position() {
 
 		child->compute();
 
-		content_pos.main += child_size.main;
+		increment_justify_content(child->final_size);
 	}
 }
 
 void carbon::flex_line::compute() {
 	compute_alignment();
 
-	content_axes = get_axes(content_bounds);
+	const auto content_axes = get_axes(content_bounds);
+	content_pos = get_pos(content_axes);
+	content_size = get_size(content_axes);
 
 	// TODO: Get minimum content
 
@@ -191,4 +201,51 @@ bool carbon::flex_line::can_use_cached() {
 	// when computing we can mark them as not being dirty
 
 	return false;
+}
+
+void carbon::flex_line::setup_justify_content() {
+	justify_content_spacing = 0.0f;
+
+	switch (flow.justify_content) {
+		case justify_start:
+			break;
+		case justify_end:
+			content_pos.main += content_size.main - children_[0]->final_size;
+			break;
+		case justify_center:
+			content_pos.main += free_space / 2.0f;
+			break;
+		case justify_space_around:
+			justify_content_spacing = free_space / static_cast<float>(children_.size());
+			content_pos.main += justify_content_spacing / 2.0f;
+			break;
+		case justify_space_between:
+			justify_content_spacing = free_space / static_cast<float>(children_.size() - 1);
+			break;
+		case justify_space_evenly:
+			justify_content_spacing = free_space / static_cast<float>(children_.size() + 1);
+			content_pos.main += justify_content_spacing;
+			break;
+		case justify_stretch:
+			break;
+	}
+}
+
+void carbon::flex_line::increment_justify_content(float item_size) {
+	switch (flow.justify_content) {
+		case justify_start:
+		case justify_center:
+			content_pos.main += item_size;
+			break;
+		case justify_end:
+			content_pos.main -= item_size;
+			break;
+		case justify_space_around:
+		case justify_space_between:
+		case justify_space_evenly:
+			content_pos.main += item_size + justify_content_spacing;
+			break;
+		case justify_stretch:
+			break;
+	}
 }
