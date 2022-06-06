@@ -1,7 +1,7 @@
 #ifndef _RENDERER_UTIL_POLYLINE_HPP_
 #define _RENDERER_UTIL_POLYLINE_HPP_
 
-#include "../types/color.hpp"
+#include "renderer/types/color.hpp"
 
 #include <glm/glm.hpp>
 #include <optional>

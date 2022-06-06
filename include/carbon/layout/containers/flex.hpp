@@ -7,6 +7,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Basic_Concepts_of_Flexbox
 // https://www.w3.org/TR/css-flexbox-1
 namespace carbon {
+	// TODO: Line wrapping and splitting is not setup at all currently so I'm just using flex_line which does not have wrapping
 	class flex_container : public base_flex_container {
 	public:
 		void compute() override;

@@ -3,6 +3,7 @@
 
 #include "../util/easing.hpp"
 
+#define _USE_MATH_DEFINES
 #include <DirectXMath.h>
 
 #define COLOR_BLACK renderer::color_rgba(0, 0, 0)

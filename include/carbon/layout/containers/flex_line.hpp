@@ -24,7 +24,7 @@ namespace carbon {
 		float resolve_flexible_length(flex_item* item) const;
 		void position();
 
-		axes_vec2 available_space;
+		axes_vec4 content_axes;
 
 		float grow_total = 0.0f;
 		float shrink_total = 0.0f;

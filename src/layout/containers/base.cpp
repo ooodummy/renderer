@@ -9,7 +9,7 @@ void carbon::base_container::draw_contents() { // NOLINT(misc-no-recursion)
 }
 
 carbon::flex_item* carbon::base_container::add_child(std::unique_ptr<flex_item> item) {
-	item->set_parent(this);
+	item->parent = this;
 	children_.push_back(std::move(item));
 	return children_.back().get();
 }

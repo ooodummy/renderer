@@ -1,12 +1,12 @@
 #ifndef _RENDERER_BUFFER_HPP_
 #define _RENDERER_BUFFER_HPP_
 
-#define _USE_MATH_DEFINES
 #include "types/batch.hpp"
 #include "types/font.hpp"
 #include "types/vertex.hpp"
-#include "util/bezier.hpp"
-#include "util/polyline.hpp"
+
+#include "renderer/geometry/bezier.hpp"
+#include "renderer/geometry/polyline.hpp"
 
 #include <cmath>
 #include <glm/gtx/rotate_vector.hpp>
@@ -14,24 +14,21 @@
 #include <glm/vec4.hpp>
 #include <memory>
 
-// TODO: Things I need to optimize
-//  SSO for vertices that are being added so I do not heap allocate a vector >:(
-//  Generate circle metadata just to avoid some trig needing to be done all the time
-//  A bunch more drawing functions for primitives
-//  Push/pop font for drawing text and just set the index to something like -1 or max when undefined
+// TODO:
+//  Generate circle points and avoid constant sin and cos calls
+//  Push/pop font for drawing text and index X be undefined
 
 namespace renderer {
 	class d3d11_renderer;
 
 	class buffer {
 	public:
-		explicit buffer(d3d11_renderer* renderer) :
-			renderer_(renderer) {}
+		explicit buffer(d3d11_renderer* renderer) : renderer_(renderer) {}
 		~buffer() = default;
 
 		void clear();
 
-		// TODO: I really don't want to just repeat these functions for static arrays but think that it is needed :(
+		// TODO: Small buffer optimization for vertex vectors
 		void add_vertices(const std::vector<vertex>& vertices);
 		void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
 
@@ -78,6 +75,7 @@ namespace renderer {
 		void draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
 		void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = text_align_left, text_align v_align = text_align_bottom);
+		void draw_text(glm::vec2 pos, const std::string& text, color_rgba col = COLOR_WHITE, text_align h_align = text_align_left, text_align v_align = text_align_bottom);
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();
@@ -87,6 +85,9 @@ namespace renderer {
 
 		void push_blur(float strength);
 		void pop_blur();
+
+		void push_font(size_t font_id);
+		void pop_font();
 
 		const std::vector<vertex>& get_vertices();
 		const std::vector<batch>& get_batches();
@@ -100,16 +101,20 @@ namespace renderer {
 		// Used when active command has changed because of a special effect being used
 		bool split_batch_ = false;
 
-		// Commands that will then be used when
-		std::vector<std::tuple<DirectX::XMFLOAT4, bool, bool>> scissor_commands_;
-		std::vector<DirectX::XMFLOAT4> key_commands_;
-		std::vector<float> blur_commands_;
+		// Commands that will then be used by just changing active
+		// TODO: What other container type works better for this? It's 2am rn... I think these should be some queue or stack though.
+		std::vector<std::tuple<DirectX::XMFLOAT4, bool, bool>> scissor_list_;
+		std::vector<DirectX::XMFLOAT4> key_list_;
+		std::vector<float> blur_list_;
+		std::vector<size_t> font_list_;
 
 		void update_scissor();
 		void update_key();
 		void update_blur();
+		void update_font();
 
 		command_buffer active_command{};
+		size_t active_font = 0;
 
 		static std::vector<vertex> create_arc(const glm::vec2& pos, float start, float length, float radius, color_rgba col, float thickness, size_t segments = 16, bool triangle_fan = false);
 

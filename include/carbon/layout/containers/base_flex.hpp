@@ -6,31 +6,34 @@
 namespace carbon {
 	enum flex_wrap_mode {
 		no_wrap,
-		wrap,
+		wrap,			// Wrap to new line when exceeds content main
 		wrap_reverse
 	};
 
-	// Alignment within flex lines on the cross axis
+	// Alignment on the cross axis
 	enum flex_align {
 		align_start,
 		align_end,
 		align_center,
-		align_stretch,
-		align_baseline
+		align_stretch,	// Fill cross axis
+		align_baseline	// Aligns item baselines TODO: Calculate baselines
 	};
 
-	// Spacing on the main axis
+	// Alignment on the main axis
 	enum flex_justify_content {
 		justify_start,
 		justify_end,
 		justify_center,
-		justify_space_around,
-		justify_space_between,
-		justify_space_evenly
+		justify_space_around,	// Items have a half-size space on either end
+		justify_space_between,	// The first item is flush with the start, the last is flush with the end
+		justify_space_evenly,	// Items have equal space around them
+		justify_stretch			// While respecting min and max constraints stretch items to fill main axis
 	};
 
 	struct flex_flow {
 		explicit flex_flow(flex_axis axis = axis_row, flex_direction direction = direction_normal, flex_wrap_mode wrap = no_wrap);
+
+		void set_axis(carbon::flex_axis axis);
 
 		flex_axis main;
 		flex_axis cross;
@@ -44,21 +47,7 @@ namespace carbon {
 
 	class base_flex_container : public base_container {
 	public:
-		[[nodiscard]] flex_axis get_main() const;
-		[[nodiscard]] flex_axis get_cross() const;
-		void set_axis(flex_axis axis);
-
-		[[nodiscard]] flex_direction get_direction() const;
-		void set_direction(flex_direction direction);
-
-		[[nodiscard]] flex_wrap_mode get_wrap() const;
-		void set_wrap(flex_wrap_mode wrap);
-
-		[[nodiscard]] flex_align get_align() const;
-		void set_align(flex_align align);
-
-		[[nodiscard]] flex_justify_content get_justify_content() const;
-		void set_justify_content(flex_justify_content justify_content);
+		flex_flow flow;
 
 	protected:
 		[[nodiscard]] axes_vec4 get_axes(glm::vec4 src) const;
@@ -69,10 +58,9 @@ namespace carbon {
 		[[nodiscard]] glm::vec2 get_cross(glm::vec4 src) const;
 		[[nodiscard]] float get_cross(glm::vec2 src) const;
 
-		flex_flow flow_;
-
-		axes_vec2 start;
-		axes_vec2 end;
+		// TODO: Will I ever use this? Maybe.
+		axes_vec2 start_;
+		axes_vec2 end_;
 	};
 }
 

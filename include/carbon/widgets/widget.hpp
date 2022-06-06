@@ -6,6 +6,8 @@
 
 #include "../global.hpp"
 
+// https://developer.android.com/guide/topics/appwidgets/overview#types
+
 namespace carbon {
 	class base_widget {
 	public:
@@ -16,6 +18,7 @@ namespace carbon {
 		std::string label_;
 	};
 
+	// Base widget class for buttons, checkboxes, text inputs, etc
 	class widget_item : public base_widget, public flex_item {
 	public:
 	};
@@ -24,6 +27,7 @@ namespace carbon {
 	public:
 	};
 
+	// Base widget class for windows, pages, groupboxes, pop outs, etc.
 	class widget_flex_container : public base_widget, public flex_line {
 	public:
 	};

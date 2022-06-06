@@ -2,7 +2,7 @@
 
 #include "renderer/util/easing.hpp"
 
-#include <algorithm>
+#include <xutility>
 
 renderer::color_hsv::color_hsv(float h, float s, float v) :
 	h(h),

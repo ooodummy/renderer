@@ -1,4 +1,4 @@
-#include "carbon/layout/axis.hpp"
+#include "carbon/layout/axes.hpp"
 
 float carbon::sum(glm::vec2 src) {
 	return src.x + src.y;
@@ -20,4 +20,12 @@ float carbon::get_axis(carbon::flex_axis axis, glm::vec2 src) {
 	else {
 		return src.y;
 	}
+}
+
+carbon::axes_vec2 carbon::get_size(const carbon::axes_vec4& bounds) {
+	return { bounds.main.y, bounds.cross.y, bounds.axis };
+}
+
+carbon::axes_vec2 carbon::get_pos(const carbon::axes_vec4& bounds) {
+	return { bounds.main.x, bounds.cross.x, bounds.axis };
 }

@@ -2,7 +2,7 @@
 
 #include "carbon/layout/containers/flex_line.hpp"
 
-// TODO: Convert to flex line approach so all flex containers
-//  do is compute the flex lines which do this logic
+// TODO: Convert to flex_line approach so all flex_containers
+//  do is compute the flex_lines which do the actual measuring and stuff
 void carbon::flex_container::compute() {
 }

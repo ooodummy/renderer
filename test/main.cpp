@@ -168,50 +168,36 @@ void draw_test_flex(renderer::buffer* buf) {
 	static auto container1 = std::make_unique<carbon::flex_line>();
 
 	if (!init) {
-		container1->set_pos({50.0f, 50.0f});
+		container1->pos = {50.0f, 50.0f};
+		//container1->padding = {25.0f};
+		const auto container11 = container1->add_child<carbon::flex_item>();
+		container11->flex = {1.0f, 0.0f};
+		const auto container12 = container1->add_child<carbon::flex_item>();
+		container12->flex = {1.0f, 0.0f};
 		/*const auto container11 = container1->add_child<carbon::flex_line>();
-		container11->set_basis(100.0f);
-		container11->set_basis_unit(carbon::unit_pixel);
-		container11->set_grow(1.0f);
+		container11->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};
+		container11->min_width = 50.0f;
 		const auto container12 = container1->add_child<carbon::flex_line>();
-		container12->set_basis(100.0f);
-		container12->set_basis_unit(carbon::unit_pixel);
-		container12->set_grow(2.0f);*/
-
-		const auto container11 = container1->add_child<carbon::flex_line>();
-		container11->set_basis(100.0f);
-		container11->set_basis_unit(carbon::unit_pixel);
-		container11->set_shrink(1.0f);
-		container11->set_min_width(50.0f);
-		const auto container12 = container1->add_child<carbon::flex_line>();
-		container12->set_shrink(1.0f);
-		container12->set_basis(100.0f);
-		container12->set_basis_unit(carbon::unit_pixel);
+		container12->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};
 		const auto container13= container1->add_child<carbon::flex_line>();
-		container13->set_shrink(1.0f);
-		container13->set_grow(1.0f);
-		container13->set_min_width(50.0f);
-		container13->set_max_width(200.0f);
+		container13->flex = {1.0f, 1.0f};
+		container13->min_width = 50.0f;
+		container13->max_width = 200.0f;
 		const auto container14 = container1->add_child<carbon::flex_line>();
-		container14->set_shrink(1.0f);
-		container14->set_grow(1.0f);
-		container14->set_min_width(50.0f);
-		container14->set_max_width(200.0f);
+		container14->flex = {1.0f, 1.0f};
+		container14->min_width = 50.0f;
+		container14->max_width = 200.0f;
 		const auto container15= container1->add_child<carbon::flex_line>();
-		container15->set_shrink(1.0f);
-		container15->set_grow(2.0f);
-		container15->set_min_width(50.0f);
-		container15->set_max_width(200.0f);
+		container15->flex = {2.0f, 1.0f};
+		container15->min_width = 50.0f;
+		container15->max_width = 200.0f;
 		const auto container16 = container1->add_child<carbon::flex_line>();
-		container16->set_shrink(1.0f);
-		container16->set_basis(100.0f);
-		container16->set_basis_unit(carbon::unit_pixel);
+		container16->flex = {0.0f, 1.0f, {100.0f, carbon::unit_pixel}};*/
 
 		init = true;
 	}
 
-	const auto pos = container1->get_pos();
-	container1->set_size({carbon::mouse_pos.x - pos.x, carbon::mouse_pos.y - pos.y});
+	container1->size = {carbon::mouse_pos.x - container1->pos.x, carbon::mouse_pos.y - container1->pos.y};
 	container1->compute();
 	container1->draw_contents();
 }
@@ -222,15 +208,12 @@ void draw_thread() {
     while (!close_requested) {
 		//updated_draw.wait();
 
-		carbon::buf = dx11->get_working_buffer(id);
+		const auto buf = dx11->get_working_buffer(id);
+		carbon::buf = buf;
 
-		//draw_test_primitives(carbon::buf);
-		//draw_test_bezier(carbon::buf);
-		//draw_test_flex(carbon::buf);
-
-		carbon::buf->draw_rect_rounded_filled({300.0f, 300.0f, 300.0f, 300.0f}, 0.5f, {255, 255, 255, 100});
-		carbon::buf->draw_circle_filled({450.0f, 450.0f}, 100.0f, {255, 0, 0, 255});
-		//carbon::buf->draw_arc({300.0f, 300.0f}, 3 * M_PI / 2.0f, 7 * M_PI / 2.0f, 100.0f, {255, 0, 0, 150}, 0.0f, 5, true);
+		//draw_test_primitives(buf);
+		//draw_test_bezier(buf);
+		draw_test_flex(buf);
 
         dx11->swap_buffers(id);
         //updated_buf.notify();

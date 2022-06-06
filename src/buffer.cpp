@@ -12,7 +12,7 @@ void renderer::buffer::clear() {
 	vertices_ = {};
 	batches_ = {};
 
-	scissor_commands_ = {};
+	scissor_list_ = {};
 }
 
 const std::vector<renderer::vertex>& renderer::buffer::get_vertices() {
@@ -120,7 +120,7 @@ std::vector<renderer::vertex> renderer::buffer::create_arc(const glm::vec2& pos,
 	thickness /= 2.0f;
 
 	std::vector<vertex> vertices;
-	vertices.reserve(segments * 2);
+	vertices.reserve(segments * 2 + 2);
 
 	const auto step = length / static_cast<float>(segments);
 	float angle = start;
@@ -288,8 +288,12 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, size_t 
 	}
 }
 
+void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, renderer::color_rgba col, renderer::text_align h_align, renderer::text_align v_align) {
+	draw_text(pos, text, active_font, col, h_align, v_align);
+}
+
 void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circle) {
-	scissor_commands_.emplace_back(
+	scissor_list_.emplace_back(
 		DirectX::XMFLOAT4{
 		bounds.x, bounds.y, bounds.z, bounds.w },
 		in,
@@ -298,19 +302,19 @@ void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circl
 }
 
 void renderer::buffer::pop_scissor() {
-	assert(!scissor_commands_.empty());
-	scissor_commands_.pop_back();
+	assert(!scissor_list_.empty());
+	scissor_list_.pop_back();
 	update_scissor();
 }
 
 void renderer::buffer::update_scissor() {
 	split_batch_ = true;
 
-	if (scissor_commands_.empty()) {
+	if (scissor_list_.empty()) {
 		active_command.scissor_enable = false;
 	}
 	else {
-		const auto& new_command = scissor_commands_.back();
+		const auto& new_command = scissor_list_.back();
 
 		active_command.scissor_enable = true;
 		active_command.scissor_bounds = std::get<0>(new_command);
@@ -320,46 +324,66 @@ void renderer::buffer::update_scissor() {
 }
 
 void renderer::buffer::push_key(color_rgba color) {
-	key_commands_.push_back(color);
+	key_list_.push_back(color);
 	update_key();
 }
 
 void renderer::buffer::pop_key() {
-	assert(!key_commands_.empty());
-	key_commands_.pop_back();
+	assert(!key_list_.empty());
+	key_list_.pop_back();
 	update_key();
 }
 
 void renderer::buffer::update_key() {
 	split_batch_ = true;
 
-	if (key_commands_.empty()) {
+	if (key_list_.empty()) {
 		active_command.key_enable = false;
 	}
 	else {
 		active_command.key_enable = true;
-		active_command.key_color = key_commands_.back();
+		active_command.key_color = key_list_.back();
 	}
 }
 
 void renderer::buffer::push_blur(float strength) {
-	blur_commands_.emplace_back(strength);
+	blur_list_.emplace_back(strength);
 	update_blur();
 }
 
 void renderer::buffer::pop_blur() {
-	assert(!blur_commands_.empty());
-	blur_commands_.pop_back();
+	assert(!blur_list_.empty());
+	blur_list_.pop_back();
 	update_blur();
+}
+
+void renderer::buffer::push_font(size_t font_id) {
+	font_list_.emplace_back(font_id);
+	update_font();
+}
+
+void renderer::buffer::pop_font() {
+	assert(!font_list_.empty());
+	font_list_.pop_back();
+	update_font();
 }
 
 void renderer::buffer::update_blur() {
 	split_batch_ = true;
 
-	if (blur_commands_.empty()) {
+	if (blur_list_.empty()) {
 		active_command.blur_strength = 0.0f;
 	}
 	else {
-		active_command.blur_strength = blur_commands_.back();
+		active_command.blur_strength = blur_list_.back();
+	}
+}
+
+void renderer::buffer::update_font() {
+	if (font_list_.empty()) {
+		active_font = 0;
+	}
+	else {
+		active_font = font_list_.back();
 	}
 }

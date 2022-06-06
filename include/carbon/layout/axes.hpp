@@ -1,5 +1,5 @@
-#ifndef _CARBON_LAYOUT_AXIS_HPP_
-#define _CARBON_LAYOUT_AXIS_HPP_
+#ifndef _CARBON_LAYOUT_AXES_HPP_
+#define _CARBON_LAYOUT_AXES_HPP_
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
@@ -11,7 +11,7 @@ namespace carbon {
 	};
 
 	template <typename T, typename RetT>
-	class axes {
+	class axes { // NOLINT(cppcoreguidelines-pro-type-member-init)
 	public:
 		axes() = default;
 		~axes() = default;
@@ -22,7 +22,7 @@ namespace carbon {
 			return axes(main + o.main, cross - o.main, axis);
 		}
 
-		operator RetT() const { // NOLINT(google-explicit-constructor)
+		explicit operator RetT() const {
 			if (axis == axis_row) {
 				return RetT(main, cross);
 			}
@@ -31,22 +31,19 @@ namespace carbon {
 			}
 		}
 
-		void  set_axis(flex_axis _axis) {
-			axis = _axis;
-		}
-
 		T main;
 		T cross;
 
-	private:
 		flex_axis axis;
 	};
 
 	using axes_vec4 = axes<glm::vec2, glm::vec4>;
 	using axes_vec2 = axes<float, glm::vec2>;
 
-	// Idc to make another file for this but this needs to change
-	// why can't glm just have a vector sum function?
+	axes_vec2 get_size(const axes_vec4& bounds);
+	axes_vec2 get_pos(const axes_vec4& bounds);
+
+	// TODO: Why is this here? Why does GLM not have a sum function?
 	[[nodiscard]] float sum(glm::vec2 src);
 
 	[[nodiscard]] glm::vec2 get_axis(flex_axis axis, glm::vec4 src);

@@ -15,22 +15,15 @@ namespace carbon {
 	public:
 		void compute() override;
 
-		void set_grid_size(glm::i16vec2 grid);
+		glm::i16vec2 size = { 0, 0 };
 
-		void set_row_direction(flex_direction direction);
-		void set_column_direction(flex_direction direction);
+		flex_direction row_direction = direction_normal;
+		flex_direction column_direction = direction_normal;
 
-		void set_resize(grid_resize resize);
+		grid_resize resize = grid_resize_none;
 
 	protected:
-		glm::i16vec2 get_grid_start();
-
-		glm::i16vec2 grid_size_ = { 0, 0 };
-
-		flex_direction row_direction_ = direction_normal;
-		flex_direction column_direction_ = direction_normal;
-
-		grid_resize resize_ = grid_resize_none;
+		glm::i16vec2 get_grid_start() const;
 	};
 }
 

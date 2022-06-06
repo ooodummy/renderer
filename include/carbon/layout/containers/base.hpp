@@ -1,7 +1,11 @@
 #ifndef _CARBON_LAYOUT_CONTAINERS_BASE_HPP_
 #define _CARBON_LAYOUT_CONTAINERS_BASE_HPP_
 
+#include "../axes.hpp"
 #include "../item.hpp"
+
+#include <memory>
+#include <vector>
 
 namespace carbon {
 	enum flex_direction {
