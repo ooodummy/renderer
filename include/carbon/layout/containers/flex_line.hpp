@@ -10,20 +10,20 @@ namespace carbon {
 		void compute() override;
 
 	private:
-		bool can_use_cached();
-
-		// Clamp src and dst between flex items target main size
-		static float clamp(flex_item* item, float src, float& dst);
-
-		// Get the base size of an item using its flex basis
-		float get_base_size(flex_item* item, float scale);
-
-		// Flexibility
 		void measure();
 		void arrange();
+		void position();
+
+		bool can_use_cached();
+
+		static float clamp(flex_item* item, float src, float& dst);
+		float get_base_size(flex_item* item, float scale);
+
 		bool calculate_flex();
 		float resolve_flexible_length(flex_item* item) const;
-		void position();
+
+		void setup_justify_content();
+		void increment_justify_content(float item_size);
 
 		axes_vec2 content_pos;
 		axes_vec2 content_size;
@@ -38,12 +38,9 @@ namespace carbon {
 		float grow_factor;
 		float shrink_factor;
 
-		// Alignment
-		void setup_justify_content();
-		void increment_justify_content(float item_size);
-
 		float final_space;
 		float justify_content_spacing;
+		float direction;
 	};
 
 }

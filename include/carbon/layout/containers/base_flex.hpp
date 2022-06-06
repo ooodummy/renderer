@@ -4,7 +4,7 @@
 #include "base.hpp"
 
 namespace carbon {
-	enum flex_wrap_mode {
+	enum flex_wrap {
 		no_wrap,
 		wrap,			// Wrap to new line when exceeds content main
 		wrap_reverse
@@ -31,15 +31,19 @@ namespace carbon {
 	};
 
 	struct flex_flow {
-		explicit flex_flow(flex_axis axis = axis_row, flex_direction direction = direction_normal, flex_wrap_mode wrap = no_wrap);
+		flex_flow() = default;
+		~flex_flow() = default;
+
+		flex_flow(flex_axis axis); // NOLINT(google-explicit-constructor)
+		flex_flow(flex_wrap wrap); // NOLINT(google-explicit-constructor)
+		flex_flow(flex_axis axis, flex_wrap wrap);
 
 		void set_axis(carbon::flex_axis axis);
 
-		flex_axis main;
-		flex_axis cross;
+		flex_axis main = axis_row;
+		flex_axis cross = axis_column;
 
-		flex_direction direction;
-		flex_wrap_mode wrap;
+		flex_wrap wrap = no_wrap;
 
 		flex_align align = align_start;
 		flex_justify_content justify_content = justify_start;

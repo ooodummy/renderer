@@ -165,47 +165,12 @@ void draw_test_bezier(renderer::buffer* buf) {
 
 void draw_test_flex(renderer::buffer* buf) {
 	static bool init = false;
-	static auto justify_content_demo_window = std::make_unique<carbon::flex_line>();
+	static auto flex_container = std::make_unique<carbon::flex_line>();
 
 	if (!init) {
-		justify_content_demo_window->pos = {50.0f, 50.0f};
-		justify_content_demo_window->flow.set_axis(carbon::axis_column);
-		const auto justify_start_container = justify_content_demo_window->add_child<carbon::flex_line>();
-		justify_start_container->flow.justify_content = carbon::justify_start;
-		justify_start_container->flex = {1.0f};
-		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		const auto justify_end_container = justify_content_demo_window->add_child<carbon::flex_line>();
-		justify_end_container->flow.justify_content = carbon::justify_end;
-		justify_end_container->flex = {1.0f};
-		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		const auto justify_center_container = justify_content_demo_window->add_child<carbon::flex_line>();
-		justify_center_container->flow.justify_content = carbon::justify_center;
-		justify_center_container->flex = {1.0f};
-		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		const auto justify_space_around_container = justify_content_demo_window->add_child<carbon::flex_line>();
-		justify_space_around_container->flow.justify_content = carbon::justify_space_around;
-		justify_space_around_container->flex = {1.0f};
-		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		const auto justify_space_between_container = justify_content_demo_window->add_child<carbon::flex_line>();
-		justify_space_between_container->flow.justify_content = carbon::justify_space_between;
-		justify_space_between_container->flex = {1.0f};
-		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		const auto justify_space_evenly_container = justify_content_demo_window->add_child<carbon::flex_line>();
-		justify_space_evenly_container->flow.justify_content = carbon::justify_space_evenly;
-		justify_space_evenly_container->flex = {1.0f};
-		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
-		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_value{0.25f}};
+		flex_container->pos = {50.0f, 50.0f};
+		const auto growable1 = flex_container->add_child<carbon::flex_item>();
+		growable1->flex = {1.0f, 0.0f};
 
 		/*container1->padding = {25.0f};
 		const auto container11 = container1->add_child<carbon::flex_item>();
@@ -237,16 +202,16 @@ void draw_test_flex(renderer::buffer* buf) {
 		init = true;
 	}
 
-	justify_content_demo_window->size = {carbon::mouse_pos.x - justify_content_demo_window->pos.x, carbon::mouse_pos.y - justify_content_demo_window->pos.y};
-	justify_content_demo_window->compute();
-	justify_content_demo_window->draw_contents();
+	flex_container->size = {carbon::mouse_pos.x - flex_container->pos.x, carbon::mouse_pos.y - flex_container->pos.y};
+	flex_container->compute();
+	flex_container->draw_contents();
 }
 
 void draw_thread() {
     const auto id = dx11->register_buffer();
 
     while (!close_requested) {
-		//updated_draw.wait();
+		updated_draw.wait();
 
 		const auto buf = dx11->get_working_buffer(id);
 		carbon::buf = buf;
@@ -256,7 +221,7 @@ void draw_thread() {
 		draw_test_flex(buf);
 
         dx11->swap_buffers(id);
-        //updated_buf.notify();
+        updated_buf.notify();
     }
 }
 
@@ -302,7 +267,7 @@ int main() {
         return 1;
     }
 
-    dx11->set_vsync(false);
+    dx11->set_vsync(true);
 
     segoe = dx11->register_font({"Segoe UI", 12, FW_THIN, true});
 
@@ -331,8 +296,8 @@ int main() {
 
         dx11->draw();
 
-		//updated_draw.notify();
-        //updated_buf.wait();
+		updated_draw.notify();
+        updated_buf.wait();
     }
 
     draw.join();

@@ -7,7 +7,9 @@
 namespace carbon {
 	enum flex_axis {
 		axis_row,
-		axis_column
+		axis_row_reversed,
+		axis_column,
+		axis_column_reversed
 	};
 
 	template <typename T, typename RetT>
@@ -23,7 +25,7 @@ namespace carbon {
 		}
 
 		explicit operator RetT() const {
-			if (axis == axis_row) {
+			if (axis == axis_row || axis == axis_row_reversed) {
 				return RetT(main, cross);
 			}
 			else {

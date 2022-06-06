@@ -73,10 +73,7 @@ void carbon::flex_line::measure() {
 }
 
 void carbon::flex_line::arrange() {
-	// TODO: Test maximum needed depth might only ever be two but is sometimes 1
 	for (size_t i = 0;;i++) {
-		// May actually never be able to happen
-		// More testing needs to be done since this logic is kinda hard to think about
 		assert(i < 3);
 
 		grow_factor = free_space / grow_total;
@@ -163,9 +160,22 @@ void carbon::flex_line::position() {
 
 	free_space = content_size.main - final_space;
 
+	const auto reversed = flow.main == axis_row_reversed || flow.main == axis_column_reversed;
+
+	if (reversed) {
+		content_pos.main += content_size.main;
+		direction = -1.0f;
+	}
+	else {
+		direction = 1.0f;
+	}
+
 	setup_justify_content();
 
-	for (auto& child : children_) {
+	for (auto & child : children_) {
+		if (reversed)
+			content_pos.main -= child->final_size;
+
 		const axes_vec2 child_size = {
 			child->final_size,
 			content_size.cross,
@@ -176,6 +186,9 @@ void carbon::flex_line::position() {
 		child->pos = glm::vec2(content_pos);
 
 		child->compute();
+
+		if (reversed)
+			content_pos.main += child->final_size;
 
 		increment_justify_content(child->final_size);
 	}
@@ -206,46 +219,55 @@ bool carbon::flex_line::can_use_cached() {
 void carbon::flex_line::setup_justify_content() {
 	justify_content_spacing = 0.0f;
 
+	float offset;
+
 	switch (flow.justify_content) {
-		case justify_start:
-			break;
 		case justify_end:
-			content_pos.main += content_size.main - children_[0]->final_size;
+			offset = content_size.main - final_space;
 			break;
 		case justify_center:
-			content_pos.main += free_space / 2.0f;
+			offset = free_space / 2.0f;
 			break;
 		case justify_space_around:
 			justify_content_spacing = free_space / static_cast<float>(children_.size());
-			content_pos.main += justify_content_spacing / 2.0f;
+			offset = justify_content_spacing / 2.0f;
 			break;
 		case justify_space_between:
 			justify_content_spacing = free_space / static_cast<float>(children_.size() - 1);
-			break;
+			return;
 		case justify_space_evenly:
 			justify_content_spacing = free_space / static_cast<float>(children_.size() + 1);
-			content_pos.main += justify_content_spacing;
+			offset = justify_content_spacing;
 			break;
-		case justify_stretch:
-			break;
+		//case justify_stretch:
+		//	break;
+		case justify_start:
+		default:
+			return;
 	}
+
+	content_pos.main += offset * direction;
 }
 
 void carbon::flex_line::increment_justify_content(float item_size) {
+	float increment;
+
 	switch (flow.justify_content) {
 		case justify_start:
-		case justify_center:
-			content_pos.main += item_size;
-			break;
 		case justify_end:
-			content_pos.main -= item_size;
+		case justify_center:
+			increment = item_size;
 			break;
 		case justify_space_around:
 		case justify_space_between:
 		case justify_space_evenly:
-			content_pos.main += item_size + justify_content_spacing;
+			increment = item_size + justify_content_spacing;
 			break;
-		case justify_stretch:
-			break;
+		//case justify_stretch:
+		//	break;
+		default:
+			return;
 	}
+
+	content_pos.main += increment * direction;
 }

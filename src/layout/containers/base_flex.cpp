@@ -1,10 +1,12 @@
 #include "carbon/layout/containers/base_flex.hpp"
 
-carbon::flex_flow::flex_flow(carbon::flex_axis axis, carbon::flex_direction direction, carbon::flex_wrap_mode wrap) : main(axis), cross(axis == axis_row ? axis_column : axis_row), direction(direction), wrap(wrap) {}
+carbon::flex_flow::flex_flow(carbon::flex_axis axis) : main(axis), cross((axis == axis_row || axis == axis_row_reversed) ? axis_column : axis_row) {}
+carbon::flex_flow::flex_flow(carbon::flex_wrap wrap) : wrap(wrap) {}
+carbon::flex_flow::flex_flow(carbon::flex_axis axis, carbon::flex_wrap wrap) : main(axis), cross((axis == axis_row || axis == axis_row_reversed) ? axis_column : axis_row), wrap(wrap) {}
 
 void carbon::flex_flow::set_axis(carbon::flex_axis axis) {
 	main = axis;
-	cross = axis == axis_row ? axis_column : axis_row;
+	cross = (axis == axis_row || axis == axis_row_reversed) ? axis_column : axis_row;
 }
 
 carbon::axes_vec4 carbon::base_flex_container::get_axes(glm::vec4 src) const {

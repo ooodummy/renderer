@@ -8,11 +8,6 @@
 #include <vector>
 
 namespace carbon {
-	enum flex_direction {
-		direction_normal,
-		direction_reversed
-	};
-
 	class base_container : public flex_item {
 	public:
 		void draw_contents() override;
