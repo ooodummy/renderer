@@ -84,7 +84,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 	//buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
 	//buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
-	std::vector<glm::vec2> points = {
+	static std::vector<glm::vec2> points = {
 		{400.0f, 500.0f},
 		{700.0f, 500.0f},
 		{600.0f, 350.0f},
@@ -170,66 +170,66 @@ void draw_test_flex(renderer::buffer* buf) {
 	if (!init) {
 		flex_container->pos = {50.0f, 50.0f};
 		/*const auto growable1 = flex_container->add_child<carbon::flex_line>();
-		growable1->flex = {1.0f, 0.0f};
-		growable1->min = 50.0f;
-		growable1->max = 150.0f;
+		growable1->flex_ = {1.0f, 0.0f};
+		growable1->min_width_ = 50.0f;
+		growable1->max_width_ = 150.0f;
 		const auto growable11 = growable1->add_child<carbon::flex_line>();
 		growable11->flow = {carbon::column};
-		growable11->flex = {1.0f, 0.0f};
+		growable11->flex_ = {1.0f, 0.0f};
 		const auto growable111 = growable11->add_child<carbon::flex_line>();
-		growable111->flex = {1.0f, 0.0f};
+		growable111->flex_ = {1.0f, 0.0f};
 		const auto growable112 = growable11->add_child<carbon::flex_line>();
-		growable112->flex = {1.0f, 0.0f};
+		growable112->flex_ = {1.0f, 0.0f};
 		const auto growable2 = flex_container->add_child<carbon::flex_line>();
-		growable2->flex = {1.0f, 0.0f};
-		growable2->min = 50.0f;
-		growable2->max = 200.0f;*/
+		growable2->flex_ = {1.0f, 0.0f};
+		growable2->min_width_ = 50.0f;
+		growable2->max_width_ = 200.0f;*/
 		/*const auto basis1 = flex_container->add_child<carbon::flex_item>();
-		basis1->flex = {0.0f, 0.0f, carbon::flex_basis(200.0f, carbon::unit_pixel)};
+		basis1->flex_ = {0.0f, 0.0f, carbon::flex_basis(200.0f, carbon::unit_pixel)};
 		const auto shrinkable1 = flex_container->add_child<carbon::flex_item>();
-		shrinkable1->flex = {0.0f, 1.0f, carbon::flex_basis(100.0f, carbon::unit_pixel)};
-		shrinkable1->min = 25.0f;
+		shrinkable1->flex_ = {0.0f, 1.0f, carbon::flex_basis(100.0f, carbon::unit_pixel)};
+		shrinkable1->min_width_ = 25.0f;
 		const auto shrinkable2 = flex_container->add_child<carbon::flex_item>();
-		shrinkable2->flex = {0.0f, 1.0f, carbon::flex_basis(100.0f, carbon::unit_pixel)};
-		shrinkable2->min = 25.0f;*/
+		shrinkable2->flex_ = {0.0f, 1.0f, carbon::flex_basis(100.0f, carbon::unit_pixel)};
+		shrinkable2->min_width_ = 25.0f;*/
 
-		/*flex_container->flow.set_axis(carbon::column);
+		flex_container->flow.set_axis(carbon::column);
 		const auto justify_start_container = flex_container->add_child<carbon::flex_line>();
 		justify_start_container->flow.justify_content = carbon::justify_start;
-		justify_start_container->flex = {1.0f};
-		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.35f}};
-		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_start_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
+		justify_start_container->set_flex(1.0f);
+		justify_start_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_start_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_start_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		const auto justify_end_container = flex_container->add_child<carbon::flex_line>();
 		justify_end_container->flow.justify_content = carbon::justify_end;
-		justify_end_container->flex = {1.0f};
-		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_end_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
+		justify_end_container->set_flex(1.0f);
+		justify_end_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_end_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_end_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		const auto justify_center_container = flex_container->add_child<carbon::flex_line>();
 		justify_center_container->flow.justify_content = carbon::justify_center;
-		justify_center_container->flex = {1.0f};
-		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_center_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
+		justify_center_container->set_flex(1.0f);
+		justify_center_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_center_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_center_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		const auto justify_space_around_container = flex_container->add_child<carbon::flex_line>();
 		justify_space_around_container->flow.justify_content = carbon::justify_space_around;
-		justify_space_around_container->flex = {1.0f};
-		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_space_around_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
+		justify_space_around_container->set_flex(1.0f);
+		justify_space_around_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_around_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_around_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		const auto justify_space_between_container = flex_container->add_child<carbon::flex_line>();
 		justify_space_between_container->flow.justify_content = carbon::justify_space_between;
-		justify_space_between_container->flex = {1.0f};
-		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_space_between_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
+		justify_space_between_container->set_flex(1.0f);
+		justify_space_between_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_between_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_between_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		const auto justify_space_evenly_container = flex_container->add_child<carbon::flex_line>();
 		justify_space_evenly_container->flow.justify_content = carbon::justify_space_evenly;
-		justify_space_evenly_container->flex = {1.0f};
-		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};
-		justify_space_evenly_container->add_child<carbon::flex_item>()->flex = {carbon::flex_basis{0.25f}};*/
+		justify_space_evenly_container->set_flex(1.0f);
+		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 
 		init = true;
 	}
@@ -252,7 +252,10 @@ void draw_thread() {
 		//draw_test_bezier(buf);
 		//draw_test_flex(buf);
 
-		buf->draw_rect_rounded({200.0f, 200.0f, 100.0f, 150.0f}, 0.2f, COLOR_WHITE);
+		buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
+		buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
+		buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
+		buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
 
         dx11->swap_buffers(id);
         updated_buf.notify();
@@ -301,7 +304,7 @@ int main() {
         return 1;
     }
 
-    dx11->set_vsync(true);
+    dx11->set_vsync(false);
 
     segoe = dx11->register_font({"Segoe UI", 12, FW_THIN, true});
 

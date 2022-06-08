@@ -27,7 +27,7 @@ namespace carbon {
 		justify_space_around,	// Items have a half-size space on either end
 		justify_space_between,	// The first item is flush with the start, the last is flush with the end
 		justify_space_evenly,	// Items have equal space around them
-		justify_stretch			// While respecting min and max constraints stretch items to fill main axis
+		justify_stretch			// While respecting constraints stretch items to fill main axis
 	};
 
 	struct flex_flow {
@@ -51,6 +51,8 @@ namespace carbon {
 
 	class base_flex_container : public base_container {
 	public:
+		void measure_content_min() override;
+
 		flex_flow flow;
 
 	protected:

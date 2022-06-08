@@ -1,7 +1,7 @@
 #ifndef _RENDERER_UTIL_POLYLINE_HPP_
 #define _RENDERER_UTIL_POLYLINE_HPP_
 
-#include "renderer/types/color.hpp"
+#include "../types/vertex.hpp"
 
 #include <glm/glm.hpp>
 #include <optional>
@@ -47,24 +47,24 @@ namespace renderer {
 	static constexpr float round_min_angle = 0.174533;// ~10 degrees
 
 	// This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
+	// TODO: Different colors and weights at each poly point
 	class polyline {
 	public:
-		[[nodiscard]] std::vector<glm::vec2> compute(bool allow_overlap = false) const;
+		polyline() = default;
+		polyline(color_rgba col, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_square);
 
-		void set_thickness(float new_thickness);
-		void set_joint(joint_type type);
-		void set_cap(cap_type cap);
+		[[nodiscard]] std::pair<vertex*, size_t> compute(bool allow_overlap = false) const;
 
 		void set_points(std::vector<glm::vec2>& points);
-		void add(glm::vec2 point);
 
 	private:
-		void create_joint(std::vector<glm::vec2>& vertices, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false) const;
-		static void create_triangle_fan(std::vector<glm::vec2>& vertices, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise);
+		void create_joint(vertex* vertices, size_t& offset, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false) const;
+		void create_triangle_fan(vertex* vertices, size_t& offset, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise) const;
 
-		joint_type joint_ = joint_miter;
-		cap_type cap_ = cap_square;
-		float thickness_ = 1.0f;
+		color_rgba col_;
+		joint_type joint_;
+		cap_type cap_;
+		float thickness_;
 
 		std::vector<glm::vec2>* points_ = nullptr;
 	};

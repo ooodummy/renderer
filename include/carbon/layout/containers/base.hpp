@@ -20,8 +20,6 @@ namespace carbon {
 		carbon::flex_item* add_child(std::unique_ptr<flex_item> item);
 		[[nodiscard]] std::vector<std::unique_ptr<flex_item>>& get_children();
 
-		void measure_content_min(flex_direction main) override;
-
 	protected:
 		std::vector<std::unique_ptr<flex_item>> children_;
 	};

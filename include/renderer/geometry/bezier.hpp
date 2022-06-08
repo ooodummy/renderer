@@ -7,6 +7,8 @@
 #include <vector>
 #include <glm/geometric.hpp>
 
+// TODO: Calculating the normal at a time point in a bezier curve seems to be the most expensive function in this renderer
+
 // https://www.youtube.com/watch?v=aVwxzDHniEw
 namespace renderer {
 	size_t binomial(size_t n, size_t k);
@@ -133,8 +135,7 @@ namespace renderer {
 
 		[[nodiscard]] glm::vec2 tangent_at(float t, bool normalize = true) const {
 			glm::vec2 p;
-			bezier_curve<N-1> derivative = this->derivative();
-			p = derivative.position_at(t);
+			p = derivative().position_at(t);
 			if (normalize)
 				return glm::normalize(p);
 			return p;

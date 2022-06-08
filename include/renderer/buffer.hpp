@@ -28,41 +28,11 @@ namespace renderer {
 
 		void clear();
 
-		// I hate that these are done twice :(
-		template <size_t N>
-		void add_vertices(vertex(&vertices)[N]);
+		void add_vertices(vertex* vertices, size_t N);
+		void add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
 
 		template <size_t N>
 		void add_vertices(vertex(&vertices)[N], D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
-
-		void add_vertices(const std::vector<vertex>& vertices);
-		void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
-
-		// TODO: Add cap types
-		template<size_t N>
-		void draw_bezier_curve(const bezier_curve<N>& bezier, color_rgba col = COLOR_WHITE, float thickness = 1.0f, cap_type cap = cap_butt, size_t segments = 32) {
-			thickness /= 2.0f;
-
-			const auto step = 1.0f / static_cast<float>(segments);
-
-			// All my homies hate heap allocations >:(
-			std::vector<vertex> vertices;
-
-			for (size_t i = 0; i <= segments; i++) {
-				const auto t = static_cast<float>(i) * step;
-				const auto point = bezier.position_at(t);
-				const auto normal = bezier.normal_at(t);
-
-				const auto angle = atan2f(normal.y, normal.x);
-
-				vertices.emplace_back(glm::rotate(glm::vec2(thickness, 0.0f), angle) + point, col);
-				vertices.emplace_back(glm::rotate(glm::vec2(thickness, 0.0f), angle + static_cast<float>(M_PI)) + point, col);
-			}
-
-			add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-		}
-
-		void draw_polyline(std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 
 		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
 		void draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col = COLOR_WHITE);
@@ -79,6 +49,35 @@ namespace renderer {
 
 		void draw_circle(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
 		void draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
+
+		template<size_t N>
+		void draw_bezier_curve(const bezier_curve<N>& bezier, color_rgba col = COLOR_WHITE, float thickness = 1.0f, cap_type cap = cap_butt, size_t segments = 32) {
+			thickness /= 2.0f;
+
+			const auto step = 1.0f / static_cast<float>(segments);
+
+			const auto vertex_count = (segments + 1) * 2;
+			auto* vertices = new vertex[vertex_count];
+			size_t offset = 0;
+
+			for (size_t i = 0; i <= segments; i++) {
+				const auto t = static_cast<float>(i) * step;
+				const auto point = bezier.position_at(t);
+				const auto normal = bezier.normal_at(t);
+
+				const auto angle = atan2f(normal.y, normal.x);
+
+				vertices[offset] = {glm::rotate(glm::vec2(thickness, 0.0f), angle) + point, col};
+				vertices[offset + 1] = {glm::rotate(glm::vec2(thickness, 0.0f), angle + static_cast<float>(M_PI)) + point, col};
+
+				offset += 2;
+			}
+
+			add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			delete[] vertices;
+		}
+
+		void draw_polyline(std::vector<glm::vec2>& points, color_rgba col = COLOR_WHITE, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_butt);
 
 		void draw_text(glm::vec2 pos, const std::string& text, size_t font_id = 0, color_rgba col = COLOR_WHITE, text_align h_align = text_align_left, text_align v_align = text_align_bottom);
 		void draw_text(glm::vec2 pos, const std::string& text, color_rgba col = COLOR_WHITE, text_align h_align = text_align_left, text_align v_align = text_align_bottom);
@@ -101,6 +100,7 @@ namespace renderer {
 	private:
 		d3d11_renderer* renderer_;
 
+		// Should we be using vector?
 		std::vector<vertex> vertices_;
 		std::vector<batch> batches_;
 
@@ -122,7 +122,7 @@ namespace renderer {
 		command_buffer active_command{};
 		size_t active_font = 0;
 
-		static std::vector<vertex> create_arc(const glm::vec2& pos, float start, float length, float radius, color_rgba col, float thickness, size_t segments = 16, bool triangle_fan = false);
+		static void add_arc_vertices(vertex* vertices, size_t offset, const glm::vec2& pos, float start, float length, float radius, color_rgba col, float thickness, size_t segments = 16, bool triangle_fan = false);
 
 		void draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col = COLOR_WHITE);
 	};

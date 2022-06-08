@@ -2,17 +2,19 @@
 
 #include "renderer/renderer.hpp"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-
-#include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
-
 void renderer::buffer::clear() {
 	vertices_ = {};
 	batches_ = {};
 
+	split_batch_ = false;
+
 	scissor_list_ = {};
+	key_list_ = {};
+	blur_list_ = {};
+	font_list_ = {};
+
+	active_command = {};
+	active_font = 0;
 }
 
 const std::vector<renderer::vertex>& renderer::buffer::get_vertices() {
@@ -23,8 +25,7 @@ const std::vector<renderer::batch>& renderer::buffer::get_batches() {
 	return batches_;
 }
 
-template<std::size_t N>
-void renderer::buffer::add_vertices(renderer::vertex (&vertices)[N]) {
+void renderer::buffer::add_vertices(vertex* vertices, size_t N) {
 	auto& active_batch = batches_.back();
 	active_batch.size += N;
 
@@ -32,127 +33,57 @@ void renderer::buffer::add_vertices(renderer::vertex (&vertices)[N]) {
 	memcpy(&vertices_[vertices_.size() - N], vertices, N * sizeof(vertex));
 }
 
+void renderer::buffer::add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv, color_rgba col) {
+	if (batches_.empty()) {
+		batches_.emplace_back(0, type);
+		split_batch_ = false;
+	}
+	else {
+		auto& previous = batches_.back();
+
+		if (split_batch_) {
+			if (previous.size != 0)
+				batches_.emplace_back(0, type);
+			split_batch_ = false;
+		}
+		else if (previous.type != type || rv != nullptr || rv != previous.rv) {
+			batches_.emplace_back(0, type);
+		}
+		else {
+			if (type == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP) {
+				vertex degenerate_triangle[] = {
+					vertices_.back(),
+					vertices[0]
+				};
+
+				add_vertices(degenerate_triangle, 2);
+			}
+			else {
+				switch (type) {
+					case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
+					case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
+					case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
+						batches_.emplace_back(0, type);
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
+
+	auto& new_batch = batches_.back();
+
+	new_batch.rv = rv;
+	new_batch.color = col;
+	new_batch.command = active_command;
+
+	add_vertices(vertices, N);
+}
+
 template<size_t N>
-void renderer::buffer::add_vertices(renderer::vertex (&vertices)[N], D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv, renderer::color_rgba col) {
-	if (N <= 0)
-		return;
-
-	if (batches_.empty()) {
-		batches_.emplace_back(0, type);
-		split_batch_ = false;
-	}
-	else {
-		auto& previous = batches_.back();
-
-		if (split_batch_) {
-			if (previous.size != 0)
-				batches_.emplace_back(0, type);
-			split_batch_ = false;
-		}
-		else if (previous.type != type || rv != nullptr || rv != previous.rv) {
-			batches_.emplace_back(0, type);
-		}
-		else {
-			if (type == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP) {
-				add_vertices({ vertices_.back(), vertices[0] });
-			}
-			else {
-				switch (type) {
-					case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
-					case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
-					case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
-						batches_.emplace_back(0, type);
-						break;
-					default:
-						break;
-				}
-			}
-		}
-	}
-
-	auto& new_batch = batches_.back();
-
-	new_batch.rv = rv;
-	new_batch.color = col;
-	new_batch.command = active_command;
-
-	add_vertices(vertices);;
-}
-
-void renderer::buffer::add_vertices(const std::vector<vertex>& vertices) {
-	auto& batch = batches_.back();
-	batch.size += vertices.size();
-
-	vertices_.resize(vertices_.size() + vertices.size());
-	memcpy(&vertices_[vertices_.size() - vertices.size()], vertices.data(), vertices.size() * sizeof(vertex));
-}
-
-void renderer::buffer::add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv, color_rgba col) {
-	if (vertices.empty())
-		return;
-
-	if (batches_.empty()) {
-		batches_.emplace_back(0, type);
-		split_batch_ = false;
-	}
-	else {
-		auto& previous = batches_.back();
-
-		if (split_batch_) {
-			if (previous.size != 0)
-				batches_.emplace_back(0, type);
-			split_batch_ = false;
-		}
-		else if (previous.type != type || rv != nullptr || rv != previous.rv) {
-			batches_.emplace_back(0, type);
-		}
-		else {
-			if (type == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP) {
-				add_vertices({ vertices_.back(), vertices.front() });
-			}
-			else {
-				switch (type) {
-					case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
-					case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
-					case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ:
-						batches_.emplace_back(0, type);
-						break;
-					default:
-						break;
-				}
-			}
-		}
-	}
-
-	auto& new_batch = batches_.back();
-
-	new_batch.rv = rv;
-	new_batch.color = col;
-	new_batch.command = active_command;
-
-	add_vertices(vertices);
-}
-
-// TODO: Heap array class w/ SSO
-void renderer::buffer::draw_polyline(std::vector<glm::vec2>& points, color_rgba col, float thickness, joint_type joint, cap_type cap) {
-	polyline line;
-	line.set_thickness(thickness);
-	line.set_joint(joint);
-	line.set_cap(cap);
-	line.set_points(points);
-
-	const auto path = line.compute();
-	if (path.empty())
-		return;
-
-	std::vector<vertex> vertices;
-	vertices.reserve(path.size());
-
-	for (auto& point : path) {
-		vertices.emplace_back(vertex(point.x, point.y, col));
-	}
-
-	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+void renderer::buffer::add_vertices(vertex(&vertices)[N], D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv, color_rgba col) {
+	add_vertices(vertices, N, type, rv, col);
 }
 
 void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
@@ -160,6 +91,7 @@ void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
 		{pos.x, pos.y, col}
 	};
 
+	// Would strips be the best, so it is all batched when possible more often
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 }
 
@@ -172,24 +104,20 @@ void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, c
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
-// TODO: Doing a normal heap allocated array instead of vector since it's size is known when created
-std::vector<renderer::vertex> renderer::buffer::create_arc(const glm::vec2& pos, float start, float length, float radius, renderer::color_rgba col, float thickness, size_t segments, bool triangle_fan) {
+// TODO: Midpoint circle
+void renderer::buffer::add_arc_vertices(vertex* vertices, size_t offset, const glm::vec2& pos, float start, float length, float radius, renderer::color_rgba col, float thickness, size_t segments, bool triangle_fan) {
 	thickness /= 2.0f;
 
-	// A small vector impl would be good for these
-	std::vector<vertex> vertices;
-	vertices.reserve((segments + 1) * 2);
-
 	const auto step = length / static_cast<float>(segments);
-	float angle = start;
+	auto angle = start;
 
 	for (size_t i = 0; i <= segments; i++) {
 		if (triangle_fan) {
 			glm::vec2 a = { radius, 0.0f };
 			a = glm::rotate(a, angle) + pos;
 
-			vertices.emplace_back(pos, col);
-			vertices.emplace_back(a, col);
+			vertices[offset] = {pos, col};
+			vertices[offset + 1] = {a, col};
 		}
 		else {
 			glm::vec2 a = { radius - thickness, 0.0f };
@@ -198,21 +126,27 @@ std::vector<renderer::vertex> renderer::buffer::create_arc(const glm::vec2& pos,
 			glm::vec2 b = { radius + thickness, 0.0f };
 			b = glm::rotate(b, angle) + pos;
 
-			vertices.emplace_back(a, col);
-			vertices.emplace_back(b, col);
+			vertices[offset] = {a, col};
+			vertices[offset + 1] = {b, col};
 		}
+
+		offset += 2;
 
 		angle += step;
 	}
-
-	return vertices;
 }
 
 void renderer::buffer::draw_arc(const glm::vec2& pos, float start, float length, float radius, renderer::color_rgba col, float thickness, size_t segments, bool triangle_fan) {
-	add_vertices(create_arc(pos, start, length, radius, col, thickness, segments, triangle_fan), D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	const auto vertex_count = (segments + 1) * 2;
+	auto* vertices = new vertex[vertex_count];
+	add_arc_vertices(vertices, 0, pos, start, length, radius, col, thickness, segments, triangle_fan);
+	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	delete[] vertices;
 }
 
 void renderer::buffer::draw_rect(const glm::vec4& rect, color_rgba col, float thickness) {
+	// TODO: Rotation around origin
+
 	if (thickness <= 1.0f) {
 		vertex vertices[] = {
 			{rect.x + 1.0f, rect.y + 1.0f, col},
@@ -267,30 +201,27 @@ void renderer::buffer::draw_rect_rounded(const glm::vec4& rect, float rounding, 
 	rounding *= std::max(rect.w, rect.z) / 2.0f;
 
 	const auto arc_vertices = (segments + 1) * 2;
+	const auto vertex_count = arc_vertices * 4 + 2;
 
-	std::vector<vertex> vertices;
-	vertices.reserve(arc_vertices * 4 + 2);
-	std::vector<vertex> arc;
-	arc.reserve((segments + 1) * 2);
+	auto* vertices = new vertex[vertex_count];
+	size_t offset = 0;
 
-	arc = create_arc({rect.x + rounding, rect.y + rounding}, M_PI, M_PI / 2.0f, rounding, col, thickness, segments);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
-
-	arc = create_arc({rect.x + rect.w - rounding, rect.y + rounding}, 3 * M_PI / 2.0f, M_PI / 2.0f, rounding, col, thickness, segments);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
-
-	arc = create_arc({rect.x + rect.w - rounding, rect.y + rect.z - rounding}, 0.0f, M_PI / 2.0f, rounding, col, thickness, segments);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
-
-	arc = create_arc({rect.x + rounding, rect.y + rect.z - rounding}, M_PI / 2.0f, M_PI / 2.0f, rounding, col, thickness, segments);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
+	add_arc_vertices(vertices, offset, {rect.x + rounding, rect.y + rounding}, M_PI, M_PI / 2.0f, rounding, col, thickness, segments);
+	offset += arc_vertices;
+	add_arc_vertices(vertices, offset, {rect.x + rect.w - rounding, rect.y + rounding}, 3.0f * M_PI / 2.0f, M_PI / 2.0f, rounding, col, thickness, segments);
+	offset += arc_vertices;
+	add_arc_vertices(vertices, offset, {rect.x + rect.w - rounding, rect.y + rect.z - rounding}, 0.0f, M_PI / 2.0f, rounding, col, thickness, segments);
+	offset += arc_vertices;
+	add_arc_vertices(vertices, offset, {rect.x + rounding, rect.y + rect.z - rounding}, M_PI / 2.0f, M_PI / 2.0f, rounding, col, thickness, segments);
+	offset += arc_vertices;
 
 	thickness /= 2.0f;
 
-	vertices.emplace_back(glm::vec2(rect.x + thickness, rect.y + rounding), col);
-	vertices.emplace_back(glm::vec2(rect.x - thickness, rect.y + rounding), col);
+	vertices[offset] = {{rect.x + thickness, rect.y + rounding}, col};
+	vertices[offset + 1] = {{rect.x - thickness, rect.y + rounding}, col};
 
-	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	delete[] vertices;
 }
 
 // Filled rounded rects could be drawn better with the center being the triangle fan center for all I think
@@ -300,26 +231,27 @@ void renderer::buffer::draw_rect_rounded_filled(const glm::vec4& rect, float rou
 
 	rounding *= std::max(rect.w, rect.z) / 2.0f;
 
-	std::vector<vertex> vertices;
-	std::vector<vertex> arc;
+	const auto arc_vertices = (segments + 1) * 2;
+	const auto vertex_count = arc_vertices * 4 + 3;
 
-	arc = create_arc({rect.x + rounding, rect.y + rounding}, M_PI, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
+	auto* vertices = new vertex[vertex_count];
+	size_t offset = 0;
 
-	arc = create_arc({rect.x + rect.w - rounding, rect.y + rounding}, 3 * M_PI / 2.0f, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
+	add_arc_vertices(vertices, offset, {rect.x + rounding, rect.y + rounding}, M_PI, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
+	offset += arc_vertices;
+	add_arc_vertices(vertices, offset, {rect.x + rect.w - rounding, rect.y + rounding}, 3.0f * M_PI / 2.0f, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
+	offset += arc_vertices;
+	add_arc_vertices(vertices, offset, {rect.x + rect.w - rounding, rect.y + rect.z - rounding}, 0.0f, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
+	offset += arc_vertices;
+	add_arc_vertices(vertices, offset, {rect.x + rounding, rect.y + rect.z - rounding}, M_PI / 2.0f, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
+	offset += arc_vertices;
 
-	arc = create_arc({rect.x + rect.w - rounding, rect.y + rect.z - rounding}, 0.0f, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
+	vertices[offset] = {{rect.x + rect.w - rounding, rect.y + rect.z - rounding}, col};
+	vertices[offset + 1] = {{rect.x, rect.y + rounding}, col};
+	vertices[offset + 2] = {{rect.x + rect.w - rounding, rect.y + rounding}, col};
 
-	arc = create_arc({rect.x + rounding, rect.y + rect.z - rounding}, M_PI / 2.0f, M_PI / 2.0f, rounding, col, 0.0f, segments, true);
-	vertices.insert(vertices.end(), arc.begin(), arc.end());
-
-	vertices.emplace_back(glm::vec2(rect.x + rect.w - rounding, rect.y + rect.z - rounding), col);
-	vertices.emplace_back(glm::vec2(rect.x, rect.y + rounding), col);
-	vertices.emplace_back(glm::vec2(rect.x + rect.w - rounding, rect.y + rounding), col);
-
-	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	delete[] vertices;
 }
 
 void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* rv, color_rgba col) {
@@ -330,7 +262,7 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 	active_command.glyph_size.x = static_cast<int>(rect.z);
 	active_command.glyph_size.y = static_cast<int>(rect.w);
 
-	std::vector<vertex> vertices = {
+	vertex vertices[] = {
 		{ rect.x,          rect.y,          col, 0.0f, 0.0f },
 		{ rect.x + rect.z, rect.y,          col, 1.0f, 0.0f },
 		{ rect.x,          rect.y + rect.w, col, 0.0f, 1.0f },
@@ -351,6 +283,15 @@ void renderer::buffer::draw_circle(const glm::vec2& pos, float radius, color_rgb
 
 void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col, size_t segments) {
 	draw_arc(pos, 3 * M_PI / 2.0f, M_PI * 2.0f, radius, col, 0.0f, segments, true);
+}
+
+// TODO: This is unstable since the estimate vertex count can be wrong
+void renderer::buffer::draw_polyline(std::vector<glm::vec2>& points, color_rgba col, float thickness, joint_type joint, cap_type cap) {
+	polyline line(col, thickness, joint, cap);
+	line.set_points(points);
+	const auto pair = line.compute();
+	add_vertices(pair.first, pair.second, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	delete[] pair.first;
 }
 
 void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {

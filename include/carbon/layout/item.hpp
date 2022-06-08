@@ -88,7 +88,7 @@ namespace carbon {
 		flex_item() = default;
 		~flex_item() = default;
 
-		friend class base_container;
+		friend class base_flex_container;
 		friend class flex_line;
 
 		virtual void compute();
@@ -97,23 +97,44 @@ namespace carbon {
 		virtual void input();
 
 		virtual void draw_contents();
-		virtual void measure_content_min(flex_direction main);
+		virtual void measure_content_min();
 
 		[[nodiscard]] flex_item* get_top_parent() const;
-
 		flex_item* parent = nullptr;
 
-		bool visible = true;
+		// Setters and getters are needed so if we can tell if properties have changed since if they have we then need to recompute
+		// We can probably remove all the flex constructors since we now have these
+		[[nodiscard]] const flex& get_flex() const;
+		void set_flex(float grow);
+		void set_flex(float grow, float shrink);
+		void set_flex(float grow, float shrink, flex_basis basis);
+		void set_flex(flex_basis basis);
+		void set_flex(float grow, flex_basis basis);
 
-		flex flex;
+		[[nodiscard]] float get_min_width() const;
+		void set_min_width(float min_width);
 
-		float min = 0.0f;
-		float max = FLT_MAX;
+		[[nodiscard]] float get_max_width() const;
+		void set_max_width(float min_width);
+
+		[[nodiscard]] bool get_hidden() const;
+		void set_hidden(bool hidden);
+
+		bool disabled = false;
 
 	protected:
-		// Variables used in flex_line::compute
+		flex flex_;
+
+		float min_width_ = 0.0f;
+		float max_width_ = FLT_MAX;
+
+		bool hidden_ = false;
+		bool dirty_ = true;
+
+		// Physical size
 		glm::vec2 content_min_;
 
+		// flex_line::compute
 		float base_size_;
 		float hypothetical_size_;
 		float shrink_scaled;

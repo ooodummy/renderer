@@ -13,7 +13,7 @@ namespace carbon {
 	};
 
 	template <typename T, typename RetT>
-	class axes { // NOLINT(cppcoreguidelines-pro-type-member-init)
+	class axes {
 	public:
 		axes() = default;
 		~axes() = default;
@@ -42,14 +42,15 @@ namespace carbon {
 	using axes_vec4 = axes<glm::vec2, glm::vec4>;
 	using axes_vec2 = axes<float, glm::vec2>;
 
-	axes_vec2 get_size(const axes_vec4& bounds);
-	axes_vec2 get_pos(const axes_vec4& bounds);
+	// These shouldn't really be needed if axes RetT() is used instead
+	[[nodiscard]] glm::vec2 get_axis(const glm::vec4& src, flex_direction axis);
+	void set_axis(glm::vec4& dst, glm::vec2 src, flex_direction axis);
 
-	// TODO: Why is this here? Why does GLM not have a sum function?
-	[[nodiscard]] float sum(glm::vec2 src);
+	[[nodiscard]] float get_axis(const glm::vec2& src, flex_direction axis);
+	void set_axis(glm::vec2& dst, float src, flex_direction axis);
 
-	[[nodiscard]] glm::vec2 get_axis(flex_direction axis, glm::vec4 src);
-	[[nodiscard]] float get_axis(flex_direction axis, glm::vec2 src);
+	[[nodiscard]] axes_vec2 get_pos(const axes_vec4& bounds);
+	[[nodiscard]] axes_vec2 get_size(const axes_vec4& bounds);
 }
 
 #endif

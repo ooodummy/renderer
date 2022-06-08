@@ -2,8 +2,6 @@
 
 #include "carbon/global.hpp"
 
-#include <fmt/format.h>
-
 carbon::flex_width::flex_width(float value) : value(value), unit(unit_aspect), relative(nullptr) {}
 carbon::flex_width::flex_width(carbon::flex_unit unit) : unit(unit), value(0.0f), relative(nullptr) {}
 carbon::flex_width::flex_width(float value, flex_unit unit) : value(value), unit(unit), relative(nullptr) {}
@@ -49,7 +47,7 @@ void carbon::flex_item::draw() {
 	buf->draw_rect(border.padded_bounds, COLOR_GREEN);
 	buf->draw_rect(content_bounds, COLOR_BLUE);
 
-	const auto content = flex.basis.content;
+	const auto content = flex_.basis.content;
 
 	if (content != glm::vec2{}) {
 		const glm::vec4 draw_content{
@@ -70,6 +68,12 @@ void carbon::flex_item::draw_contents() {// NOLINT(misc-no-recursion)
 	draw();
 }
 
+void carbon::flex_item::measure_content_min() {
+	compute_alignment();
+
+	content_min_ = min_width_ + get_thickness();
+}
+
 carbon::flex_item* carbon::flex_item::get_top_parent() const {
 	if (!parent)
 		return nullptr;
@@ -80,7 +84,70 @@ carbon::flex_item* carbon::flex_item::get_top_parent() const {
 	}
 }
 
-void carbon::flex_item::measure_content_min(flex_direction main) {
-	compute_alignment();
-	//content_min_ = min + get_axis(main, get_thickness());
+const carbon::flex& carbon::flex_item::get_flex() const {
+	return flex_;
+}
+
+void carbon::flex_item::set_flex(float grow) {
+	dirty_ = true;
+
+	flex_.grow = grow;
+}
+
+void carbon::flex_item::set_flex(float grow, float shrink) {
+	dirty_ = true;
+
+	flex_.grow = grow;
+	flex_.shrink = shrink;
+}
+
+void carbon::flex_item::set_flex(float grow, float shrink, flex_basis basis) {
+	dirty_ = true;
+
+	flex_.grow = grow;
+	flex_.shrink = shrink;
+	flex_.basis = basis;
+}
+
+void carbon::flex_item::set_flex(flex_basis basis) {
+	dirty_ = true;
+
+	flex_.basis = basis;
+}
+
+void carbon::flex_item::set_flex(float grow, flex_basis basis) {
+	dirty_ = true;
+
+	flex_.grow = grow;
+	flex_.basis = basis;
+}
+
+float carbon::flex_item::get_min_width() const {
+	return min_width_;
+}
+
+void carbon::flex_item::set_min_width(float min_width) {
+	dirty_ = true;
+
+	min_width_ = min_width;
+}
+
+float carbon::flex_item::get_max_width() const {
+	return max_width_;
+}
+
+void carbon::flex_item::set_max_width(float min_width) {
+	dirty_ = true;
+
+	max_width_ = min_width;
+}
+
+bool carbon::flex_item::get_hidden() const {
+	return hidden_;
+}
+
+void carbon::flex_item::set_hidden(bool hidden) {
+	dirty_ = true;
+
+	hidden_ = hidden;
 }

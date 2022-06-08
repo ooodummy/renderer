@@ -15,18 +15,18 @@ void carbon::flex_line::draw() {
 }
 
 float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
-	dst = std::clamp(src, item->min, item->max);
+	dst = std::clamp(src, item->min_width_, item->max_width_);
 
 	return dst - src;
 }
 
 float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
-	const auto basis = item->flex.basis.width.value;
+	const auto basis = item->flex_.basis.width.value;
 
 	float base;
 
-	if (!item->flex.basis.minimum) {
-		switch (item->flex.basis.width.unit) {
+	if (!item->flex_.basis.minimum) {
+		switch (item->flex_.basis.width.unit) {
 			case unit_pixel:
 				base = basis;
 				break;
@@ -39,7 +39,7 @@ float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
 		}
 	}
 
-	return std::max(base, get_main(item->flex.basis.content));
+	return std::max(base, get_main(item->flex_.basis.content));
 }
 
 void carbon::flex_line::measure() {
@@ -50,16 +50,16 @@ void carbon::flex_line::measure() {
 	for (auto& child : children_) {
 		child->base_size_ = get_base_size(child.get(), content_size.main);
 
-		const auto grow = child->flex.grow;
-		const auto shrink = child->flex.shrink;
+		const auto grow = child->flex_.grow;
+		const auto shrink = child->flex_.shrink;
 
 		hypothetical_space += child->base_size_;
 
 		if (grow > 0.0f || shrink > 0.0f) {
 			child->flexible = true;
 
-			grow_total += child->flex.grow;
-			shrink_total += child->flex.shrink;
+			grow_total += child->flex_.grow;
+			shrink_total += child->flex_.shrink;
 
 			child->hypothetical_size_ = child->base_size_;
 		}
@@ -83,10 +83,10 @@ void carbon::flex_line::arrange() {
 		shrink_scaled_total = 0.0f;
 
 		for (auto& child : children_) {
-			const auto shrink = child->flex.shrink;
+			const auto shrink = child->flex_.shrink;
 
 			if (shrink > 0.0f) {
-				child->shrink_scaled = child->hypothetical_size_ * free_space - child->flex.shrink;
+				child->shrink_scaled = child->hypothetical_size_ * free_space - child->flex_.shrink;
 				shrink_scaled_total += child->shrink_scaled;
 			}
 		}
@@ -114,8 +114,8 @@ bool carbon::flex_line::calculate_flex() {
 
 			child->flexible = false;
 
-			grow_total -= child->flex.grow;
-			shrink_total -= child->flex.shrink;
+			grow_total -= child->flex_.grow;
+			shrink_total -= child->flex_.shrink;
 
 			new_free_space -= flexible_length + extra;
 		}
@@ -127,7 +127,7 @@ bool carbon::flex_line::calculate_flex() {
 
 float carbon::flex_line::resolve_flexible_length(flex_item* item) const {
 	if (free_space > 0.0f) {
-		const auto grow = item->flex.grow;
+		const auto grow = item->flex_.grow;
 
 		if (grow <= 0.0f)
 			return 0.0f;
@@ -135,7 +135,7 @@ float carbon::flex_line::resolve_flexible_length(flex_item* item) const {
 		return grow * grow_factor;
 	}
 	else {
-		const auto shrink = item->flex.shrink;
+		const auto shrink = item->flex_.shrink;
 
 		if (shrink <= 0.0f)
 			return 0.0f;
