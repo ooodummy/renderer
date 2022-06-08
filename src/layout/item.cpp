@@ -38,14 +38,17 @@ carbon::flex::flex(float grow, flex_basis basis) : grow(grow), basis(basis) {}
 }*/
 
 void carbon::flex_item::compute() {
+	// We don't need to really do this all the time, but it cost nothing
 	compute_alignment();
+
+	dirty_ = false;
 }
 
 void carbon::flex_item::draw() {
-	const glm::vec2 center = { bounds.x + (bounds.z / 2.0f), bounds.y + bounds.w / 2.0f };
+	const glm::vec2 center = { bounds_.x + (bounds_.z / 2.0f), bounds_.y + bounds_.w / 2.0f };
 
 	buf->draw_rect(border.padded_bounds, COLOR_GREEN);
-	buf->draw_rect(content_bounds, COLOR_BLUE);
+	buf->draw_rect(content_bounds_, COLOR_BLUE);
 
 	const auto content = flex_.basis.content;
 
@@ -89,35 +92,30 @@ const carbon::flex& carbon::flex_item::get_flex() const {
 }
 
 void carbon::flex_item::set_flex(float grow) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	flex_.grow = grow;
 }
 
 void carbon::flex_item::set_flex(float grow, float shrink) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	flex_.grow = grow;
 	flex_.shrink = shrink;
 }
 
 void carbon::flex_item::set_flex(float grow, float shrink, flex_basis basis) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	flex_.grow = grow;
 	flex_.shrink = shrink;
 	flex_.basis = basis;
 }
 
 void carbon::flex_item::set_flex(flex_basis basis) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	flex_.basis = basis;
 }
 
 void carbon::flex_item::set_flex(float grow, flex_basis basis) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	flex_.grow = grow;
 	flex_.basis = basis;
 }
@@ -127,8 +125,7 @@ float carbon::flex_item::get_min_width() const {
 }
 
 void carbon::flex_item::set_min_width(float min_width) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	min_width_ = min_width;
 }
 
@@ -137,8 +134,7 @@ float carbon::flex_item::get_max_width() const {
 }
 
 void carbon::flex_item::set_max_width(float min_width) {
-	dirty_ = true;
-
+	mark_dirty_and_propagate();
 	max_width_ = min_width;
 }
 
@@ -147,7 +143,13 @@ bool carbon::flex_item::get_hidden() const {
 }
 
 void carbon::flex_item::set_hidden(bool hidden) {
+	mark_dirty_and_propagate();
+	hidden_ = hidden;
+}
+
+void carbon::flex_item::mark_dirty_and_propagate() { // NOLINT(misc-no-recursion)
 	dirty_ = true;
 
-	hidden_ = hidden;
+	if (parent)
+		parent->mark_dirty_and_propagate();
 }

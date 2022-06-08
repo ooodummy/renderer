@@ -23,13 +23,13 @@ float carbon::padded_box::get_spacing_height() const {
 }
 
 void carbon::box_model::compute_alignment() {
-	bounds = {pos, size};
+	bounds_ = { pos_, size_ };
 
-	margin.compute(bounds);
+	margin.compute(bounds_);
 	border.compute(margin.padded_bounds);
 	padding.compute(border.padded_bounds);
 
-	content_bounds = padding.padded_bounds;
+	content_bounds_ = padding.padded_bounds;
 }
 
 glm::vec2 carbon::box_model::get_thickness() const {

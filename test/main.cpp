@@ -168,7 +168,7 @@ void draw_test_flex(renderer::buffer* buf) {
 	static auto flex_container = std::make_unique<carbon::flex_line>();
 
 	if (!init) {
-		flex_container->pos = {50.0f, 50.0f};
+		flex_container->pos_ = {50.0f, 50.0f};
 		/*const auto growable1 = flex_container->add_child<carbon::flex_line>();
 		growable1->flex_ = {1.0f, 0.0f};
 		growable1->min_width_ = 50.0f;
@@ -234,7 +234,7 @@ void draw_test_flex(renderer::buffer* buf) {
 		init = true;
 	}
 
-	flex_container->size = {carbon::mouse_pos.x - flex_container->pos.x, carbon::mouse_pos.y - flex_container->pos.y};
+	flex_container->size_ = {carbon::mouse_pos.x - flex_container->pos_.x, carbon::mouse_pos.y - flex_container->pos_.y};
 	flex_container->compute();
 	flex_container->draw_contents();
 }

@@ -9,9 +9,7 @@
 #include "renderer/geometry/polyline.hpp"
 
 #include <cmath>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
+#include <stack>
 #include <memory>
 
 // TODO:
@@ -104,15 +102,19 @@ namespace renderer {
 		std::vector<vertex> vertices_;
 		std::vector<batch> batches_;
 
-		// Used when active command has changed because of a special effect being used
+		// Used when active command has changed to force a new batch
 		bool split_batch_ = false;
 
-		// Commands that will then be used by just changing active
-		// TODO: What other container type works better for this? It's 2am rn... I think these should be some queue or stack though.
-		std::vector<std::tuple<DirectX::XMFLOAT4, bool, bool>> scissor_list_;
-		std::vector<DirectX::XMFLOAT4> key_list_;
-		std::vector<float> blur_list_;
-		std::vector<size_t> font_list_;
+		struct scissor_command {
+			DirectX::XMFLOAT4 bounds;
+			bool in;
+			bool circle;
+		};
+
+		std::stack<scissor_command> scissor_list_;
+		std::stack<DirectX::XMFLOAT4> key_list_;
+		std::stack<float> blur_list_;
+		std::stack<size_t> font_list_;
 
 		void update_scissor();
 		void update_key();

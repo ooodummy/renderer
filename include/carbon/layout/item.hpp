@@ -123,13 +123,14 @@ namespace carbon {
 		bool disabled = false;
 
 	protected:
+		void mark_dirty_and_propagate() override;
+
 		flex flex_;
 
 		float min_width_ = 0.0f;
 		float max_width_ = FLT_MAX;
 
 		bool hidden_ = false;
-		bool dirty_ = true;
 
 		// Physical size
 		glm::vec2 content_min_;

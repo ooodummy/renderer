@@ -109,30 +109,24 @@ void renderer::buffer::add_arc_vertices(vertex* vertices, size_t offset, const g
 	thickness /= 2.0f;
 
 	const auto step = length / static_cast<float>(segments);
-	auto angle = start;
+	const auto ss = sin(step), cs = cos(step);
+	auto sa = sinf(start), ca = cosf(start);
 
 	for (size_t i = 0; i <= segments; i++) {
 		if (triangle_fan) {
-			glm::vec2 a = { radius, 0.0f };
-			a = glm::rotate(a, angle) + pos;
-
 			vertices[offset] = {pos, col};
-			vertices[offset + 1] = {a, col};
+			vertices[offset + 1] = {radius * ca + pos.x, radius * sa + pos.y, col};
 		}
 		else {
-			glm::vec2 a = { radius - thickness, 0.0f };
-			a = glm::rotate(a, angle) + pos;
-
-			glm::vec2 b = { radius + thickness, 0.0f };
-			b = glm::rotate(b, angle) + pos;
-
-			vertices[offset] = {a, col};
-			vertices[offset + 1] = {b, col};
+			vertices[offset] = { (radius - thickness) * ca + pos.x, (radius - thickness) * sa + pos.y, col };
+			vertices[offset + 1] = { (radius + thickness) * ca + pos.x, (radius + thickness) * sa + pos.y, col };
 		}
 
-		offset += 2;
+		const auto tmp = sa * cs + ca * ss;
+		ca = ca * cs - sa * ss;
+		sa = tmp;
 
-		angle += step;
+		offset += 2;
 	}
 }
 
@@ -322,7 +316,7 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, rendere
 }
 
 void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circle) {
-	scissor_list_.emplace_back(
+	scissor_list_.emplace(
 	DirectX::XMFLOAT4{
 	bounds.x, bounds.y, bounds.z, bounds.w },
 	in,
@@ -332,7 +326,7 @@ void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circl
 
 void renderer::buffer::pop_scissor() {
 	assert(!scissor_list_.empty());
-	scissor_list_.pop_back();
+	scissor_list_.pop();
 	update_scissor();
 }
 
@@ -343,23 +337,24 @@ void renderer::buffer::update_scissor() {
 		active_command.scissor_enable = false;
 	}
 	else {
-		const auto& new_command = scissor_list_.back();
+		const auto& new_command = scissor_list_.top();
 
+		// Should we respect the active scissor bounds too?
 		active_command.scissor_enable = true;
-		active_command.scissor_bounds = std::get<0>(new_command);
-		active_command.scissor_in = std::get<1>(new_command);
-		active_command.scissor_circle = std::get<2>(new_command);
+		active_command.scissor_bounds = new_command.bounds;
+		active_command.scissor_in = new_command.in;
+		active_command.scissor_circle = new_command.circle;
 	}
 }
 
 void renderer::buffer::push_key(color_rgba color) {
-	key_list_.push_back(color);
+	key_list_.push(color);
 	update_key();
 }
 
 void renderer::buffer::pop_key() {
 	assert(!key_list_.empty());
-	key_list_.pop_back();
+	key_list_.pop();
 	update_key();
 }
 
@@ -371,29 +366,29 @@ void renderer::buffer::update_key() {
 	}
 	else {
 		active_command.key_enable = true;
-		active_command.key_color = key_list_.back();
+		active_command.key_color = key_list_.top();
 	}
 }
 
 void renderer::buffer::push_blur(float strength) {
-	blur_list_.emplace_back(strength);
+	blur_list_.push(strength);
 	update_blur();
 }
 
 void renderer::buffer::pop_blur() {
 	assert(!blur_list_.empty());
-	blur_list_.pop_back();
+	blur_list_.pop();
 	update_blur();
 }
 
 void renderer::buffer::push_font(size_t font_id) {
-	font_list_.emplace_back(font_id);
+	font_list_.push(font_id);
 	update_font();
 }
 
 void renderer::buffer::pop_font() {
 	assert(!font_list_.empty());
-	font_list_.pop_back();
+	font_list_.pop();
 	update_font();
 }
 
@@ -404,7 +399,7 @@ void renderer::buffer::update_blur() {
 		active_command.blur_strength = 0.0f;
 	}
 	else {
-		active_command.blur_strength = blur_list_.back();
+		active_command.blur_strength = blur_list_.top();
 	}
 }
 
@@ -413,6 +408,6 @@ void renderer::buffer::update_font() {
 		active_font = 0;
 	}
 	else {
-		active_font = font_list_.back();
+		active_font = font_list_.top();
 	}
 }

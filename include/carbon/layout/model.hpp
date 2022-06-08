@@ -32,20 +32,24 @@ namespace carbon {
 	public:
 		box_model() = default;
 		~box_model() = default;
+		
+		virtual void mark_dirty_and_propagate() = 0;
 
 		void compute_alignment();
 		[[nodiscard]] glm::vec2 get_thickness() const;
-
-		glm::vec2 pos{};
-		glm::vec2 size{};
-
-		glm::vec4 bounds;
 
 		padded_box margin{5.0f};
 		padded_box border;
 		padded_box padding;
 
-		glm::vec4 content_bounds;
+	protected:
+		bool dirty_ = true;
+
+		glm::vec2 pos_{};
+		glm::vec2 size_{};
+
+		glm::vec4 bounds_;
+		glm::vec4 content_bounds_;
 	};
 }
 

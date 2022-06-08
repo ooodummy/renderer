@@ -5,13 +5,13 @@
 #include <algorithm>
 
 void carbon::flex_line::draw() {
-	const glm::vec2 center = { bounds.x + (bounds.z / 2.0f), bounds.y + bounds.w / 2.0f };
+	const glm::vec2 center = { bounds_.x + (bounds_.z / 2.0f), bounds_.y + bounds_.w / 2.0f };
 
 	//buf->draw_rect(bounds, COLOR_RED);
 	buf->draw_rect(margin.padded_bounds, COLOR_PURPLE);
 	buf->draw_rect(border.padded_bounds, COLOR_GREEN);
 	buf->draw_rect(padding.padded_bounds, COLOR_YELLOW);
-	buf->draw_rect(content_bounds, COLOR_BLUE);
+	buf->draw_rect(content_bounds_, COLOR_BLUE);
 }
 
 float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
@@ -183,8 +183,8 @@ void carbon::flex_line::position() {
 			flow.main
 		};
 
-		child->size = glm::vec2(child_size);
-		child->pos = glm::vec2(content_pos);
+		child->size_ = glm::vec2(child_size);
+		child->pos_ = glm::vec2(content_pos);
 
 		child->compute();
 
@@ -201,9 +201,14 @@ void carbon::flex_line::compute() {
 	auto min_size = std::max(min, content_min_ + get_main(get_thickness()));
 	set_main(size, std::clamp(get_main(size), min_size, max));*/
 
+	if (can_use_cached())
+		return;
+
+	dirty_ = false;
+
 	compute_alignment();
 
-	const auto content_axes = get_axes(content_bounds);
+	const auto content_axes = get_axes(content_bounds_);
 	content_pos = get_pos(content_axes);
 	content_size = get_size(content_axes);
 
@@ -219,7 +224,8 @@ bool carbon::flex_line::can_use_cached() {
 	// Mark children as dirty and their propagate downwards
 	// when computing we can mark them as not being dirty
 
-	return false;
+	// Do we need more than this?
+	return !dirty_;
 }
 
 void carbon::flex_line::setup_justify_content() {

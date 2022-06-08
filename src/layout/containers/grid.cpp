@@ -17,12 +17,12 @@ void carbon::grid_container::compute() {
 	for (auto& child : children_) {
 		const auto margin = child->margin;
 
-		child->pos = {
-			pos.x + cell_size.x * static_cast<float>(grid_pos.x) + margin.left,
-			pos.y + cell_size.y * static_cast<float>(grid_pos.y) + margin.top
+		child->pos_ = {
+			pos_.x + cell_size.x * static_cast<float>(grid_pos.x) + margin.left,
+			pos_.y + cell_size.y * static_cast<float>(grid_pos.y) + margin.top
 		};
 
-		child->size = {
+		child->size_ = {
 			cell_size.x - margin.get_spacing_width(),
 			cell_size.y - margin.get_spacing_height()
 		};
