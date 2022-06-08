@@ -28,7 +28,13 @@ namespace renderer {
 
 		void clear();
 
-		// TODO: Small buffer optimization for vertex vectors
+		// I hate that these are done twice :(
+		template <size_t N>
+		void add_vertices(vertex(&vertices)[N]);
+
+		template <size_t N>
+		void add_vertices(vertex(&vertices)[N], D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
+
 		void add_vertices(const std::vector<vertex>& vertices);
 		void add_vertices(const std::vector<vertex>& vertices, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv = nullptr, color_rgba col = { 255, 255, 255, 255 });
 
@@ -66,8 +72,8 @@ namespace renderer {
 		void draw_rect(const glm::vec4& rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 		void draw_rect_filled(const glm::vec4& rect, color_rgba col = COLOR_WHITE);
 
-		void draw_rect_rounded(const glm::vec4& rect, float rounding = 0.1f, color_rgba = COLOR_WHITE, float thickness = 1.0f);
-		void draw_rect_rounded_filled(const glm::vec4& rect, float rounding = 0.1f, color_rgba = COLOR_WHITE);
+		void draw_rect_rounded(const glm::vec4& rect, float rounding = 0.1f, color_rgba = COLOR_WHITE, float thickness = 1.0f, size_t segments = 16);
+		void draw_rect_rounded_filled(const glm::vec4& rect, float rounding = 0.1f, color_rgba = COLOR_WHITE, size_t segments = 16);
 
 		void draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* rv, color_rgba col = COLOR_WHITE);
 

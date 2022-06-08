@@ -196,10 +196,10 @@ void carbon::flex_line::position() {
 }
 
 void carbon::flex_line::compute() {
-	measure_content_min(flow.main);
+	/*measure_content_min(flow.main);
 
-	auto min_size = std::max(min, content_min_);
-	set_main(size, std::clamp(get_main(size), min_size, max));
+	auto min_size = std::max(min, content_min_ + get_main(get_thickness()));
+	set_main(size, std::clamp(get_main(size), min_size, max));*/
 
 	compute_alignment();
 

@@ -54,11 +54,11 @@ namespace carbon {
 
 	struct flex_basis {
 		flex_basis() = default;
-		flex_basis(float value); // NOLINT(google-explicit-constructor)
-		flex_basis(flex_unit unit); // NOLINT(google-explicit-constructor)
+		flex_basis(float value);
+		flex_basis(flex_unit unit);
 		flex_basis(float value, flex_unit unit);
 		flex_basis(float value, flex_item* relative);
-		flex_basis(bool minimum); // NOLINT(google-explicit-constructor)
+		flex_basis(bool minimum);
 
 		bool minimum = false; // Same as auto
 		glm::vec2 content = {0.0f, 0.0f};
@@ -68,14 +68,14 @@ namespace carbon {
 	// TODO: Should initial/constructor values be changed?
 	struct flex {
 		flex() = default;
-		flex(float grow); // NOLINT(google-explicit-constructor)
+		flex(float grow);
 		flex(float grow, float shrink);
 		flex(float grow, float shrink, flex_basis basis);
-		flex(flex_basis basis); // NOLINT(google-explicit-constructor)
+		flex(flex_basis basis);
 		flex(float grow, flex_basis basis);
 
 		// Is this type of code design bad?
-		flex(flex_keyword_values keyword); // NOLINT(google-explicit-constructor)
+		//flex(flex_keyword_values keyword);
 
 		float grow = 0.0f;
 		float shrink = 1.0f;
@@ -102,14 +102,18 @@ namespace carbon {
 		[[nodiscard]] flex_item* get_top_parent() const;
 
 		flex_item* parent = nullptr;
+
+		bool visible = true;
+
 		flex flex;
-		bool visible = true; // TODO: Check this when computing and drawing
+
 		float min = 0.0f;
 		float max = FLT_MAX;
 
 	protected:
 		// Variables used in flex_line::compute
-		float content_min_;
+		glm::vec2 content_min_;
+
 		float base_size_;
 		float hypothetical_size_;
 		float shrink_scaled;

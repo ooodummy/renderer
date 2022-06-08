@@ -235,7 +235,7 @@ void renderer::d3d11_renderer::render_buffers() {
 
 	// pipeline_->context_->IASetIndexBuffer(pipeline_->index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 
-	pipeline_->context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pipeline_->context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	pipeline_->context_->IASetInputLayout(pipeline_->input_layout_);
 }
 

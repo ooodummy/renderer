@@ -109,4 +109,4 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 Standard: Auto
 TabWidth: 4
-UseTab: AlignWithSpaces
+UseTab: Always

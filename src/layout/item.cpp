@@ -20,7 +20,7 @@ carbon::flex::flex(float grow, float shrink) : grow(grow), shrink(shrink) {}
 carbon::flex::flex(float grow, float shrink, flex_basis basis) : grow(grow), shrink(shrink), basis(basis) {}
 carbon::flex::flex(flex_basis basis) : basis(basis) {}
 carbon::flex::flex(float grow, flex_basis basis) : grow(grow), basis(basis) {}
-carbon::flex::flex(flex_keyword_values keyword) {
+/*carbon::flex::flex(flex_keyword_values keyword) {
 	basis.minimum = true;
 
 	switch (keyword) {
@@ -37,7 +37,7 @@ carbon::flex::flex(flex_keyword_values keyword) {
 			shrink = 0.0f;
 			break;
 	}
-}
+}*/
 
 void carbon::flex_item::compute() {
 	compute_alignment();
@@ -82,5 +82,5 @@ carbon::flex_item* carbon::flex_item::get_top_parent() const {
 
 void carbon::flex_item::measure_content_min(flex_direction main) {
 	compute_alignment();
-	content_min_ = min + get_axis(main, get_thickness());
+	//content_min_ = min + get_axis(main, get_thickness());
 }
