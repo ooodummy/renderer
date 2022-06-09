@@ -31,6 +31,6 @@ namespace carbon {
 
 		[[nodiscard]] glm::i16vec2 get_grid_start() const;
 	};
-}
+}// namespace carbon
 
 #endif

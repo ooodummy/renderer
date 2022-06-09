@@ -1,6 +1,6 @@
 #include "carbon/layout/containers/base_container.hpp"
 
-void carbon::base_container::draw() { // NOLINT(misc-no-recursion)
+void carbon::base_container::draw() {
 	decorate();
 
 	for (auto& child : children_) {

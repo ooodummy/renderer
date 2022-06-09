@@ -3,17 +3,20 @@
 
 #include "../util/easing.hpp"
 
-#define _USE_MATH_DEFINES
 #include <DirectXMath.h>
 
 #define COLOR_BLACK renderer::color_rgba(0, 0, 0)
 #define COLOR_GREY renderer::color_rgba(128, 128, 128)
 #define COLOR_WHITE renderer::color_rgba(255, 255, 255)
-#define COLOR_RED renderer::color_rgba(255, 0, 0)
-#define COLOR_GREEN renderer::color_rgba(0, 255, 0)
-#define COLOR_BLUE renderer::color_rgba(0, 0, 255)
+
+#define COLOR_ORANGE renderer::color_rgba(255, 128, 255)
 #define COLOR_YELLOW renderer::color_rgba(255, 255, 0)
-#define COLOR_PURPLE renderer::color_rgba(255, 0, 255)
+#define COLOR_LIME renderer::color_rgba(128, 255, 0)
+#define COLOR_GREEN renderer::color_rgba(0, 255, 0)
+#define COLOR_CYAN renderer::color_rgba(0, 255, 255)
+#define COLOR_BLUE renderer::color_rgba(0, 0, 255)
+#define COLOR_PURPLE renderer::color_rgba(127, 0, 255)
+#define COLOR_MAGENTA renderer::color_rgba(255, 0, 255)
 
 namespace renderer {
 	class color_rgba;

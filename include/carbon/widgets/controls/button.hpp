@@ -15,6 +15,6 @@ namespace carbon {
 	private:
 		std::function<void()> callback_;
 	};
-}
+}// namespace carbon
 
 #endif

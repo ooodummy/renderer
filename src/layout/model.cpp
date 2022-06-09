@@ -23,12 +23,7 @@ bool carbon::box_model::is_dirty() const {
 
 void carbon::padded_box::set_edge(const glm::vec4& bounds) {
 	edge_ = bounds;
-	content_ = {
-		edge_.x + left_,
-		edge_.y + top_,
-		edge_.z - left_ - right_,
-		edge_.w - top_ - bottom_
-	};
+	content_ = { edge_.x + left_, edge_.y + top_, edge_.z - left_ - right_, edge_.w - top_ - bottom_ };
 }
 
 glm::vec2 carbon::padded_box::get_padding() const {
@@ -70,7 +65,7 @@ void carbon::box_model::set_size(const glm::vec2& size) {
 }
 
 void carbon::box_model::compute_box_model() {
-	margin_.set_edge({pos_, size_});
+	margin_.set_edge({ pos_, size_ });
 	border_.set_edge(margin_.get_content());
 	padding_.set_edge(border_.get_content());
 	content_ = padding_.get_content();

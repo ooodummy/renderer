@@ -1,6 +1,7 @@
 #ifndef _RENDERER_UTIL_EASING_HPP_
 #define _RENDERER_UTIL_EASING_HPP_
 
+#define _USE_MATH_DEFINES
 #include <glm/vec2.hpp>
 
 namespace renderer {

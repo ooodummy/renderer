@@ -3,7 +3,6 @@
 
 #define NOMINMAX
 #include <Windows.h>
-
 #include <glm/vec2.hpp>
 
 namespace carbon {
@@ -13,6 +12,6 @@ namespace carbon {
 	extern glm::vec2 mouse_pos;
 
 	LRESULT impl_win32_winproc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-}
+}// namespace carbon
 
 #endif

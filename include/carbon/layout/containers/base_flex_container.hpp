@@ -28,6 +28,6 @@ namespace carbon {
 
 		void set_main(glm::vec2& dst, float src) const;
 	};
-}
+}// namespace carbon
 
 #endif

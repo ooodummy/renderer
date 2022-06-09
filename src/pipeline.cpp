@@ -55,15 +55,15 @@ bool renderer::pipeline::create_device() {
 #endif
 
 	HRESULT hr = D3D11CreateDevice(nullptr,
-	                               D3D_DRIVER_TYPE_HARDWARE,
-	                               nullptr,
-	                               creation_flags,
-	                               feature_levels,
-	                               ARRAYSIZE(feature_levels),
-	                               D3D11_SDK_VERSION,
-	                               &base_device,
-	                               nullptr,
-	                               &base_context);
+								   D3D_DRIVER_TYPE_HARDWARE,
+								   nullptr,
+								   creation_flags,
+								   feature_levels,
+								   ARRAYSIZE(feature_levels),
+								   D3D11_SDK_VERSION,
+								   &base_device,
+								   nullptr,
+								   &base_context);
 
 	if (FAILED(hr))
 		return false;
@@ -137,12 +137,8 @@ void renderer::pipeline::create_swap_chain() {
 	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swap_chain_desc.Flags = 0;
 
-	hr = dxgi_factory->CreateSwapChainForHwnd(device_,
-	                                          window_->get_hwnd(),
-	                                          &swap_chain_desc,
-	                                          nullptr,
-	                                          nullptr,
-	                                          &swap_chain_);
+	hr = dxgi_factory
+		 ->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
 	assert(SUCCEEDED(hr));
 	dxgi_factory->Release();
 }
@@ -184,7 +180,7 @@ void renderer::pipeline::create_frame_buffer_view() {
 	D3D11_RENDER_TARGET_VIEW_DESC frame_buffer_desc{};
 	frame_buffer_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 	frame_buffer_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-	
+
 	hr = device_->CreateRenderTargetView(frame_buffer, &frame_buffer_desc, &frame_buffer_view_);
 	assert(SUCCEEDED(hr));
 
@@ -196,29 +192,23 @@ void renderer::pipeline::create_frame_buffer_view() {
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
 void renderer::pipeline::create_shaders() {
-	HRESULT hr = device_->CreateVertexShader(vertex_shader_data,
-	                                         sizeof(vertex_shader_data),
-	                                         nullptr,
-	                                         &vertex_shader_);
+	HRESULT hr = device_->CreateVertexShader(vertex_shader_data, sizeof(vertex_shader_data), nullptr, &vertex_shader_);
 	assert(SUCCEEDED(hr));
 
-	hr = device_->CreatePixelShader(pixel_shader_data,
-	                                sizeof(pixel_shader_data),
-	                                nullptr,
-	                                &pixel_shader_);
+	hr = device_->CreatePixelShader(pixel_shader_data, sizeof(pixel_shader_data), nullptr, &pixel_shader_);
 	assert(SUCCEEDED(hr));
 
 	D3D11_INPUT_ELEMENT_DESC input_desc[] = {
-		{ "POS",  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"POS",	 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, 0,							   D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{ "COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{ "UV",	0, DXGI_FORMAT_R32G32_FLOAT,		 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
 	hr = device_->CreateInputLayout(input_desc,
-	                                ARRAYSIZE(input_desc),
-	                                vertex_shader_data,
-	                                sizeof(vertex_shader_data),
-	                                &input_layout_);
+									ARRAYSIZE(input_desc),
+									vertex_shader_data,
+									sizeof(vertex_shader_data),
+									&input_layout_);
 	assert(SUCCEEDED(hr));
 }
 
@@ -240,13 +230,10 @@ void renderer::pipeline::create_states() {
 
 	D3D11_DEPTH_STENCIL_DESC depth_stencil_state_desc{};
 	depth_stencil_state_desc.DepthEnable = true;
-	depth_stencil_state_desc.DepthWriteMask = 
-		D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ALL;
-	depth_stencil_state_desc.DepthFunc = 
-		D3D11_COMPARISON_FUNC::D3D11_COMPARISON_LESS_EQUAL;
+	depth_stencil_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_stencil_state_desc.DepthFunc = D3D11_COMPARISON_FUNC::D3D11_COMPARISON_LESS_EQUAL;
 
-	hr = device_->CreateDepthStencilState(&depth_stencil_state_desc, 
-		&depth_stencil_state_);
+	hr = device_->CreateDepthStencilState(&depth_stencil_state_desc, &depth_stencil_state_);
 	assert(SUCCEEDED(hr));
 
 	D3D11_SAMPLER_DESC sampler_desc{};
@@ -319,9 +306,7 @@ void renderer::pipeline::create_vertex_buffers(size_t vertex_count) {
 	vertex_desc.MiscFlags = 0;
 	vertex_desc.StructureByteStride = 0;
 
-	HRESULT hr = device_->CreateBuffer(&vertex_desc,
-	                                   nullptr,
-	                                   &vertex_buffer_);
+	HRESULT hr = device_->CreateBuffer(&vertex_desc, nullptr, &vertex_buffer_);
 	assert(SUCCEEDED(hr));
 
 	delete[] vertices;
@@ -345,9 +330,7 @@ void renderer::pipeline::create_vertex_buffers(size_t vertex_count) {
 	index_data.SysMemPitch = 0;
 	index_data.SysMemSlicePitch = 0;
 
-	hr = device_->CreateBuffer(&index_desc,
-	                           &index_data,
-	                           &index_buffer_);
+	hr = device_->CreateBuffer(&index_desc, &index_data, &index_buffer_);
 	assert(SUCCEEDED(hr));
 
 	delete[] indices;

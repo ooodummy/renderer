@@ -4,9 +4,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-renderer::line_segment::line_segment(glm::vec2 a, glm::vec2 b) :
-	a(a),
-	b(b) {}
+renderer::line_segment::line_segment(glm::vec2 a, glm::vec2 b) : a(a), b(b) {}
 
 renderer::line_segment renderer::line_segment::operator+(const glm::vec2& o) const {
 	return { a + o, b + o };
@@ -33,15 +31,14 @@ glm::vec2 renderer::line_segment::direction(bool normalized) const {
 	}
 }
 
-std::optional<glm::vec2> renderer::line_segment::intersection(const renderer::line_segment& o, bool infinite_lines) const {
+std::optional<glm::vec2> renderer::line_segment::intersection(const renderer::line_segment& o,
+															  bool infinite_lines) const {
 	const auto r = direction(false);
 	const auto s = o.direction(false);
 
 	const auto dst = o.a - a;
 
-	auto cross = [](const glm::vec2& a, const glm::vec2& b) -> float {
-		return a.x * b.y - a.y * b.x;
-	};
+	auto cross = [](const glm::vec2& a, const glm::vec2& b) -> float { return a.x * b.y - a.y * b.x; };
 
 	const auto numerator = cross(dst, r);
 	const auto denominator = cross(r, s);
@@ -63,7 +60,14 @@ renderer::poly_segment::poly_segment(const renderer::line_segment& _center, floa
 	edge1(center + center.normal() * thickness),
 	edge2(center - center.normal() * thickness) {}
 
-renderer::polyline::polyline(renderer::color_rgba col, float thickness, renderer::joint_type joint, renderer::cap_type cap) : col_(col), thickness_(thickness), joint_(joint), cap_(cap) {}
+renderer::polyline::polyline(renderer::color_rgba col,
+							 float thickness,
+							 renderer::joint_type joint,
+							 renderer::cap_type cap) :
+	col_(col),
+	thickness_(thickness),
+	joint_(joint),
+	cap_(cap) {}
 
 std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_overlap) const {
 	assert(points_);
@@ -121,11 +125,14 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 		path_end2 += last_segment.edge2.direction() * half_thickness_;
 	}
 	else if (cap_ == cap_round) {
-		create_triangle_fan(vertices, offset, first_segment.center.a, first_segment.center.a, first_segment.edge1.a, first_segment.edge2.a, false);
-		create_triangle_fan(vertices, offset, last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b, true);
+		create_triangle_fan(vertices, offset, first_segment.center.a, first_segment.center.a, first_segment.edge1.a,
+							first_segment.edge2.a, false);
+		create_triangle_fan(vertices, offset, last_segment.center.b, last_segment.center.b, last_segment.edge1.b,
+							last_segment.edge2.b, true);
 	}
 	else if (cap_ == cap_joint) {
-		create_joint(vertices, offset, last_segment, first_segment, path_end1, path_end2, path_start1, path_start2, allow_overlap);
+		create_joint(vertices, offset, last_segment, first_segment, path_end1, path_end2, path_start1, path_start2,
+					 allow_overlap);
 	}
 
 	glm::vec2 next_start1;
@@ -143,16 +150,17 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 			end2 = path_end2;
 		}
 		else {
-			create_joint(vertices, offset, segment, segments[i + 1], end1, end2, next_start1, next_start2, allow_overlap);
+			create_joint(vertices, offset, segment, segments[i + 1], end1, end2, next_start1, next_start2,
+						 allow_overlap);
 		}
 
-		vertices[offset] = {start1, col_};
+		vertices[offset] = { start1, col_ };
 		offset++;
-		vertices[offset] = {end1, col_};
+		vertices[offset] = { end1, col_ };
 		offset++;
-		vertices[offset] = {start2, col_};
+		vertices[offset] = { start2, col_ };
 		offset++;
-		vertices[offset] = {end2, col_};
+		vertices[offset] = { end2, col_ };
 		offset++;
 
 		start1 = next_start1;
@@ -176,12 +184,21 @@ void renderer::polyline::set_points(std::vector<glm::vec2>& points) {
 	points_ = &points;
 }
 
-void renderer::polyline::create_joint(vertex* vertices, size_t& offset, const renderer::poly_segment& segment1, const renderer::poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap) const {
+void renderer::polyline::create_joint(vertex* vertices,
+									  size_t& offset,
+									  const renderer::poly_segment& segment1,
+									  const renderer::poly_segment& segment2,
+									  glm::vec2& end1,
+									  glm::vec2& end2,
+									  glm::vec2& next_start1,
+									  glm::vec2& next_start2,
+									  bool allow_overlap) const {
 	const auto dir1 = segment1.center.direction();
 	const auto dir2 = segment2.center.direction();
 
 	// Ignore me not using GLM properly because I'm lazy
-	const auto angle = std::acos(glm::dot(dir1, dir2) / std::sqrt(dir1.x * dir1.x + dir1.y * dir1.y) * std::sqrt(dir2.x * dir2.x + dir2.y * dir2.y));
+	const auto angle = std::acos(glm::dot(dir1, dir2) / std::sqrt(dir1.x * dir1.x + dir1.y * dir1.y) *
+								 std::sqrt(dir2.x * dir2.x + dir2.y * dir2.y));
 	auto wrapped_angle = angle;
 
 	if (wrapped_angle > M_PI / 2.0f)
@@ -252,11 +269,11 @@ void renderer::polyline::create_joint(vertex* vertices, size_t& offset, const re
 
 		// TODO: Fix for triangle strip :(
 		if (override_joint == joint_bevel) {
-			vertices[offset] = {outer1->b, col_};
+			vertices[offset] = { outer1->b, col_ };
 			offset++;
-			vertices[offset] = {outer2->a, col_};
+			vertices[offset] = { outer2->a, col_ };
 			offset++;
-			vertices[offset] = {inner_sec, col_};
+			vertices[offset] = { inner_sec, col_ };
 			offset++;
 		}
 		else if (override_joint == joint_round) {
@@ -268,7 +285,13 @@ void renderer::polyline::create_joint(vertex* vertices, size_t& offset, const re
 	}
 }
 
-void renderer::polyline::create_triangle_fan(vertex* vertices, size_t& offset, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise) const {
+void renderer::polyline::create_triangle_fan(vertex* vertices,
+											 size_t& offset,
+											 const glm::vec2& connect_to,
+											 const glm::vec2& origin,
+											 const glm::vec2& start,
+											 const glm::vec2& end,
+											 bool clockwise) const {
 	const auto point1 = start - origin;
 	const auto point2 = end - origin;
 
@@ -301,19 +324,17 @@ void renderer::polyline::create_triangle_fan(vertex* vertices, size_t& offset, c
 		else {
 			const auto rot = (static_cast<float>(i) + 1.0f) * seg_angle;
 
-			end_point = {
-				std::cos(rot) * point1.x - std::sin(rot) * point1.y,
-				std::sin(rot) * point1.x + std::cos(rot) * point1.y
-			};
+			end_point = { std::cos(rot) * point1.x - std::sin(rot) * point1.y,
+						  std::sin(rot) * point1.x + std::cos(rot) * point1.y };
 
 			end_point += origin;
 		}
 
-		vertices[offset] = {start_point, col_};
+		vertices[offset] = { start_point, col_ };
 		offset++;
-		vertices[offset] = {end_point, col_};
+		vertices[offset] = { end_point, col_ };
 		offset++;
-		vertices[offset] = {connect_to, col_};
+		vertices[offset] = { connect_to, col_ };
 		offset++;
 
 		start_point = end_point;

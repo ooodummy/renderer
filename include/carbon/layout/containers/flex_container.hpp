@@ -8,6 +8,6 @@ namespace carbon {
 	public:
 		void compute() override;
 	};
-}
+}// namespace carbon
 
 #endif

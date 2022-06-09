@@ -22,6 +22,6 @@ namespace carbon {
 	protected:
 		std::vector<std::unique_ptr<flex_item>> children_;
 	};
-}
+}// namespace carbon
 
 #endif

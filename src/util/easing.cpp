@@ -1,12 +1,8 @@
 #include "renderer/util/easing.hpp"
 
-#define _USE_MATH_DEFINES
-#include <cassert>
 #include <cmath>
 
-#include <math.h>
-
-float renderer::ease(float a, float b, float t, float d, renderer::ease_type type) {// NOLINT(misc-no-recursion)
+float renderer::ease(float a, float b, float t, float d, renderer::ease_type type) {
 	b -= a;
 
 	switch (type) {
@@ -88,8 +84,5 @@ float renderer::ease(float a, float b, float t, float d, renderer::ease_type typ
 }
 
 glm::vec2 renderer::ease(glm::vec2 a, glm::vec2 b, float t, float d, renderer::ease_type type) {
-	return {
-		ease(a.x, b.x, t, d, type),
-		ease(a.y, b.y, t, d, type)
-	};
+	return { ease(a.x, b.x, t, d, type), ease(a.y, b.y, t, d, type) };
 }

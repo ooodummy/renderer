@@ -10,7 +10,7 @@
 
 namespace carbon {
 	// Used to easily manage the current main and cross axis, and convert back into physical position/size
-	template <typename T, typename RetT>
+	template<typename T, typename RetT>
 	class axes {
 	public:
 		axes() = default;
@@ -18,7 +18,7 @@ namespace carbon {
 
 		axes(const T& main, const T& cross, flex_direction main_axis) : main(main), cross(cross), axis_(main_axis) {}
 
-		axes& operator+=(const axes& o){
+		axes& operator+=(const axes& o) {
 			if (cross == o.cross) {
 				main += o.main;
 				cross += o.cross;
@@ -70,6 +70,6 @@ namespace carbon {
 	// Helpers for spitting vec4 into vec2 counterparts
 	glm::vec2 get_pos(const glm::vec4& box);
 	glm::vec2 get_size(const glm::vec4& box);
-}
+}// namespace carbon
 
 #endif

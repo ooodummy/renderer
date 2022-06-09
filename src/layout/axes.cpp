@@ -2,10 +2,10 @@
 
 glm::vec2 carbon::get_axis(const glm::vec4& src, carbon::flex_direction axis) {
 	if (axis == row || axis == row_reversed) {
-		return {src.x, src.z};
+		return { src.x, src.z };
 	}
 	else {
-		return {src.y, src.w};
+		return { src.y, src.w };
 	}
 }
 
@@ -47,9 +47,9 @@ carbon::axes_vec2 carbon::get_axes_size(const carbon::axes_vec4& box) {
 }
 
 glm::vec2 carbon::get_pos(const glm::vec4& box) {
-	return {box.x, box.y};
+	return { box.x, box.y };
 }
 
 glm::vec2 carbon::get_size(const glm::vec4& box) {
-	return {box.z, box.w};
+	return { box.z, box.w };
 }

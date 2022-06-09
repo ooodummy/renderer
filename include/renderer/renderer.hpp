@@ -25,8 +25,7 @@ namespace renderer {
 		friend class buffer;
 
 	public:
-		explicit d3d11_renderer(pipeline* pipeline) :
-			pipeline_(pipeline) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+		explicit d3d11_renderer(pipeline* pipeline);
 
 		size_t register_buffer(size_t priority = 0);
 		buffer* get_working_buffer(size_t id);

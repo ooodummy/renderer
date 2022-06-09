@@ -4,10 +4,7 @@
 
 #include <xutility>
 
-renderer::color_hsv::color_hsv(float h, float s, float v) :
-	h(h),
-	s(s),
-	v(v) {}
+renderer::color_hsv::color_hsv(float h, float s, float v) : h(h), s(s), v(v) {}
 
 renderer::color_rgba renderer::color_hsv::get_rgb() const {
 	const auto c = v * s;
@@ -59,15 +56,13 @@ renderer::color_rgba renderer::color_hsv::get_rgb() const {
 	};
 }
 
-[[nodiscard]] renderer::color_hsv renderer::color_hsv::ease(const color_hsv& o, float p, renderer::ease_type type) const {
+[[nodiscard]] renderer::color_hsv
+renderer::color_hsv::ease(const color_hsv& o, float p, renderer::ease_type type) const {
 	if (p > 1.0f)
 		p = 1.0f;
 
-	const color_hsv hsv = {
-		renderer::ease(h, o.h, p, 1.0f, type),
-		renderer::ease(s, o.s, p, 1.0f, type),
-		renderer::ease(v, o.v, p, 1.0f, type)
-	};
+	const color_hsv hsv = { renderer::ease(h, o.h, p, 1.0f, type), renderer::ease(s, o.s, p, 1.0f, type),
+							renderer::ease(v, o.v, p, 1.0f, type) };
 
 	return hsv;
 }
@@ -76,11 +71,7 @@ renderer::color_hsv::operator renderer::color_rgba() const {
 	return get_rgb();
 }
 
-renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) :
-	r(r),
-	g(g),
-	b(b),
-	a(a) {}
+renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
 renderer::color_rgba::color_rgba(uint32_t color) :
 	a((color >> 24) & 0xff),
@@ -89,10 +80,7 @@ renderer::color_rgba::color_rgba(uint32_t color) :
 	r(color & 0xff) {}
 
 renderer::color_rgba::operator uint32_t() const {
-	return static_cast<uint32_t>((((a)&0xff) << 24) |
-	                             (((b)&0xff) << 16) |
-	                             (((g)&0xff) << 8) |
-	                             ((r)&0xff));
+	return static_cast<uint32_t>((((a)&0xff) << 24) | (((b)&0xff) << 16) | (((g)&0xff) << 8) | ((r)&0xff));
 }
 
 renderer::color_rgba::operator renderer::color_hsv() const {
@@ -100,12 +88,8 @@ renderer::color_rgba::operator renderer::color_hsv() const {
 }
 
 renderer::color_rgba::operator DirectX::XMFLOAT4() const {
-	return {
-		static_cast<float>(r) / 255.0f,
-		static_cast<float>(g) / 255.0f,
-		static_cast<float>(b) / 255.0f,
-		static_cast<float>(a) / 255.0f
-	};
+	return { static_cast<float>(r) / 255.0f, static_cast<float>(g) / 255.0f, static_cast<float>(b) / 255.0f,
+			 static_cast<float>(a) / 255.0f };
 }
 
 renderer::color_hsv renderer::color_rgba::get_hsv() const {
@@ -130,14 +114,11 @@ renderer::color_hsv renderer::color_rgba::get_hsv() const {
 		hue *= 60.0f;
 	}
 
-	return {
-		hue,
-		max == 0.0f ? 0.0f : delta / max,
-		max
-	};
+	return { hue, max == 0.0f ? 0.0f : delta / max, max };
 }
 
-renderer::color_rgba renderer::color_rgba::ease(const renderer::color_rgba& o, float p, renderer::ease_type type) const {
+renderer::color_rgba
+renderer::color_rgba::ease(const renderer::color_rgba& o, float p, renderer::ease_type type) const {
 	if (p > 1.0f)
 		p = 1.0f;
 

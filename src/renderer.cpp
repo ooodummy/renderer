@@ -6,8 +6,9 @@
 
 #include <d3d11.h>
 
-// Use this for help
-// https://github.com/ooodummy/carbon/blob/96d35073927cddef5cad0dcb6c77f659ea5a3df2/src/renderer/impl/d3d9.cpp
+// Code gets a bit messy in here
+renderer::d3d11_renderer::d3d11_renderer(renderer::pipeline* pipeline) :
+	pipeline_(pipeline) {}
 
 void renderer::d3d11_renderer::draw() {
 	begin();
@@ -24,9 +25,7 @@ size_t renderer::d3d11_renderer::register_buffer(size_t priority) {
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	const auto id = buffers_.size();
-	buffers_.emplace_back(buffer_node{
-	std::make_unique<buffer>(this),
-	std::make_unique<buffer>(this) });
+	buffers_.emplace_back(buffer_node{ std::make_unique<buffer>(this), std::make_unique<buffer>(this) });
 
 	return id;
 }
@@ -58,7 +57,7 @@ size_t renderer::d3d11_renderer::register_font(const font& font) {
 }
 
 bool renderer::d3d11_renderer::init() {
-	//if (FT_Init_FreeType(&library_))
+	// if (FT_Init_FreeType(&library_))
 	//	return false;
 
 	return true;
@@ -79,18 +78,17 @@ void renderer::d3d11_renderer::begin() {
 			pipeline_->context_->RSSetViewports(1, &viewport);
 
 			DirectX::XMStoreFloat4x4(&pipeline_->projection,
-			                         DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX,
-			                                                                  viewport.Width,
-			                                                                  viewport.Height,
-			                                                                  viewport.TopLeftY,
-			                                                                  viewport.MinDepth,
-			                                                                  viewport.MaxDepth));
+									 DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX,
+																			  viewport.Width,
+																			  viewport.Height,
+																			  viewport.TopLeftY,
+																			  viewport.MinDepth,
+																			  viewport.MaxDepth));
 
-			hr = pipeline_->context_->Map(pipeline_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+			hr =
+			pipeline_->context_->Map(pipeline_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 			assert(SUCCEEDED(hr));
-			{
-				std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMFLOAT4X4));
-			}
+			{ std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMFLOAT4X4)); }
 			pipeline_->context_->Unmap(pipeline_->projection_buffer_, 0);
 
 			pipeline_->context_->VSSetConstantBuffers(0, 1, &pipeline_->projection_buffer_);
@@ -101,9 +99,7 @@ void renderer::d3d11_renderer::begin() {
 
 		hr = pipeline_->context_->Map(pipeline_->global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 		assert(SUCCEEDED(hr));
-		{
-			std::memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
-		}
+		{ std::memcpy(mapped_resource.pData, &global, sizeof(global_buffer)); }
 		pipeline_->context_->Unmap(pipeline_->global_buffer_, 0);
 
 		pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->global_buffer_);
@@ -111,7 +107,9 @@ void renderer::d3d11_renderer::begin() {
 
 	pipeline_->context_->OMSetBlendState(pipeline_->blend_state_, nullptr, 0xffffffff);
 
-	pipeline_->context_->OMSetRenderTargets(1, &pipeline_->frame_buffer_view_, pipeline_->depth_stencil_view_);//pipeline_->depth_stencil_view_);
+	pipeline_->context_->OMSetRenderTargets(1,
+											&pipeline_->frame_buffer_view_,
+											pipeline_->depth_stencil_view_);// pipeline_->depth_stencil_view_);
 
 	pipeline_->context_->OMSetDepthStencilState(pipeline_->depth_stencil_state_, NULL);
 
@@ -138,22 +136,21 @@ void renderer::d3d11_renderer::populate() {
 		for (auto& batch : batches) {
 			{
 				D3D11_MAPPED_SUBRESOURCE mapped_resource;
-				const auto hr = pipeline_->context_->Map(pipeline_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+				const auto hr =
+				pipeline_->context_->Map(pipeline_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 				assert(SUCCEEDED(hr));
-				{
-					std::memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
-				}
+				{ std::memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer)); }
 				pipeline_->context_->Unmap(pipeline_->command_buffer_, 0);
 
 				pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->command_buffer_);
 			}
 
-			//if (batch.rv)
+			// if (batch.rv)
 			//	pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
 
 			pipeline_->context_->IASetPrimitiveTopology(batch.type);
 			pipeline_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
-			
+
 			offset += batch.size;
 		}
 	}
@@ -163,8 +160,7 @@ void renderer::d3d11_renderer::end() {
 	const auto hr = pipeline_->swap_chain_->Present(vsync_, 0);
 
 	// https://docs.microsoft.com/en-us/windows/uwp/gaming/handling-device-lost-scenarios
-	if (hr == DXGI_ERROR_DEVICE_REMOVED ||
-	    hr == DXGI_ERROR_DEVICE_RESET) {
+	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
 		reset();
 	}
 }
@@ -213,7 +209,8 @@ void renderer::d3d11_renderer::update_buffers() {
 		if (pipeline_->vertex_buffer_) {
 			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
 
-			HRESULT hr = pipeline_->context_->Map(pipeline_->vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+			HRESULT hr =
+			pipeline_->context_->Map(pipeline_->vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
 			assert(SUCCEEDED(hr));
 
 			for (const auto& [active, working] : buffers_) {
@@ -239,20 +236,21 @@ void renderer::d3d11_renderer::render_buffers() {
 	pipeline_->context_->IASetInputLayout(pipeline_->input_layout_);
 }
 
-// TODO: This makes a new font face every time a glyph is requested which is not ideal position_at all I just need it to be functional
+// TODO: This makes a new font face every time a glyph is requested which is not ideal position_at all I just need it to
+// be functional
 bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	auto& font = fonts_[id];
 
 	if (!font.face) {
-		//if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
+		// if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
 		//	return false;
 
 		const auto dpi = GetDpiForWindow(pipeline_->get_window()->get_hwnd());
 
-		//if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
+		// if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
 		//	return false;
 
-		//if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
+		// if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
 		//	return false;
 	}
 
@@ -262,20 +260,15 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 		load_flags |= FT_LOAD_TARGET_MONO | FT_LOAD_MONOCHROME;
 	}
 
-	//if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
+	// if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
 	//	return false;
 
 	auto& glyph = font.char_set[c];
 
-	glyph.size = {
-		font.face->glyph->bitmap.width ? font.face->glyph->bitmap.width : 16,
-		font.face->glyph->bitmap.rows ? font.face->glyph->bitmap.rows : 16
-	};
+	glyph.size = { font.face->glyph->bitmap.width ? font.face->glyph->bitmap.width : 16,
+				   font.face->glyph->bitmap.rows ? font.face->glyph->bitmap.rows : 16 };
 
-	glyph.bearing = {
-		font.face->glyph->bitmap_left,
-		font.face->glyph->bitmap_top
-	};
+	glyph.bearing = { font.face->glyph->bitmap_left, font.face->glyph->bitmap_top };
 
 	glyph.advance = font.face->glyph->advance.x;
 

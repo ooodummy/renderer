@@ -61,7 +61,6 @@ namespace carbon {
 		glm::vec2 get_total_padding() const;
 
 	protected:
-
 		bool dirty_ = true;
 
 		glm::vec2 pos_{};
@@ -71,8 +70,8 @@ namespace carbon {
 
 		padded_box margin_;
 		padded_box border_;
-		padded_box padding_{5.0f};
+		padded_box padding_{ 5.0f };
 	};
-}
+}// namespace carbon
 
 #endif

@@ -19,10 +19,10 @@ void carbon::flex_item::compute() {
 
 void carbon::flex_item::decorate() {
 	buf->draw_rect(margin_.get_edge(), COLOR_GREEN);
-	//buf->draw_rect(border_.get_edge(), COLOR_GREEN);
-	//buf->draw_rect(padding_.get_edge(), COLOR_RED);
+	// buf->draw_rect(border_.get_edge(), COLOR_GREEN);
+	// buf->draw_rect(padding_.get_edge(), COLOR_RED);
 	buf->draw_rect(content_, COLOR_BLUE);
-	//buf->draw_rect(glm::vec4(carbon::get_pos(content_), flex_.basis.content), COLOR_PURPLE);
+	// buf->draw_rect(glm::vec4(carbon::get_pos(content_), flex_.basis.content), COLOR_PURPLE);
 }
 
 void carbon::flex_item::input() {}
@@ -77,7 +77,7 @@ void carbon::flex_item::set_hidden(bool hidden) {
 	hidden_ = hidden;
 }
 
-void carbon::flex_item::mark_dirty_and_propagate() { // NOLINT(misc-no-recursion)
+void carbon::flex_item::mark_dirty_and_propagate() {// NOLINT(misc-no-recursion)
 	dirty_ = true;
 
 	if (parent)

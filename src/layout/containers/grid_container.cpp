@@ -6,10 +6,8 @@ void carbon::grid_container::compute() {
 	const auto main_size_padded = size.x - padding_.get_padding().x * 2.0f;
 	const auto cross_size_padded = size.y - padding_.get_padding().y * 2.0f;
 
-	const glm::vec2 cell_size = {
-		main_size_padded / static_cast<float>(size.x),
-		cross_size_padded / static_cast<float>(size.y)
-	};
+	const glm::vec2 cell_size = { main_size_padded / static_cast<float>(size.x),
+								  cross_size_padded / static_cast<float>(size.y) };
 
 	const auto grid_start = get_grid_start();
 	glm::i16vec2 grid_pos = grid_start;
@@ -53,8 +51,6 @@ void carbon::grid_container::compute() {
 }
 
 glm::i16vec2 carbon::grid_container::get_grid_start() const {
-	return {
-		row_direction == direction_normal ? 0 : size.x - 1,
-		column_direction == direction_normal ? 0 : size.y - 1
-	};
+	return { row_direction == direction_normal ? 0 : size.x - 1,
+			 column_direction == direction_normal ? 0 : size.y - 1 };
 }

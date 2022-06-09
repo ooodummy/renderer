@@ -55,14 +55,15 @@ namespace carbon {
 		bool disabled_ = false;
 
 		// Compute data
-		glm::vec2 content_min_;         // Used to provide min content size to parent
-		float final_content_min_width_; // Unneeded used for testing
-		float base_size_;       // Starts as the basis size then gets flexed repeatedly if needed
-		float shrink_scaled;            // TODO: Fix Shrinking
-		float shrink_ratio;
-		float final_size;               // Final size, once set we also no longer make the item flexable
-		bool flexible;
+		glm::vec2 content_min_;		   // Used to provide min content size to parent
+		float final_content_min_width_;// Unneeded used for testing
+
+		bool flexible_;
+		float base_size_; // Starts as the basis size then gets flexed repeatedly if needed
+		float final_size_;// Final size, once set we also no longer make the item flexable
+		float shrink_scaled_;
+		float shrink_ratio_;
 	};
-}
+}// namespace carbon
 
 #endif

@@ -2,5 +2,4 @@
 
 #include "carbon/layout/containers/flex_line.hpp"
 
-void carbon::flex_container::compute() {
-}
+void carbon::flex_container::compute() {}

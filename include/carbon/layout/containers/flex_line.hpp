@@ -38,6 +38,6 @@ namespace carbon {
 		float direction;
 	};
 
-}
+}// namespace carbon
 
 #endif

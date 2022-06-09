@@ -32,15 +32,15 @@ void carbon::flex_line::measure() {
 		used_space += child->base_size_;
 
 		if (child->flex_.grow > 0.0f || child->flex_.shrink > 0.0f) {
-			child->flexible = true;
+			child->flexible_ = true;
 
 			grow_total += child->flex_.grow;
 			shrink_total += child->flex_.shrink;
 		}
 		else {
-			child->flexible = false;
+			child->flexible_ = false;
 
-			child->final_size = child->base_size_;
+			child->final_size_ = child->base_size_;
 		}
 	}
 
@@ -49,7 +49,7 @@ void carbon::flex_line::measure() {
 
 // Arrange doesn't sound correct
 void carbon::flex_line::arrange() {
-	for (size_t i = 0;;i++) {
+	for (size_t i = 0;; i++) {
 		// Is there a maximum of times it will ever recompute that we can calculate mathematically?
 		assert(i < 3);
 
@@ -63,8 +63,8 @@ void carbon::flex_line::arrange() {
 			const auto shrink = child->flex_.shrink;
 
 			if (shrink > 0.0f) {
-				child->shrink_scaled = child->base_size_ * remaining_space_ - child->flex_.shrink;
-				shrink_scaled_total += child->shrink_scaled;
+				child->shrink_scaled_ = child->base_size_ * remaining_space_ - child->flex_.shrink;
+				shrink_scaled_total += child->shrink_scaled_;
 			}
 		}
 
@@ -78,15 +78,15 @@ bool carbon::flex_line::calculate_flex() {
 	auto adjusted_space = 0.0f;
 
 	for (auto& child : children_) {
-		if (!child->flexible)
+		if (!child->flexible_)
 			continue;
 
 		const auto adjusted_length = resolve_flexible_length(child.get());
 		const auto adjusted_size = child->base_size_ + adjusted_length;
-		const auto clamped = clamp(child.get(), adjusted_size, child->final_size);
+		const auto clamped = clamp(child.get(), adjusted_size, child->final_size_);
 
 		if (clamped != 0.0f) {
-			child->flexible = false;
+			child->flexible_ = false;
 
 			grow_total -= child->flex_.grow;
 			shrink_total -= child->flex_.shrink;
@@ -111,8 +111,8 @@ float carbon::flex_line::resolve_flexible_length(flex_item* item) const {
 			return remaining_space_ * item->flex_.shrink;
 		}
 		else {
-			item->shrink_ratio = item->shrink_scaled / shrink_scaled_total;
-			return remaining_space_ * item->shrink_ratio;
+			item->shrink_ratio_ = item->shrink_scaled_ / shrink_scaled_total;
+			return remaining_space_ * item->shrink_ratio_;
 		}
 	}
 }
@@ -123,7 +123,7 @@ void carbon::flex_line::position() {
 
 	final_space = 0.0f;
 	for (const auto& child : children_) {
-		final_space += child->final_size;
+		final_space += child->final_size_;
 	}
 
 	remaining_space_ = content_size.main - final_space;
@@ -140,15 +140,11 @@ void carbon::flex_line::position() {
 
 	setup_justify_content();
 
-	for (auto & child : children_) {
+	for (auto& child : children_) {
 		if (reversed)
-			content_pos.main -= child->final_size;
+			content_pos.main -= child->final_size_;
 
-		const axes_vec2 child_size = {
-			child->final_size,
-			content_size.cross,
-			flow_.main
-		};
+		const axes_vec2 child_size = { child->final_size_, content_size.cross, flow_.main };
 
 		child->size_ = glm::vec2(child_size);
 		child->pos_ = glm::vec2(content_pos);
@@ -159,14 +155,14 @@ void carbon::flex_line::position() {
 		child->compute();
 
 		if (reversed)
-			content_pos.main += child->final_size;
+			content_pos.main += child->final_size_;
 
-		increment_justify_content(child->final_size);
+		increment_justify_content(child->final_size_);
 	}
 }
 
 void carbon::flex_line::compute() {
-	//if (can_use_cached())
+	// if (can_use_cached())
 	//	return;
 
 	adjust_min();
@@ -200,7 +196,7 @@ void carbon::flex_line::setup_justify_content() {
 			justify_content_spacing = remaining_space_ / static_cast<float>(children_.size() + 1);
 			offset = justify_content_spacing;
 			break;
-		//case justify_stretch:
+		// case justify_stretch:
 		//	break;
 		case justify_start:
 		default:
@@ -224,7 +220,7 @@ void carbon::flex_line::increment_justify_content(float item_size) {
 		case justify_space_evenly:
 			increment = item_size + justify_content_spacing;
 			break;
-		//case justify_stretch:
+		// case justify_stretch:
 		//	break;
 		default:
 			return;

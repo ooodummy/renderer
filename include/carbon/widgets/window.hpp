@@ -3,7 +3,6 @@
 
 #include "widget.hpp"
 
-// mercury
 namespace carbon {
 	// title bar 50px
 	// tab bar 100px
@@ -13,6 +12,6 @@ namespace carbon {
 	class window : public widget_flex_container {
 	public:
 	};
-}
+}// namespace carbon
 
 #endif

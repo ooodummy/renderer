@@ -1,10 +1,9 @@
 #ifndef _CARBON_WIDGETS_WIDGET_HPP_
 #define _CARBON_WIDGETS_WIDGET_HPP_
 
+#include "../global.hpp"
 #include "../layout/containers/flex_container.hpp"
 #include "../layout/containers/grid_container.hpp"
-
-#include "../global.hpp"
 
 // https://developer.android.com/guide/topics/appwidgets/overview#types
 
@@ -12,7 +11,7 @@ namespace carbon {
 	class base_widget {
 	public:
 		void set_label(const std::string& label);
-		[[nodiscard]] const std::string& get_label() const;
+		const std::string& get_label() const;
 
 	private:
 		std::string label_;

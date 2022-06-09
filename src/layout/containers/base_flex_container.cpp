@@ -47,21 +47,27 @@ void carbon::base_flex_container::set_justify_content(const flex_justify_content
 
 carbon::axes_vec4 carbon::base_flex_container::get_axes(glm::vec4 src) const {
 	if (flow_.main == row || flow_.main == row_reversed) {
-		return {{src.x, src.z}, {src.y, src.w},
-			flow_.main};
+		return {
+			{src.x,	 src.z},
+			{ src.y, src.w},
+			flow_.main
+		};
 	}
 	else {
-		return {{src.y, src.w}, {src.x, src.z},
-			flow_.main};
+		return {
+			{src.y,	 src.w},
+			{ src.x, src.z},
+			flow_.main
+		};
 	}
 }
 
 carbon::axes_vec2 carbon::base_flex_container::get_axes(glm::vec2 src) const {
 	if (flow_.main == row || flow_.main == row_reversed) {
-		return {src.x, src.y, flow_.main};
+		return { src.x, src.y, flow_.main };
 	}
 	else {
-		return  {src.y, src.x, flow_.main};
+		return { src.y, src.x, flow_.main };
 	}
 }
 

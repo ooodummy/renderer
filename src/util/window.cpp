@@ -20,17 +20,14 @@ bool renderer::win32_window::create() {
 	RECT rect = { pos_.x, pos_.y, pos_.x + size_.x, pos_.y + size_.y };
 	::AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, style);
 
-	hwnd_ = ::CreateWindowExA(style, wc_.lpszClassName, title_.data(),
-	                          WS_OVERLAPPEDWINDOW, rect.left, rect.top,
-	                          rect.right - rect.left, rect.bottom - rect.top,
-	                          nullptr, nullptr, wc_.hInstance, nullptr);
+	hwnd_ = ::CreateWindowExA(style, wc_.lpszClassName, title_.data(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
+							  rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, wc_.hInstance, nullptr);
 
 	return hwnd_ != nullptr;
 }
 
 bool renderer::win32_window::destroy() {
-	if (!::DestroyWindow(hwnd_) ||
-	    !::UnregisterClassA(wc_.lpszClassName, wc_.hInstance))
+	if (!::DestroyWindow(hwnd_) || !::UnregisterClassA(wc_.lpszClassName, wc_.hInstance))
 		return false;
 
 	return true;

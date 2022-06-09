@@ -7,13 +7,14 @@
 // All the constructors for flex properties try to imitate the CSS flex shorthand due to the need to mark items as dirty
 // when modified I don't think using set values with the whole property would be ideal because singular variables
 // couldn't be set one after another. So I think I will resort to creating an eye watering amount of constructors.
+// Mercury
 
 namespace carbon {
 	enum flex_unit {
-		unit_pixel,		// Pixel value
-		unit_aspect,	// Aspect to parent main axis size
-		unit_relative,	// Aspect relative to another flex_item
-		unit_auto		// Ignore value and just clamp basis size to basis content
+		unit_pixel,	  // Pixel value
+		unit_aspect,  // Aspect to parent main axis size
+		unit_relative,// Aspect relative to another flex_item
+		unit_auto	  // Ignore value and just clamp basis size to basis content
 	};
 
 	// TODO: Would doing this be appropriate?
@@ -22,7 +23,8 @@ namespace carbon {
 		basis_percentage,
 		basis_auto,
 		basis_content,
-		basis_fit_content, // (available < max-content) ? max-content : ((available < min-content) ? min-content : available)
+		basis_fit_content,// (available < max-content) ? max-content : ((available < min-content) ? min-content :
+						  // available)
 		basis_max_content,
 		basis_min_content
 	};
@@ -42,14 +44,14 @@ namespace carbon {
 		flex_width(float value);
 		flex_width(flex_unit unit);
 		flex_width(float value, flex_unit unit);
-		//flex_width(float value, flex_item* relative);
+		// flex_width(float value, flex_item* relative);
 
 		flex_unit unit = unit_aspect;
 		float value = 0.0f;
 
 		// Will implementing relative widths be worth it?
 		// And what are the guidelines for computing them?
-		//flex_item* relative;
+		// flex_item* relative;
 	};
 
 	struct flex_basis {
@@ -61,7 +63,7 @@ namespace carbon {
 		flex_basis(bool minimum);
 
 		bool minimum = false;
-		glm::vec2 content = {0.0f, 0.0f};
+		glm::vec2 content = { 0.0f, 0.0f };
 		flex_width width;
 	};
 
@@ -85,7 +87,7 @@ namespace carbon {
 
 	enum flex_wrap {
 		no_wrap,
-		wrap,			// Wrap to new line when exceeds content main
+		wrap,// Wrap to new line when exceeds content main
 		wrap_reverse
 	};
 
@@ -94,7 +96,7 @@ namespace carbon {
 		align_start,
 		align_end,
 		align_center,
-		align_stretch,	// Fill cross axis
+		align_stretch,// Fill cross axis
 		align_baseline
 	};
 
@@ -103,10 +105,10 @@ namespace carbon {
 		justify_start,
 		justify_end,
 		justify_center,
-		justify_space_around,	// Items have a half-size space on either end
-		justify_space_between,	// The first item is flush with the start, the last is flush with the end
-		justify_space_evenly,	// Items have equal space around them
-		justify_stretch			// While respecting constraints stretch items to fill main axis
+		justify_space_around, // Items have a half-size space on either end
+		justify_space_between,// The first item is flush with the start, the last is flush with the end
+		justify_space_evenly, // Items have equal space around them
+		justify_stretch		  // While respecting constraints stretch items to fill main axis
 	};
 
 	// Should probably be in properties, but I don't want to include properties here
@@ -133,6 +135,6 @@ namespace carbon {
 		flex_align align = align_start;
 		flex_justify_content justify_content = justify_start;
 	};
-}
+}// namespace carbon
 
 #endif
