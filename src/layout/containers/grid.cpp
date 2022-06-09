@@ -3,8 +3,8 @@
 void carbon::grid_container::compute() {
 	compute_alignment();
 
-	const auto main_size_padded = size.x - padding.get_spacing_width() * 2.0f;
-	const auto cross_size_padded = size.y - padding.get_spacing_height() * 2.0f;
+	const auto main_size_padded = size.x - padding_.get_padding_width() * 2.0f;
+	const auto cross_size_padded = size.y - padding_.get_padding_height() * 2.0f;
 
 	const glm::vec2 cell_size = {
 		main_size_padded / static_cast<float>(size.x),
@@ -15,7 +15,7 @@ void carbon::grid_container::compute() {
 	glm::i16vec2 grid_pos = grid_start;
 
 	for (auto& child : children_) {
-		const auto margin = child->margin;
+		const auto margin = child->margin_;
 
 		child->pos_ = {
 			pos_.x + cell_size.x * static_cast<float>(grid_pos.x) + margin.left,
@@ -23,8 +23,8 @@ void carbon::grid_container::compute() {
 		};
 
 		child->size_ = {
-			cell_size.x - margin.get_spacing_width(),
-			cell_size.y - margin.get_spacing_height()
+			cell_size.x - margin.get_padding_width(),
+			cell_size.y - margin.get_padding_height()
 		};
 
 		child->compute();

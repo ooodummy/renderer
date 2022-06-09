@@ -18,9 +18,8 @@ carbon::flex::flex(float grow, float shrink) : grow(grow), shrink(shrink) {}
 carbon::flex::flex(float grow, float shrink, flex_basis basis) : grow(grow), shrink(shrink), basis(basis) {}
 carbon::flex::flex(flex_basis basis) : basis(basis) {}
 carbon::flex::flex(float grow, flex_basis basis) : grow(grow), basis(basis) {}
-/*carbon::flex::flex(flex_keyword_values keyword) {
+carbon::flex::flex(flex_keyword_values keyword) {
 	basis.minimum = true;
-
 	switch (keyword) {
 		case value_initial:
 			grow = 0.0f;
@@ -35,9 +34,12 @@ carbon::flex::flex(float grow, flex_basis basis) : grow(grow), basis(basis) {}
 			shrink = 0.0f;
 			break;
 	}
-}*/
+}
 
 void carbon::flex_item::compute() {
+	//if (!dirty_)
+	//	return;
+
 	// We don't need to really do this all the time, but it cost nothing
 	compute_alignment();
 
@@ -47,7 +49,8 @@ void carbon::flex_item::compute() {
 void carbon::flex_item::draw() {
 	const glm::vec2 center = { bounds_.x + (bounds_.z / 2.0f), bounds_.y + bounds_.w / 2.0f };
 
-	buf->draw_rect(border.padded_bounds, COLOR_GREEN);
+	buf->draw_rect(bounds_, COLOR_YELLOW);
+	buf->draw_rect(border_.padded_bounds, COLOR_GREEN);
 	buf->draw_rect(content_bounds_, COLOR_BLUE);
 
 	const auto content = flex_.basis.content;
@@ -74,7 +77,7 @@ void carbon::flex_item::draw_contents() {// NOLINT(misc-no-recursion)
 void carbon::flex_item::measure_content_min() {
 	compute_alignment();
 
-	content_min_ = min_width_ + get_thickness();
+	content_min_ = get_total_padding();
 }
 
 carbon::flex_item* carbon::flex_item::get_top_parent() const {
@@ -91,33 +94,9 @@ const carbon::flex& carbon::flex_item::get_flex() const {
 	return flex_;
 }
 
-void carbon::flex_item::set_flex(float grow) {
+void carbon::flex_item::set_flex(const flex& flex) {
 	mark_dirty_and_propagate();
-	flex_.grow = grow;
-}
-
-void carbon::flex_item::set_flex(float grow, float shrink) {
-	mark_dirty_and_propagate();
-	flex_.grow = grow;
-	flex_.shrink = shrink;
-}
-
-void carbon::flex_item::set_flex(float grow, float shrink, flex_basis basis) {
-	mark_dirty_and_propagate();
-	flex_.grow = grow;
-	flex_.shrink = shrink;
-	flex_.basis = basis;
-}
-
-void carbon::flex_item::set_flex(flex_basis basis) {
-	mark_dirty_and_propagate();
-	flex_.basis = basis;
-}
-
-void carbon::flex_item::set_flex(float grow, flex_basis basis) {
-	mark_dirty_and_propagate();
-	flex_.grow = grow;
-	flex_.basis = basis;
+	flex_ = flex;
 }
 
 float carbon::flex_item::get_min_width() const {

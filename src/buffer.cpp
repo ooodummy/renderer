@@ -315,12 +315,10 @@ void renderer::buffer::draw_text(glm::vec2 pos, const std::string& text, rendere
 	draw_text(pos, text, active_font, col, h_align, v_align);
 }
 
+renderer::buffer::scissor_command::scissor_command(DirectX::XMFLOAT4 bounds, bool in, bool circle) : bounds(bounds), in(in), circle(circle) {}
+
 void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circle) {
-	scissor_list_.emplace(
-	DirectX::XMFLOAT4{
-	bounds.x, bounds.y, bounds.z, bounds.w },
-	in,
-	circle);
+	scissor_list_.emplace(DirectX::XMFLOAT4(bounds.x, bounds.y, bounds.z, bounds.w), in, circle);
 	update_scissor();
 }
 
@@ -411,3 +409,4 @@ void renderer::buffer::update_font() {
 		active_font = font_list_.top();
 	}
 }
+

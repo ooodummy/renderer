@@ -34,11 +34,9 @@ namespace carbon {
 		flex_flow() = default;
 		~flex_flow() = default;
 
-		flex_flow(flex_direction axis); // NOLINT(google-explicit-constructor)
-		flex_flow(flex_wrap wrap); // NOLINT(google-explicit-constructor)
+		flex_flow(flex_direction axis);
+		flex_flow(flex_wrap wrap);
 		flex_flow(flex_direction axis, flex_wrap wrap);
-
-		void set_axis(carbon::flex_direction axis);
 
 		flex_direction main = row;
 		flex_direction cross = column;
@@ -51,11 +49,17 @@ namespace carbon {
 
 	class base_flex_container : public base_container {
 	public:
+		friend class flex_line;
+
+		void set_flow(const flex_flow& flow);
+
 		void measure_content_min() override;
 
-		flex_flow flow;
-
 	protected:
+		flex_flow flow_;
+
+		axes_vec2 content_min_axes_;
+
 		[[nodiscard]] axes_vec4 get_axes(glm::vec4 src) const;
 		[[nodiscard]] axes_vec2 get_axes(glm::vec2 src) const;
 

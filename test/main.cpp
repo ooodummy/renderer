@@ -5,6 +5,7 @@
 #include <thread>
 #include <windowsx.h>
 
+#include <glm/gtx/rotate_vector.hpp>
 #include <fmt/core.h>
 
 std::unique_ptr<renderer::win32_window> window;
@@ -166,40 +167,29 @@ void draw_test_bezier(renderer::buffer* buf) {
 void draw_test_flex(renderer::buffer* buf) {
 	static bool init = false;
 	static auto flex_container = std::make_unique<carbon::flex_line>();
+	static carbon::flex_item* item111;
 
 	if (!init) {
-		flex_container->pos_ = {50.0f, 50.0f};
-		/*const auto growable1 = flex_container->add_child<carbon::flex_line>();
-		growable1->flex_ = {1.0f, 0.0f};
-		growable1->min_width_ = 50.0f;
-		growable1->max_width_ = 150.0f;
-		const auto growable11 = growable1->add_child<carbon::flex_line>();
-		growable11->flow = {carbon::column};
-		growable11->flex_ = {1.0f, 0.0f};
-		const auto growable111 = growable11->add_child<carbon::flex_line>();
-		growable111->flex_ = {1.0f, 0.0f};
-		const auto growable112 = growable11->add_child<carbon::flex_line>();
-		growable112->flex_ = {1.0f, 0.0f};
-		const auto growable2 = flex_container->add_child<carbon::flex_line>();
-		growable2->flex_ = {1.0f, 0.0f};
-		growable2->min_width_ = 50.0f;
-		growable2->max_width_ = 200.0f;*/
-		/*const auto basis1 = flex_container->add_child<carbon::flex_item>();
-		basis1->flex_ = {0.0f, 0.0f, carbon::flex_basis(200.0f, carbon::unit_pixel)};
-		const auto shrinkable1 = flex_container->add_child<carbon::flex_item>();
-		shrinkable1->flex_ = {0.0f, 1.0f, carbon::flex_basis(100.0f, carbon::unit_pixel)};
-		shrinkable1->min_width_ = 25.0f;
-		const auto shrinkable2 = flex_container->add_child<carbon::flex_item>();
-		shrinkable2->flex_ = {0.0f, 1.0f, carbon::flex_basis(100.0f, carbon::unit_pixel)};
-		shrinkable2->min_width_ = 25.0f;*/
+		flex_container->set_pos({50.0f, 50.0f});
+		const auto line1 = flex_container->add_child<carbon::flex_line>();
+		line1->set_flex(1.0f);
+		const auto container1 = line1->add_child<carbon::flex_line>();
+		container1->set_flex({1.0f});
+		container1->set_flow({carbon::column});
+		const auto container11 = container1->add_child<carbon::flex_item>();
+		container11->set_flex({1.0f});
+		const auto container12 = container1->add_child<carbon::flex_item>();
+		container12->set_flex({1.0f});
+		const auto container2 = line1->add_child<carbon::flex_line>();
+		container2->set_flex({1.0f});
 
-		flex_container->flow.set_axis(carbon::column);
+		/*flex_container->flow.set_axis(carbon::column);
 		const auto justify_start_container = flex_container->add_child<carbon::flex_line>();
 		justify_start_container->flow.justify_content = carbon::justify_start;
-		justify_start_container->set_flex(1.0f);
-		justify_start_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_start_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_start_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		flex_container->set_flex(1.0f);
+		flex_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		flex_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		flex_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		const auto justify_end_container = flex_container->add_child<carbon::flex_line>();
 		justify_end_container->flow.justify_content = carbon::justify_end;
 		justify_end_container->set_flex(1.0f);
@@ -229,12 +219,12 @@ void draw_test_flex(renderer::buffer* buf) {
 		justify_space_evenly_container->set_flex(1.0f);
 		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
 		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
+		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));*/
 
 		init = true;
 	}
 
-	flex_container->size_ = {carbon::mouse_pos.x - flex_container->pos_.x, carbon::mouse_pos.y - flex_container->pos_.y};
+	flex_container->set_size(carbon::mouse_pos - flex_container->get_pos());
 	flex_container->compute();
 	flex_container->draw_contents();
 }
@@ -250,12 +240,13 @@ void draw_thread() {
 
 		//draw_test_primitives(buf);
 		//draw_test_bezier(buf);
-		//draw_test_flex(buf);
+		draw_test_flex(buf);
 
-		buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
+		// Testing arc performance
+		/*buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
 		buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
 		buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
-		buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
+		buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);*/
 
         dx11->swap_buffers(id);
         updated_buf.notify();

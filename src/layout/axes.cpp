@@ -38,10 +38,10 @@ void carbon::set_axis(glm::vec2& dst, float src, carbon::flex_direction axis) {
 	}
 }
 
-carbon::axes_vec2 carbon::get_pos(const carbon::axes_vec4& bounds) {
+carbon::axes_vec2 carbon::get_axes_pos(const carbon::axes_vec4& bounds) {
 	return { bounds.main.x, bounds.cross.x, bounds.axis };
 }
 
-carbon::axes_vec2 carbon::get_size(const carbon::axes_vec4& bounds) {
+carbon::axes_vec2 carbon::get_axes_size(const carbon::axes_vec4& bounds) {
 	return { bounds.main.y, bounds.cross.y, bounds.axis };
 }

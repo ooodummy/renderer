@@ -106,6 +106,8 @@ namespace renderer {
 		bool split_batch_ = false;
 
 		struct scissor_command {
+			scissor_command(DirectX::XMFLOAT4 bounds, bool in, bool circle);
+
 			DirectX::XMFLOAT4 bounds;
 			bool in;
 			bool circle;

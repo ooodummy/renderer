@@ -6,7 +6,7 @@
 namespace carbon {
 	class flex_line : public base_flex_container {
 	public:
-		void draw() override;
+		//void draw() override;
 		void compute() override;
 
 	private:
@@ -16,7 +16,7 @@ namespace carbon {
 
 		bool can_use_cached();
 
-		static float clamp(flex_item* item, float src, float& dst);
+		float clamp(flex_item* item, float src, float& dst);
 		float get_base_size(flex_item* item, float scale);
 
 		bool calculate_flex();

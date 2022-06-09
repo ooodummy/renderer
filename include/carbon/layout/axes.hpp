@@ -20,6 +20,19 @@ namespace carbon {
 
 		axes(const T& main, const T& cross, flex_direction main_axis) : main(main), cross(cross), axis(main_axis) {}
 
+		axes& operator+=(const axes& o){
+			if (cross == o.cross) {
+				main += o.main;
+				cross += o.cross;
+			}
+			else {
+				main += o.cross;
+				cross += o.main;
+			}
+
+			return *this;
+		}
+
 		axes operator+(const axes& o) const {
 			return axes(main + o.main, cross - o.main, axis);
 		}
@@ -49,8 +62,8 @@ namespace carbon {
 	[[nodiscard]] float get_axis(const glm::vec2& src, flex_direction axis);
 	void set_axis(glm::vec2& dst, float src, flex_direction axis);
 
-	[[nodiscard]] axes_vec2 get_pos(const axes_vec4& bounds);
-	[[nodiscard]] axes_vec2 get_size(const axes_vec4& bounds);
+	[[nodiscard]] axes_vec2 get_axes_pos(const axes_vec4& bounds);
+	[[nodiscard]] axes_vec2 get_axes_size(const axes_vec4& bounds);
 }
 
 #endif

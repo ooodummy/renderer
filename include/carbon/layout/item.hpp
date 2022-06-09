@@ -40,8 +40,8 @@ namespace carbon {
 		flex_width() = default;
 		~flex_width() = default;
 
-		flex_width(float value); // NOLINT(google-explicit-constructor)
-		flex_width(flex_unit unit); // NOLINT(google-explicit-constructor)
+		flex_width(float value);
+		flex_width(flex_unit unit);
 		flex_width(float value, flex_unit unit);
 		flex_width(float value, flex_item* relative);
 
@@ -68,14 +68,14 @@ namespace carbon {
 	// TODO: Should initial/constructor values be changed?
 	struct flex {
 		flex() = default;
+		~flex() = default;
+
 		flex(float grow);
 		flex(float grow, float shrink);
 		flex(float grow, float shrink, flex_basis basis);
 		flex(flex_basis basis);
 		flex(float grow, flex_basis basis);
-
-		// Is this type of code design bad?
-		//flex(flex_keyword_values keyword);
+		flex(flex_keyword_values keyword);
 
 		float grow = 0.0f;
 		float shrink = 1.0f;
@@ -105,11 +105,7 @@ namespace carbon {
 		// Setters and getters are needed so if we can tell if properties have changed since if they have we then need to recompute
 		// We can probably remove all the flex constructors since we now have these
 		[[nodiscard]] const flex& get_flex() const;
-		void set_flex(float grow);
-		void set_flex(float grow, float shrink);
-		void set_flex(float grow, float shrink, flex_basis basis);
-		void set_flex(flex_basis basis);
-		void set_flex(float grow, flex_basis basis);
+		void set_flex(const flex& flex);
 
 		[[nodiscard]] float get_min_width() const;
 		void set_min_width(float min_width);
@@ -132,10 +128,8 @@ namespace carbon {
 
 		bool hidden_ = false;
 
-		// Physical size
+		// Compute data
 		glm::vec2 content_min_;
-
-		// flex_line::compute
 		float base_size_;
 		float hypothetical_size_;
 		float shrink_scaled;

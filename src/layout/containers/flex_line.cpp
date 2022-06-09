@@ -4,18 +4,18 @@
 
 #include <algorithm>
 
-void carbon::flex_line::draw() {
+/*void carbon::flex_line::draw() {
 	const glm::vec2 center = { bounds_.x + (bounds_.z / 2.0f), bounds_.y + bounds_.w / 2.0f };
 
 	//buf->draw_rect(bounds, COLOR_RED);
-	buf->draw_rect(margin.padded_bounds, COLOR_PURPLE);
-	buf->draw_rect(border.padded_bounds, COLOR_GREEN);
-	buf->draw_rect(padding.padded_bounds, COLOR_YELLOW);
+	buf->draw_rect(margin_.padded_bounds, COLOR_PURPLE);
+	buf->draw_rect(border_.padded_bounds, COLOR_GREEN);
+	buf->draw_rect(padding_.padded_bounds, COLOR_YELLOW);
 	buf->draw_rect(content_bounds_, COLOR_BLUE);
-}
+}*/
 
 float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
-	dst = std::clamp(src, item->min_width_, item->max_width_);
+	dst = std::clamp(src, get_main(item->content_min_), item->max_width_);
 
 	return dst - src;
 }
@@ -161,7 +161,7 @@ void carbon::flex_line::position() {
 
 	free_space = content_size.main - final_space;
 
-	const auto reversed = flow.main == row_reversed || flow.main == column_reversed;
+	const auto reversed = flow_.main == row_reversed || flow_.main == column_reversed;
 
 	if (reversed) {
 		content_pos.main += content_size.main;
@@ -180,11 +180,14 @@ void carbon::flex_line::position() {
 		const axes_vec2 child_size = {
 			child->final_size,
 			content_size.cross,
-			flow.main
+			flow_.main
 		};
 
 		child->size_ = glm::vec2(child_size);
 		child->pos_ = glm::vec2(content_pos);
+
+		// I think this is wrong
+		child->dirty_ = true;
 
 		child->compute();
 
@@ -196,23 +199,24 @@ void carbon::flex_line::position() {
 }
 
 void carbon::flex_line::compute() {
-	/*measure_content_min(flow.main);
-
-	auto min_size = std::max(min, content_min_ + get_main(get_thickness()));
-	set_main(size, std::clamp(get_main(size), min_size, max));*/
-
-	if (can_use_cached())
-		return;
+	//if (can_use_cached())
+	//	return;
 
 	dirty_ = false;
+
+	measure_content_min();
+
+	auto size_axes = get_axes(size_);
+	size_axes.main = std::clamp(size_axes.main, content_min_axes_.main, max_width_);
+	size_axes.cross = std::max(size_axes.cross, content_min_axes_.cross);
+
+	size_ = glm::vec2(size_axes);
 
 	compute_alignment();
 
 	const auto content_axes = get_axes(content_bounds_);
-	content_pos = get_pos(content_axes);
-	content_size = get_size(content_axes);
-
-	// TODO: Get minimum content
+	content_pos = get_axes_pos(content_axes);
+	content_size = get_axes_size(content_axes);
 
 	measure();
 	arrange();
@@ -233,7 +237,7 @@ void carbon::flex_line::setup_justify_content() {
 
 	float offset;
 
-	switch (flow.justify_content) {
+	switch (flow_.justify_content) {
 		case justify_end:
 			offset = content_size.main - final_space;
 			break;
@@ -264,7 +268,7 @@ void carbon::flex_line::setup_justify_content() {
 void carbon::flex_line::increment_justify_content(float item_size) {
 	float increment;
 
-	switch (flow.justify_content) {
+	switch (flow_.justify_content) {
 		case justify_start:
 		case justify_end:
 		case justify_center:
