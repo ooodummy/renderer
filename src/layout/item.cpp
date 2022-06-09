@@ -37,8 +37,8 @@ carbon::flex::flex(flex_keyword_values keyword) {
 }
 
 void carbon::flex_item::compute() {
-	//if (!dirty_)
-	//	return;
+	if (!dirty_)
+		return;
 
 	// We don't need to really do this all the time, but it cost nothing
 	compute_alignment();
@@ -112,9 +112,9 @@ float carbon::flex_item::get_max_width() const {
 	return max_width_;
 }
 
-void carbon::flex_item::set_max_width(float min_width) {
+void carbon::flex_item::set_max_width(float max_width) {
 	mark_dirty_and_propagate();
-	max_width_ = min_width;
+	max_width_ = max_width;
 }
 
 bool carbon::flex_item::get_hidden() const {

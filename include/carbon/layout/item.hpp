@@ -111,7 +111,7 @@ namespace carbon {
 		void set_min_width(float min_width);
 
 		[[nodiscard]] float get_max_width() const;
-		void set_max_width(float min_width);
+		void set_max_width(float max_width);
 
 		[[nodiscard]] bool get_hidden() const;
 		void set_hidden(bool hidden);

@@ -199,8 +199,8 @@ void carbon::flex_line::position() {
 }
 
 void carbon::flex_line::compute() {
-	//if (can_use_cached())
-	//	return;
+	if (can_use_cached())
+		return;
 
 	dirty_ = false;
 

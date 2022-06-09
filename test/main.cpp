@@ -176,8 +176,17 @@ void draw_test_flex(renderer::buffer* buf) {
 		const auto container1 = line1->add_child<carbon::flex_line>();
 		container1->set_flex({1.0f});
 		container1->set_flow({carbon::column});
-		const auto container11 = container1->add_child<carbon::flex_item>();
+		container1->set_justify_content(carbon::justify_center);
+		const auto container11 = container1->add_child<carbon::flex_line>();
 		container11->set_flex({1.0f});
+		container11->set_min_width(100.0f);
+		container11->set_max_width(200.0f);
+		const auto container111 = container11->add_child<carbon::flex_item>();
+		container111->set_flex({1.0f});
+		const auto container112 = container11->add_child<carbon::flex_item>();
+		container112->set_flex({1.0f});
+		const auto container113 = container11->add_child<carbon::flex_item>();
+		container113->set_flex({1.0f});
 		const auto container12 = container1->add_child<carbon::flex_item>();
 		container12->set_flex({1.0f});
 		const auto container2 = line1->add_child<carbon::flex_line>();

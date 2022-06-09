@@ -70,9 +70,9 @@ namespace carbon {
 		glm::vec4 bounds_;
 		glm::vec4 content_bounds_;
 
-		padded_box margin_{3.0f};
-		padded_box border_{3.0f};
-		padded_box padding_{3.0f};
+		padded_box margin_;
+		padded_box border_;
+		padded_box padding_{5.0f};
 	};
 }
 

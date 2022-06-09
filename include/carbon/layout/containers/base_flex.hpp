@@ -52,6 +52,7 @@ namespace carbon {
 		friend class flex_line;
 
 		void set_flow(const flex_flow& flow);
+		void set_justify_content(const flex_justify_content justify_content);
 
 		void measure_content_min() override;
 

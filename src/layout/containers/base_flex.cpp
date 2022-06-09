@@ -9,11 +9,16 @@ void carbon::base_flex_container::set_flow(const flex_flow& flow) {
 	flow_ = flow;
 }
 
+void carbon::base_flex_container::set_justify_content(const flex_justify_content justify_content) {
+	mark_dirty_and_propagate();
+	flow_.justify_content = justify_content;
+}
+
 void carbon::base_flex_container::measure_content_min() {
 	compute_alignment();
 
-	const auto padded_padded_axes = get_axes(padding_.get_padding());
-	content_min_axes_ = padded_padded_axes;
+	const auto total_padding_axes = get_axes(get_total_padding());
+	content_min_axes_ = total_padding_axes;
 	auto cross_min = 0.0f;
 
 	for (auto& child : children_) {
