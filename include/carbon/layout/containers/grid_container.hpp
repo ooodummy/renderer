@@ -1,7 +1,7 @@
 #ifndef _CARBON_LAYOUT_CONTAINERS_GRID_HPP_
 #define _CARBON_LAYOUT_CONTAINERS_GRID_HPP_
 
-#include "base.hpp"
+#include "base_container.hpp"
 
 namespace carbon {
 	enum grid_resize {
@@ -16,10 +16,12 @@ namespace carbon {
 		direction_reversed
 	};
 
+	// TODO: Recode
 	class grid_container : public base_container {
 	public:
 		void compute() override;
 
+	protected:
 		glm::i16vec2 size = { 0, 0 };
 
 		grid_direction row_direction = direction_normal;
@@ -27,7 +29,6 @@ namespace carbon {
 
 		grid_resize resize = grid_resize_none;
 
-	protected:
 		[[nodiscard]] glm::i16vec2 get_grid_start() const;
 	};
 }

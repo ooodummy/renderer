@@ -4,85 +4,7 @@
 #include "axes.hpp"
 #include "model.hpp"
 
-#include <glm/vec2.hpp>
-
-// There are so many constructors in here...
-
 namespace carbon {
-	enum flex_unit {
-		unit_pixel,		// Pixel value
-		unit_aspect,	// Aspect to parent main axis size
-		unit_relative,	// Aspect relative to another flex_item
-		unit_auto		// Ignore value and just clamp basis size to basis content
-	};
-
-	// TODO: Maybe add all this fun stuff
-	//  I don't really think it has much purpose though
-	enum flex_basis_size {
-		basis_width,
-		basis_percentage,
-		basis_auto,
-		basis_content,
-		basis_fit_content, // (available < max-content) ? max-content : ((available < min-content) ? min-content : available)
-		basis_max_content,
-		basis_min_content
-	};
-
-	enum flex_keyword_values {
-		value_initial,
-		value_auto,
-		value_none
-	};
-
-	class flex_item;
-
-	struct flex_width {
-		flex_width() = default;
-		~flex_width() = default;
-
-		flex_width(float value);
-		flex_width(flex_unit unit);
-		flex_width(float value, flex_unit unit);
-		flex_width(float value, flex_item* relative);
-
-		flex_unit unit = unit_aspect;
-		float value = 0.0f;
-
-		// TODO: How difficult will it actually be to do this?
-		flex_item* relative;
-	};
-
-	struct flex_basis {
-		flex_basis() = default;
-		flex_basis(float value);
-		flex_basis(flex_unit unit);
-		flex_basis(float value, flex_unit unit);
-		flex_basis(float value, flex_item* relative);
-		flex_basis(bool minimum);
-
-		bool minimum = false; // Same as auto
-		glm::vec2 content = {0.0f, 0.0f};
-		flex_width width;
-	};
-
-	// TODO: Should initial/constructor values be changed?
-	struct flex {
-		flex() = default;
-		~flex() = default;
-
-		flex(float grow);
-		flex(float grow, float shrink);
-		flex(float grow, float shrink, flex_basis basis);
-		flex(flex_basis basis);
-		flex(float grow, flex_basis basis);
-		flex(flex_keyword_values keyword);
-
-		float grow = 0.0f;
-		float shrink = 1.0f;
-		flex_basis basis;
-	};
-
-	// Flexable item with almost all functionality in the standard flex layout model :money_mouth:
 	class flex_item : public box_model {
 	public:
 		flex_item() = default;
@@ -96,45 +18,49 @@ namespace carbon {
 		virtual void draw();
 		virtual void input();
 
-		virtual void draw_contents();
-		virtual void measure_content_min();
-
-		[[nodiscard]] flex_item* get_top_parent() const;
+		flex_item* get_top_parent() const;
 		flex_item* parent = nullptr;
 
-		// Setters and getters are needed so if we can tell if properties have changed since if they have we then need to recompute
-		// We can probably remove all the flex constructors since we now have these
-		[[nodiscard]] const flex& get_flex() const;
+		const flex& get_flex() const;
 		void set_flex(const flex& flex);
 
-		[[nodiscard]] float get_min_width() const;
+		float get_min_width() const;
 		void set_min_width(float min_width);
 
-		[[nodiscard]] float get_max_width() const;
+		float get_max_width() const;
 		void set_max_width(float max_width);
 
-		[[nodiscard]] bool get_hidden() const;
+		bool get_hidden() const;
 		void set_hidden(bool hidden);
 
-		bool disabled = false;
+		bool get_disabled() const;
+		void set_disabled(bool hidden);
+
+		void mark_dirty_and_propagate() override;
 
 	protected:
-		void mark_dirty_and_propagate() override;
+		virtual void measure_contents();
+		virtual void decorate();
 
 		flex flex_;
 
+		// Should we make min/max a vec2?
 		float min_width_ = 0.0f;
 		float max_width_ = FLT_MAX;
 
+		// Ignored completely by the layout engine
 		bool hidden_ = false;
 
+		// Input disabled
+		bool disabled_ = false;
+
 		// Compute data
-		glm::vec2 content_min_;
-		float base_size_;
-		float hypothetical_size_;
-		float shrink_scaled;
+		glm::vec2 content_min_;         // Used to provide min content size to parent
+		float final_content_min_width_; // Unneeded used for testing
+		float base_size_;       // Starts as the basis size then gets flexed repeatedly if needed
+		float shrink_scaled;            // TODO: Fix Shrinking
 		float shrink_ratio;
-		float final_size;
+		float final_size;               // Final size, once set we also no longer make the item flexable
 		bool flexible;
 	};
 }

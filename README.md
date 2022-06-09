@@ -59,7 +59,7 @@ quality drastically gets even worse.
 - D3D11 Implementation
   - Textures
     - Research general information about textures to get a better understanding of how things such as an SRV are
-    handled and how I can draw a texture after setting it in my pixel shader.
+    handled and how I can decorate a texture after setting it in my pixel shader.
   - [ ] Make sure that proper formats are utilized in all the parts of the pipeline, I don't know how I should easily
   assess what works best for each situation though.
   - [ ] Resizing the depth view stencil causes an exception when the window is minimized.
@@ -119,7 +119,7 @@ quality drastically gets even worse.
       - [ ] Multicolored primitives should be written for every type and then the non-multicolor one might just call the
     multicolor one using the repeat color, this is laziness. But there is absolutely zero way I'm writing each twice!
       - Triangle strip order is irrelevant because there is no reasoning I believe to use backface culling in 2D
-    rendering. Should meshes still be made with order in mind? And is there preferred ways to draw primitives that we
+    rendering. Should meshes still be made with order in mind? And is there preferred ways to decorate primitives that we
     are not doing? It legit does not matter at all I'm just interested in knowing is the preferred starting position and
     pattern to go in for things such as rectangles. Looking at documentation graphic engines should provide the pattern
     most people like.
@@ -128,7 +128,7 @@ quality drastically gets even worse.
       - Instead of cramping a bunch of rectangles in and checking for intersections and all that it's probably best to
     make it just keep getting taller and having its width be the maximum glyph width in either axis. This may waste a
     little of memory but should make essentially no difference other than not requiring some algorithm to layout.
-      - Is drawing multiple textures in a singular draw call possible when using a texture atlas thanks to UVs? And how
+      - Is drawing multiple textures in a singular decorate call possible when using a texture atlas thanks to UVs? And how
     does UV mapping work when using an atlas?
   - [ ] Font glyph bitmap/texture creation with minimal binary footprint potentially taking GDI code or using something
   like FW1. Freetype is nice, but it's size ups the binary from less than 100kb to 1mb.

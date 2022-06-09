@@ -1,7 +1,6 @@
-#ifndef _CARBON_LAYOUT_CONTAINERS_BASE_HPP_
-#define _CARBON_LAYOUT_CONTAINERS_BASE_HPP_
+#ifndef _CARBON_LAYOUT_CONTAINERS_BASE_CONTAINER_HPP_
+#define _CARBON_LAYOUT_CONTAINERS_BASE_CONTAINER_HPP_
 
-#include "../axes.hpp"
 #include "../item.hpp"
 
 #include <memory>
@@ -10,7 +9,7 @@
 namespace carbon {
 	class base_container : public flex_item {
 	public:
-		void draw_contents() override;
+		void draw() override;
 
 		template<typename T, typename... Args>
 		T* add_child(Args&&... args) {
@@ -18,7 +17,7 @@ namespace carbon {
 		}
 
 		carbon::flex_item* add_child(std::unique_ptr<flex_item> item);
-		[[nodiscard]] std::vector<std::unique_ptr<flex_item>>& get_children();
+		std::vector<std::unique_ptr<flex_item>>& get_children();
 
 	protected:
 		std::vector<std::unique_ptr<flex_item>> children_;

@@ -1,10 +1,10 @@
-#include "carbon/layout/containers/grid.hpp"
+#include "carbon/layout/containers/grid_container.hpp"
 
 void carbon::grid_container::compute() {
-	compute_alignment();
+	compute_box_model();
 
-	const auto main_size_padded = size.x - padding_.get_padding_width() * 2.0f;
-	const auto cross_size_padded = size.y - padding_.get_padding_height() * 2.0f;
+	const auto main_size_padded = size.x - padding_.get_padding().x * 2.0f;
+	const auto cross_size_padded = size.y - padding_.get_padding().y * 2.0f;
 
 	const glm::vec2 cell_size = {
 		main_size_padded / static_cast<float>(size.x),
@@ -15,17 +15,17 @@ void carbon::grid_container::compute() {
 	glm::i16vec2 grid_pos = grid_start;
 
 	for (auto& child : children_) {
-		const auto margin = child->margin_;
+		const auto margin = child->get_margin();
 
-		child->pos_ = {
-			pos_.x + cell_size.x * static_cast<float>(grid_pos.x) + margin.left,
-			pos_.y + cell_size.y * static_cast<float>(grid_pos.y) + margin.top
-		};
+		// Grid container is going to be rewritten, so I don't care that it doesn't work rn
+		/*child->pos_ = {
+			pos_.x + cell_size.x * static_cast<float>(grid_pos.x) + margin.left_,
+			pos_.y + cell_size.y * static_cast<float>(grid_pos.y) + margin.top_ };
 
 		child->size_ = {
 			cell_size.x - margin.get_padding_width(),
 			cell_size.y - margin.get_padding_height()
-		};
+		};*/
 
 		child->compute();
 

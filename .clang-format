@@ -50,7 +50,7 @@ BreakBeforeTernaryOperators : true
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: true
-ColumnLimit: 0
+ColumnLimit: 120
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 0
 ContinuationIndentWidth: 0

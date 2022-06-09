@@ -4,64 +4,38 @@
 
 #include <algorithm>
 
-/*void carbon::flex_line::draw() {
-	const glm::vec2 center = { bounds_.x + (bounds_.z / 2.0f), bounds_.y + bounds_.w / 2.0f };
+void carbon::flex_line::adjust_min() {
+	measure_contents();
 
-	//buf->draw_rect(bounds, COLOR_RED);
-	buf->draw_rect(margin_.padded_bounds, COLOR_PURPLE);
-	buf->draw_rect(border_.padded_bounds, COLOR_GREEN);
-	buf->draw_rect(padding_.padded_bounds, COLOR_YELLOW);
-	buf->draw_rect(content_bounds_, COLOR_BLUE);
-}*/
+	auto size_axes = get_axes(size_);
+	size_axes.main = std::max(size_axes.main, content_min_axes_.main);
+	size_axes.cross = std::max(size_axes.cross, content_min_axes_.cross);
 
-float carbon::flex_line::clamp(carbon::flex_item* item, float src, float& dst) {
-	dst = std::clamp(src, get_main(item->content_min_), item->max_width_);
+	size_ = glm::vec2(size_axes);
 
-	return dst - src;
-}
+	compute_box_model();
 
-float carbon::flex_line::get_base_size(carbon::flex_item* item, float scale) {
-	const auto basis = item->flex_.basis.width.value;
-
-	float base;
-
-	if (!item->flex_.basis.minimum) {
-		switch (item->flex_.basis.width.unit) {
-			case unit_pixel:
-				base = basis;
-				break;
-			case unit_aspect:
-				base = basis * scale;
-				break;
-			default:
-				assert(false);
-				break;
-		}
-	}
-
-	return std::max(base, get_main(item->flex_.basis.content));
+	const auto content_axes = get_axes(content_);
+	content_pos = get_axes_pos(content_axes);
+	content_size = get_axes_size(content_axes);
 }
 
 void carbon::flex_line::measure() {
 	grow_total = 0.0f;
 	shrink_total = 0.0f;
-	hypothetical_space = 0.0f;
+	used_space = 0.0f;
 
+	// Collect total values and mark inflexible items as such
 	for (auto& child : children_) {
 		child->base_size_ = get_base_size(child.get(), content_size.main);
 
-		const auto grow = child->flex_.grow;
-		const auto shrink = child->flex_.shrink;
+		used_space += child->base_size_;
 
-		hypothetical_space += child->base_size_;
-
-		if (grow > 0.0f || shrink > 0.0f) {
+		if (child->flex_.grow > 0.0f || child->flex_.shrink > 0.0f) {
 			child->flexible = true;
 
 			grow_total += child->flex_.grow;
 			shrink_total += child->flex_.shrink;
-
-			child->hypothetical_size_ = child->base_size_;
 		}
 		else {
 			child->flexible = false;
@@ -70,82 +44,75 @@ void carbon::flex_line::measure() {
 		}
 	}
 
-	free_space = content_size.main - hypothetical_space;
+	remaining_space_ = content_size.main - used_space;
 }
 
+// Arrange doesn't sound correct
 void carbon::flex_line::arrange() {
 	for (size_t i = 0;;i++) {
+		// Is there a maximum of times it will ever recompute that we can calculate mathematically?
 		assert(i < 3);
 
-		grow_factor = free_space / grow_total;
-		shrink_factor = free_space / shrink_total;
+		grow_factor = remaining_space_ / grow_total;
+		shrink_factor = remaining_space_ / shrink_total;
 
+		// How should shrink get factored to perfectly mimic CSS?
 		shrink_scaled_total = 0.0f;
 
 		for (auto& child : children_) {
 			const auto shrink = child->flex_.shrink;
 
 			if (shrink > 0.0f) {
-				child->shrink_scaled = child->hypothetical_size_ * free_space - child->flex_.shrink;
+				child->shrink_scaled = child->base_size_ * remaining_space_ - child->flex_.shrink;
 				shrink_scaled_total += child->shrink_scaled;
 			}
 		}
 
+		// Breaks once size didn't get adjusted on any elements because of flexibility
 		if (calculate_flex())
 			break;
 	}
 }
 
 bool carbon::flex_line::calculate_flex() {
-	auto ret = true;
-	float new_free_space = free_space;
+	auto adjusted_space = 0.0f;
 
 	for (auto& child : children_) {
 		if (!child->flexible)
 			continue;
 
-		const auto flexible_length = resolve_flexible_length(child.get());
+		const auto adjusted_length = resolve_flexible_length(child.get());
+		const auto adjusted_size = child->base_size_ + adjusted_length;
+		const auto clamped = clamp(child.get(), adjusted_size, child->final_size);
 
-		child->hypothetical_size_ = child->base_size_ + flexible_length;
-		auto extra = clamp(child.get(), child->hypothetical_size_, child->final_size);
-
-		if (extra != 0.0f) {
-			ret = false;
-
+		if (clamped != 0.0f) {
 			child->flexible = false;
 
 			grow_total -= child->flex_.grow;
 			shrink_total -= child->flex_.shrink;
 
-			new_free_space -= flexible_length + extra;
+			adjusted_space -= adjusted_length + clamped;
 		}
 	}
 
-	free_space = new_free_space;
-	return ret;
+	remaining_space_ += adjusted_space;
+	return adjusted_space == 0.0f;
 }
 
 float carbon::flex_line::resolve_flexible_length(flex_item* item) const {
-	if (free_space > 0.0f) {
-		const auto grow = item->flex_.grow;
-
-		if (grow <= 0.0f)
-			return 0.0f;
-
-		return grow * grow_factor;
+	if (remaining_space_ > 0.0f) {
+		return item->flex_.grow * grow_factor;
 	}
 	else {
-		const auto shrink = item->flex_.shrink;
-
-		if (shrink <= 0.0f)
+		if (item->flex_.shrink <= 0.0f)
 			return 0.0f;
 
 		if (shrink_total < 1.0f) {
-			return free_space * shrink_factor;
+			return remaining_space_ * item->flex_.shrink;
 		}
 		else {
 			item->shrink_ratio = item->shrink_scaled / shrink_scaled_total;
-			return free_space * item->shrink_ratio;
+			return remaining_space_ * item->shrink_ratio;
 		}
 	}
 }
@@ -159,7 +126,7 @@ void carbon::flex_line::position() {
 		final_space += child->final_size;
 	}
 
-	free_space = content_size.main - final_space;
+	remaining_space_ = content_size.main - final_space;
 
 	const auto reversed = flow_.main == row_reversed || flow_.main == column_reversed;
 
@@ -199,37 +166,15 @@ void carbon::flex_line::position() {
 }
 
 void carbon::flex_line::compute() {
-	if (can_use_cached())
-		return;
+	//if (can_use_cached())
+	//	return;
 
-	dirty_ = false;
-
-	measure_content_min();
-
-	auto size_axes = get_axes(size_);
-	size_axes.main = std::clamp(size_axes.main, content_min_axes_.main, max_width_);
-	size_axes.cross = std::max(size_axes.cross, content_min_axes_.cross);
-
-	size_ = glm::vec2(size_axes);
-
-	compute_alignment();
-
-	const auto content_axes = get_axes(content_bounds_);
-	content_pos = get_axes_pos(content_axes);
-	content_size = get_axes_size(content_axes);
-
+	adjust_min();
 	measure();
 	arrange();
-
 	position();
-}
 
-bool carbon::flex_line::can_use_cached() {
-	// Mark children as dirty and their propagate downwards
-	// when computing we can mark them as not being dirty
-
-	// Do we need more than this?
-	return !dirty_;
+	dirty_ = false;
 }
 
 void carbon::flex_line::setup_justify_content() {
@@ -242,17 +187,17 @@ void carbon::flex_line::setup_justify_content() {
 			offset = content_size.main - final_space;
 			break;
 		case justify_center:
-			offset = free_space / 2.0f;
+			offset = remaining_space_ / 2.0f;
 			break;
 		case justify_space_around:
-			justify_content_spacing = free_space / static_cast<float>(children_.size());
+			justify_content_spacing = remaining_space_ / static_cast<float>(children_.size());
 			offset = justify_content_spacing / 2.0f;
 			break;
 		case justify_space_between:
-			justify_content_spacing = free_space / static_cast<float>(children_.size() - 1);
+			justify_content_spacing = remaining_space_ / static_cast<float>(children_.size() - 1);
 			return;
 		case justify_space_evenly:
-			justify_content_spacing = free_space / static_cast<float>(children_.size() + 1);
+			justify_content_spacing = remaining_space_ / static_cast<float>(children_.size() + 1);
 			offset = justify_content_spacing;
 			break;
 		//case justify_stretch:
@@ -286,4 +231,32 @@ void carbon::flex_line::increment_justify_content(float item_size) {
 	}
 
 	content_pos.main += increment * direction;
+}
+
+float carbon::flex_line::clamp(const flex_item* item, float src, float& dst) {
+	dst = std::clamp(src, item->final_content_min_width_, item->max_width_);
+
+	return dst - src;
+}
+
+float carbon::flex_line::get_base_size(const flex_item* item, float scale) {
+	const auto basis = item->flex_.basis.width.value;
+
+	float base;
+
+	if (!item->flex_.basis.minimum) {
+		switch (item->flex_.basis.width.unit) {
+			case unit_pixel:
+				base = basis;
+				break;
+			case unit_aspect:
+				base = basis * scale;
+				break;
+			default:
+				assert(false);
+				break;
+		}
+	}
+
+	return std::max(base, get_main(item->flex_.basis.content));
 }

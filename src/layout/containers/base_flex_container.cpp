@@ -1,8 +1,39 @@
-#include "carbon/layout/containers/base_flex.hpp"
+#include "carbon/layout/containers/base_flex_container.hpp"
 
-carbon::flex_flow::flex_flow(carbon::flex_direction axis) : main(axis), cross((axis == row || axis == row_reversed) ? column : row) {}
-carbon::flex_flow::flex_flow(carbon::flex_wrap wrap) : wrap(wrap) {}
-carbon::flex_flow::flex_flow(carbon::flex_direction axis, carbon::flex_wrap wrap) : main(axis), cross((axis == row || axis == row_reversed) ? column : row), wrap(wrap) {}
+void carbon::base_flex_container::measure_contents() {
+	compute_box_model();
+
+	// All content min is always at least the total padding added up
+	const auto total_padding_axes = get_axes(get_total_padding());
+	content_min_axes_ = total_padding_axes;
+
+	auto cross_min = 0.0f;
+
+	for (auto& child : children_) {
+		// Calculate minimum content size in child
+		child->measure_contents();
+
+		// Clamp main axis child content min by its width
+		auto child_content_min_axes = get_axes(child->content_min_);
+		child_content_min_axes.main = std::max(child_content_min_axes.main, child->min_width_);
+
+		// Update it for the child
+		// because it's later used inside of clamp when a flex container
+		// is clamping its children
+		set_main(child->content_min_, child_content_min_axes.main);
+
+		// Add up minimum main axis side and store largest cross axis
+		content_min_axes_.main += child_content_min_axes.main;
+		cross_min = std::max(cross_min, child_content_min_axes.cross);
+	}
+
+	content_min_axes_.cross += cross_min;
+	content_min_ = glm::vec2(content_min_axes_);
+
+	// This is unneeded but just used for trying to see
+	// what's currently causing issues with computing all of this
+	final_content_min_width_ = content_min_axes_.main;
+}
 
 void carbon::base_flex_container::set_flow(const flex_flow& flow) {
 	mark_dirty_and_propagate();
@@ -12,29 +43,6 @@ void carbon::base_flex_container::set_flow(const flex_flow& flow) {
 void carbon::base_flex_container::set_justify_content(const flex_justify_content justify_content) {
 	mark_dirty_and_propagate();
 	flow_.justify_content = justify_content;
-}
-
-void carbon::base_flex_container::measure_content_min() {
-	compute_alignment();
-
-	const auto total_padding_axes = get_axes(get_total_padding());
-	content_min_axes_ = total_padding_axes;
-	auto cross_min = 0.0f;
-
-	for (auto& child : children_) {
-		child->measure_content_min();
-
-		auto child_content_min_axes = get_axes(child->content_min_);
-		child_content_min_axes.main = std::max(child_content_min_axes.main, child->min_width_);
-
-		child->content_min_ = glm::vec2(child_content_min_axes);
-
-		content_min_axes_.main += child_content_min_axes.main;
-		cross_min = std::max(cross_min, child_content_min_axes.cross);
-	}
-
-	content_min_axes_.cross += cross_min;
-	content_min_ = glm::vec2(content_min_axes_);
 }
 
 carbon::axes_vec4 carbon::base_flex_container::get_axes(glm::vec4 src) const {

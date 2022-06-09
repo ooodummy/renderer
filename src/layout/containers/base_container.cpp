@@ -1,12 +1,10 @@
-#include "carbon/layout/containers/base.hpp"
+#include "carbon/layout/containers/base_container.hpp"
 
-#include <xutility>
-
-void carbon::base_container::draw_contents() { // NOLINT(misc-no-recursion)
-	draw();
+void carbon::base_container::draw() { // NOLINT(misc-no-recursion)
+	decorate();
 
 	for (auto& child : children_) {
-		child->draw_contents();
+		child->draw();
 	}
 }
 

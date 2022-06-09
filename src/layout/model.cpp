@@ -1,32 +1,46 @@
 #include "carbon/layout/model.hpp"
 
-carbon::padded_box::padded_box(float size) : top(size), right(size), bottom(size), left(size) {}
-carbon::padded_box::padded_box(float vertical, float horizontal) : top(vertical), right(horizontal), bottom(vertical), left(horizontal) {}
-carbon::padded_box::padded_box(float top, float horizontal, float bottom) : top(top), right(horizontal), bottom(bottom), left(horizontal) {}
-carbon::padded_box::padded_box(float top, float right, float bottom, float left) : top(top), right(right), bottom(bottom), left(left) {}
+carbon::padded_box::padded_box(float size) : top_(size), right_(size), bottom_(size), left_(size) {}
+carbon::padded_box::padded_box(float vertical, float horizontal) :
+	top_(vertical),
+	right_(horizontal),
+	bottom_(vertical),
+	left_(horizontal) {}
+carbon::padded_box::padded_box(float top, float horizontal, float bottom) :
+	top_(top),
+	right_(horizontal),
+	bottom_(bottom),
+	left_(horizontal) {}
+carbon::padded_box::padded_box(float top, float right, float bottom, float left) :
+	top_(top),
+	right_(right),
+	bottom_(bottom),
+	left_(left) {}
 
-void carbon::padded_box::compute(const glm::vec4& bounds) {
-	padded_bounds = {
-		bounds.x + left,
-		bounds.y + top,
-		bounds.z - left - right,
-		bounds.w - top - bottom
+bool carbon::box_model::is_dirty() const {
+	return dirty_;
+}
+
+void carbon::padded_box::set_edge(const glm::vec4& bounds) {
+	edge_ = bounds;
+	content_ = {
+		edge_.x + left_,
+		edge_.y + top_,
+		edge_.z - left_ - right_,
+		edge_.w - top_ - bottom_
 	};
 }
 
 glm::vec2 carbon::padded_box::get_padding() const {
-	return {
-		left + right,
-		top + bottom
-	};
+	return { left_ + right_, top_ + bottom_ };
 }
 
-float carbon::padded_box::get_padding_width() const {
-	return left + right;
+const glm::vec4& carbon::padded_box::get_edge() const {
+	return edge_;
 }
 
-float carbon::padded_box::get_padding_height() const {
-	return top + bottom;
+const glm::vec4& carbon::padded_box::get_content() const {
+	return content_;
 }
 
 const glm::vec2& carbon::box_model::get_pos() const {
@@ -55,26 +69,15 @@ void carbon::box_model::set_size(const glm::vec2& size) {
 	size_ = size;
 }
 
-[[nodiscard]] const glm::vec4& carbon::box_model::get_content_bounds() const {
-	return content_bounds_;
-}
-
-void carbon::box_model::compute_alignment() {
-	bounds_ = { pos_, size_ };
-
-	margin_.compute(bounds_);
-	border_.compute(margin_.padded_bounds);
-	padding_.compute(border_.padded_bounds);
-
-	content_bounds_ = padding_.padded_bounds;
+void carbon::box_model::compute_box_model() {
+	margin_.set_edge({pos_, size_});
+	border_.set_edge(margin_.get_content());
+	padding_.set_edge(border_.get_content());
+	content_ = padding_.get_content();
 }
 
 glm::vec2 carbon::box_model::get_total_padding() const {
 	return margin_.get_padding() + border_.get_padding() + padding_.get_padding();
-}
-
-glm::vec2 carbon::box_model::get_total_border_padding() {
-	return margin_.get_padding() + border_.get_padding() ;
 }
 
 const carbon::padded_box& carbon::box_model::get_margin() const {
@@ -102,4 +105,8 @@ const carbon::padded_box& carbon::box_model::get_padding() const {
 void carbon::box_model::set_padding(const carbon::padded_box& padding) {
 	mark_dirty_and_propagate();
 	padding_ = padding;
+}
+
+const glm::vec4& carbon::box_model::get_content() const {
+	return content_;
 }

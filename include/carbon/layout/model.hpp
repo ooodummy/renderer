@@ -5,7 +5,8 @@
 #include <glm/vec4.hpp>
 
 namespace carbon {
-	struct padded_box {
+	class padded_box {
+	public:
 		padded_box() = default;
 		~padded_box() = default;
 
@@ -14,61 +15,59 @@ namespace carbon {
 		padded_box(float top, float horizontal, float bottom);
 		padded_box(float top, float right, float bottom, float left);
 
-		void compute(const glm::vec4& bounds);
+		void set_edge(const glm::vec4& bounds);
+		glm::vec2 get_padding() const;
 
-		[[nodiscard]] glm::vec2 get_padding() const;
+		const glm::vec4& get_edge() const;
+		const glm::vec4& get_content() const;
 
-		[[nodiscard]] float get_padding_width() const;
-		[[nodiscard]] float get_padding_height() const;
+	private:
+		float top_ = 0.0f;
+		float right_ = 0.0f;
+		float bottom_ = 0.0f;
+		float left_ = 0.0f;
 
-		float top = 0.0f;
-		float right = 0.0f;
-		float bottom = 0.0f;
-		float left = 0.0f;
-
-		glm::vec4 padded_bounds;
+		glm::vec4 edge_;
+		glm::vec4 content_;
 	};
 
-	// https://i.imgur.com/S3nJWLV.png
+	// https://www.w3.org/TR/CSS2/box.html
 	class box_model {
 	public:
 		box_model() = default;
 		~box_model() = default;
 
-		friend class grid_container;
-		friend class flex_container;
-		
+		bool is_dirty() const;
 		virtual void mark_dirty_and_propagate() = 0;
 
-		[[nodiscard]] const glm::vec2& get_pos() const;
+		void compute_box_model();
+
+		const glm::vec2& get_pos() const;
 		void set_pos(const glm::vec2& pos);
 
-		[[nodiscard]] const glm::vec2& get_size() const;
+		const glm::vec2& get_size() const;
 		void set_size(const glm::vec2& size);
 
-		[[nodiscard]] const glm::vec4& get_content_bounds() const;
-
-		void compute_alignment();
-		[[nodiscard]] glm::vec2 get_total_padding() const;
-		[[nodiscard]] glm::vec2 get_total_border_padding();
-
-		[[nodiscard]] const padded_box& get_margin() const;
+		const padded_box& get_margin() const;
 		void set_margin(const carbon::padded_box& margin);
 
-		[[nodiscard]] const padded_box& get_border() const;
+		const padded_box& get_border() const;
 		void set_border(const carbon::padded_box& border);
 
-		[[nodiscard]] const padded_box& get_padding() const;
+		const padded_box& get_padding() const;
 		void set_padding(const carbon::padded_box& padding);
 
+		const glm::vec4& get_content() const;
+		glm::vec2 get_total_padding() const;
+
 	protected:
+
 		bool dirty_ = true;
 
 		glm::vec2 pos_{};
 		glm::vec2 size_{};
 
-		glm::vec4 bounds_;
-		glm::vec4 content_bounds_;
+		glm::vec4 content_;
 
 		padded_box margin_;
 		padded_box border_;

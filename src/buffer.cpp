@@ -91,7 +91,7 @@ void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
 		{pos.x, pos.y, col}
 	};
 
-	// Would strips be the best, so it is all batched when possible more often
+	// Would strips be the best, so it is all batched when possible more often?
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 }
 
@@ -104,7 +104,7 @@ void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, c
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
-// TODO: Midpoint circle
+// TODO: Optimized circle points
 void renderer::buffer::add_arc_vertices(vertex* vertices, size_t offset, const glm::vec2& pos, float start, float length, float radius, renderer::color_rgba col, float thickness, size_t segments, bool triangle_fan) {
 	thickness /= 2.0f;
 

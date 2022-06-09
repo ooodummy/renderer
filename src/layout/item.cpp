@@ -2,82 +2,33 @@
 
 #include "carbon/global.hpp"
 
-carbon::flex_width::flex_width(float value) : value(value), unit(unit_aspect), relative(nullptr) {}
-carbon::flex_width::flex_width(carbon::flex_unit unit) : unit(unit), value(0.0f), relative(nullptr) {}
-carbon::flex_width::flex_width(float value, flex_unit unit) : value(value), unit(unit), relative(nullptr) {}
-carbon::flex_width::flex_width(float value, carbon::flex_item* relative) : value(value), relative(relative), unit(unit_relative) {}
+void carbon::flex_item::measure_contents() {
+	compute_box_model();
 
-carbon::flex_basis::flex_basis(float value) : width(value) {}
-carbon::flex_basis::flex_basis(flex_unit unit) : width(unit) {}
-carbon::flex_basis::flex_basis(float value, flex_unit unit) : width(value, unit) {}
-carbon::flex_basis::flex_basis(float value, carbon::flex_item* relative) : width(value, relative) {}
-carbon::flex_basis::flex_basis(bool minimum) : minimum(minimum) {}
-
-carbon::flex::flex(float grow) : grow(grow) {}
-carbon::flex::flex(float grow, float shrink) : grow(grow), shrink(shrink) {}
-carbon::flex::flex(float grow, float shrink, flex_basis basis) : grow(grow), shrink(shrink), basis(basis) {}
-carbon::flex::flex(flex_basis basis) : basis(basis) {}
-carbon::flex::flex(float grow, flex_basis basis) : grow(grow), basis(basis) {}
-carbon::flex::flex(flex_keyword_values keyword) {
-	basis.minimum = true;
-	switch (keyword) {
-		case value_initial:
-			grow = 0.0f;
-			shrink = 1.0f;
-			break;
-		case value_auto:
-			grow = 1.0f;
-			shrink = 1.0f;
-			break;
-		case value_none:
-			grow = 0.0f;
-			shrink = 0.0f;
-			break;
-	}
+	content_min_ = get_total_padding();
 }
 
 void carbon::flex_item::compute() {
 	if (!dirty_)
 		return;
 
-	// We don't need to really do this all the time, but it cost nothing
-	compute_alignment();
+	compute_box_model();
 
 	dirty_ = false;
 }
 
-void carbon::flex_item::draw() {
-	const glm::vec2 center = { bounds_.x + (bounds_.z / 2.0f), bounds_.y + bounds_.w / 2.0f };
-
-	buf->draw_rect(bounds_, COLOR_YELLOW);
-	buf->draw_rect(border_.padded_bounds, COLOR_GREEN);
-	buf->draw_rect(content_bounds_, COLOR_BLUE);
-
-	const auto content = flex_.basis.content;
-
-	if (content != glm::vec2{}) {
-		const glm::vec4 draw_content{
-			center.x - content.x / 2.0f,
-			center.y - content.y / 2.0f,
-			content.x,
-			content.y
-		};
-
-		buf->draw_rect(draw_content, COLOR_PURPLE);
-	}
+void carbon::flex_item::decorate() {
+	buf->draw_rect(margin_.get_edge(), COLOR_GREEN);
+	//buf->draw_rect(border_.get_edge(), COLOR_GREEN);
+	//buf->draw_rect(padding_.get_edge(), COLOR_RED);
+	buf->draw_rect(content_, COLOR_BLUE);
+	//buf->draw_rect(glm::vec4(carbon::get_pos(content_), flex_.basis.content), COLOR_PURPLE);
 }
 
-void carbon::flex_item::input() {
-}
+void carbon::flex_item::input() {}
 
-void carbon::flex_item::draw_contents() {// NOLINT(misc-no-recursion)
-	draw();
-}
-
-void carbon::flex_item::measure_content_min() {
-	compute_alignment();
-
-	content_min_ = get_total_padding();
+void carbon::flex_item::draw() {// NOLINT(misc-no-recursion)
+	decorate();
 }
 
 carbon::flex_item* carbon::flex_item::get_top_parent() const {
