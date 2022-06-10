@@ -250,7 +250,7 @@ float carbon::flex_line::get_base_size(const flex_item* item, float scale) {
 				break;
 			default:
 				assert(false);
-				break;
+				return 0.0f;
 		}
 	}
 

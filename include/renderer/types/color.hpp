@@ -9,7 +9,8 @@
 #define COLOR_GREY renderer::color_rgba(128, 128, 128)
 #define COLOR_WHITE renderer::color_rgba(255, 255, 255)
 
-#define COLOR_ORANGE renderer::color_rgba(255, 128, 255)
+#define COLOR_RED renderer::color_rgba(255, 0, 0)
+#define COLOR_ORANGE renderer::color_rgba(255, 128, 0)
 #define COLOR_YELLOW renderer::color_rgba(255, 255, 0)
 #define COLOR_LIME renderer::color_rgba(128, 255, 0)
 #define COLOR_GREEN renderer::color_rgba(0, 255, 0)
