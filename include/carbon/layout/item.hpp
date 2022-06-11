@@ -34,7 +34,7 @@ namespace carbon {
 		void set_hidden(bool hidden);
 
 		bool get_disabled() const;
-		void set_disabled(bool hidden);
+		void set_disabled(bool disabled);
 
 		void mark_dirty_and_propagate() override;
 
@@ -56,7 +56,6 @@ namespace carbon {
 
 		// Compute data
 		glm::vec2 content_min_;		   // Used to provide min content size to parent
-		float final_content_min_width_;// Unneeded used for testing
 
 		bool flexible_;
 		float base_size_; // Starts as the basis size then gets flexed repeatedly if needed

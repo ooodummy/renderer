@@ -1,7 +1,8 @@
 #ifndef _RENDERER_BUFFER_HPP_
 #define _RENDERER_BUFFER_HPP_
 
-#include "types/batch.hpp"
+#include "renderer/shaders/constant_buffers.hpp"
+
 #include "types/font.hpp"
 #include "types/vertex.hpp"
 
@@ -12,11 +13,24 @@
 #include <stack>
 #include <memory>
 
-// TODO:
-//  Generate circle points and avoid constant sin and cos calls
-//  Push/pop font for drawing text and index X be undefined
-
 namespace renderer {
+	class batch {
+	public:
+		batch(size_t size, D3D_PRIMITIVE_TOPOLOGY type) :
+			size(size),
+			type(type) {}
+
+		// Basic geometry
+		size_t size;
+		D3D_PRIMITIVE_TOPOLOGY type;
+
+		// Fonts
+		ID3D11ShaderResourceView* rv = nullptr;
+		color_rgba color;
+
+		command_buffer command{};
+	};
+
 	class d3d11_renderer;
 
 	class buffer {

@@ -10,12 +10,12 @@
 namespace renderer {
 	// TODO: Renderer impl should handle shader and constant buffer creation
 	// https://github.com/kevinmoran/BeginnerDirect3D11
-	class pipeline {
+	class d3d11_pipeline {
 		friend class d3d11_renderer;
 
 	public:
 		// TODO: Setup the pipeline helper to just be given a pipeline that already exist
-		explicit pipeline(win32_window* window) :
+		explicit d3d11_pipeline(win32_window* window) :
 			window_(window) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
 
 		bool init();

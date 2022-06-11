@@ -1,9 +1,9 @@
 #include "renderer/pipeline.hpp"
 
-#include "renderer/types/constant_buffers.hpp"
+#include "renderer/shaders/constant_buffers.hpp"
 #include "renderer/types/vertex.hpp"
 
-bool renderer::pipeline::init() {
+bool renderer::d3d11_pipeline::init() {
 	if (!device_) {
 		if (!create_device())
 			return false;
@@ -26,7 +26,7 @@ bool renderer::pipeline::init() {
 	return true;
 }
 
-void renderer::pipeline::release() {
+void renderer::d3d11_pipeline::release() {
 	if (projection_buffer_) {
 		projection_buffer_->Release();
 		projection_buffer_ = nullptr;
@@ -43,7 +43,7 @@ void renderer::pipeline::release() {
 	}
 }
 
-bool renderer::pipeline::create_device() {
+bool renderer::d3d11_pipeline::create_device() {
 	ID3D11Device* base_device;
 	ID3D11DeviceContext* base_context;
 
@@ -79,7 +79,7 @@ bool renderer::pipeline::create_device() {
 	return true;
 }
 
-void renderer::pipeline::setup_debug_layer() const {
+void renderer::d3d11_pipeline::setup_debug_layer() const {
 	ID3D11Debug* debug;
 	HRESULT hr = device_->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug);
 	assert(SUCCEEDED(hr));
@@ -97,7 +97,7 @@ void renderer::pipeline::setup_debug_layer() const {
 	assert(SUCCEEDED(hr));
 }
 
-void renderer::pipeline::create_swap_chain() {
+void renderer::d3d11_pipeline::create_swap_chain() {
 	HRESULT hr;
 
 	IDXGIDevice1* dxgi_device;
@@ -143,7 +143,7 @@ void renderer::pipeline::create_swap_chain() {
 	dxgi_factory->Release();
 }
 
-void renderer::pipeline::create_depth_stencil_view() {
+void renderer::d3d11_pipeline::create_depth_stencil_view() {
 	const auto size = window_->get_size();
 
 	D3D11_TEXTURE2D_DESC depth_desc;
@@ -172,7 +172,7 @@ void renderer::pipeline::create_depth_stencil_view() {
 	depth_stencil->Release();
 }
 
-void renderer::pipeline::create_frame_buffer_view() {
+void renderer::d3d11_pipeline::create_frame_buffer_view() {
 	ID3D11Texture2D* frame_buffer;
 	auto hr = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&frame_buffer);
 	assert(SUCCEEDED(hr));
@@ -191,7 +191,7 @@ void renderer::pipeline::create_frame_buffer_view() {
 #include "renderer/shaders/compiled/vertex.h"
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
-void renderer::pipeline::create_shaders() {
+void renderer::d3d11_pipeline::create_shaders() {
 	HRESULT hr = device_->CreateVertexShader(vertex_shader_data, sizeof(vertex_shader_data), nullptr, &vertex_shader_);
 	assert(SUCCEEDED(hr));
 
@@ -212,7 +212,7 @@ void renderer::pipeline::create_shaders() {
 	assert(SUCCEEDED(hr));
 }
 
-void renderer::pipeline::create_states() {
+void renderer::d3d11_pipeline::create_states() {
 	D3D11_BLEND_DESC blend_desc;
 	blend_desc.AlphaToCoverageEnable = FALSE;
 	blend_desc.IndependentBlendEnable = FALSE;
@@ -266,7 +266,7 @@ void renderer::pipeline::create_states() {
 	context_->RSSetState(rasterizer_state_);
 }
 
-void renderer::pipeline::create_constant_buffers() {
+void renderer::d3d11_pipeline::create_constant_buffers() {
 	D3D11_BUFFER_DESC buffer_desc;
 	buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
 	buffer_desc.ByteWidth = sizeof(DirectX::XMFLOAT4X4);
@@ -289,7 +289,7 @@ void renderer::pipeline::create_constant_buffers() {
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
-void renderer::pipeline::create_vertex_buffers(size_t vertex_count) {
+void renderer::d3d11_pipeline::create_vertex_buffers(size_t vertex_count) {
 	if (vertex_count <= 0) {
 		release_buffers();
 		return;
@@ -336,7 +336,7 @@ void renderer::pipeline::create_vertex_buffers(size_t vertex_count) {
 	delete[] indices;
 }
 
-void renderer::pipeline::release_buffers() {
+void renderer::d3d11_pipeline::release_buffers() {
 	if (vertex_buffer_) {
 		vertex_buffer_->Release();
 		vertex_buffer_ = nullptr;
@@ -348,7 +348,7 @@ void renderer::pipeline::release_buffers() {
 	}
 }
 
-void renderer::pipeline::resize() {
+void renderer::d3d11_pipeline::resize() {
 	context_->OMSetRenderTargets(0, nullptr, nullptr);
 	context_->OMSetDepthStencilState(nullptr, NULL);
 	frame_buffer_view_->Release();
@@ -372,6 +372,6 @@ void renderer::pipeline::resize() {
 	create_depth_stencil_view();
 }
 
-renderer::win32_window* renderer::pipeline::get_window() {
+renderer::win32_window* renderer::d3d11_pipeline::get_window() {
 	return window_;
 }

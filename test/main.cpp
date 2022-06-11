@@ -173,7 +173,9 @@ void draw_test_flex(renderer::buffer* buf) {
 		flex_container->set_pos({50.0f, 50.0f});
 		const auto container1 = flex_container->add_child<carbon::flex_line>();
 		container1->set_flex({1.0f});
-		container1->set_flow({carbon::column});
+		container1->set_axis(carbon::column);
+		const auto item3 = flex_container->add_child<carbon::flex_item>();
+		item3->set_flex({1.0f});
 		const auto container11 = container1->add_child<carbon::flex_line>();
 		container11->set_flex({1.0f});
 		container11->set_min_width(100.0f);
@@ -186,46 +188,9 @@ void draw_test_flex(renderer::buffer* buf) {
 		container113->set_flex({1.0f});
 		const auto container12 = container1->add_child<carbon::flex_item>();
 		container12->set_flex({1.0f});
+		//container12->set_max_width(50.0f); // >:( causes issues
 		auto container2 = container1->add_child<carbon::flex_line>();
-		container2->set_flex({0.0f});
-
-		/*flex_container->flow.set_axis(carbon::column);
-		const auto justify_start_container = flex_container->add_child<carbon::flex_line>();
-		justify_start_container->flow.justify_content = carbon::justify_start;
-		flex_container->set_flex(1.0f);
-		flex_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		flex_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		flex_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		const auto justify_end_container = flex_container->add_child<carbon::flex_line>();
-		justify_end_container->flow.justify_content = carbon::justify_end;
-		justify_end_container->set_flex(1.0f);
-		justify_end_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_end_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_end_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		const auto justify_center_container = flex_container->add_child<carbon::flex_line>();
-		justify_center_container->flow.justify_content = carbon::justify_center;
-		justify_center_container->set_flex(1.0f);
-		justify_center_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_center_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_center_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		const auto justify_space_around_container = flex_container->add_child<carbon::flex_line>();
-		justify_space_around_container->flow.justify_content = carbon::justify_space_around;
-		justify_space_around_container->set_flex(1.0f);
-		justify_space_around_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_around_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_around_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		const auto justify_space_between_container = flex_container->add_child<carbon::flex_line>();
-		justify_space_between_container->flow.justify_content = carbon::justify_space_between;
-		justify_space_between_container->set_flex(1.0f);
-		justify_space_between_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_between_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_between_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		const auto justify_space_evenly_container = flex_container->add_child<carbon::flex_line>();
-		justify_space_evenly_container->flow.justify_content = carbon::justify_space_evenly;
-		justify_space_evenly_container->set_flex(1.0f);
-		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));
-		justify_space_evenly_container->add_child<carbon::flex_item>()->set_flex(carbon::flex_basis(0.25f));*/
+		container2->set_flex({1.0f});
 
 		init = true;
 	}
@@ -287,7 +252,7 @@ int main() {
 
     window->set_visibility(true);
 
-    auto device = std::make_unique<renderer::pipeline>(window.get());
+    auto device = std::make_unique<renderer::d3d11_pipeline>(window.get());
 
     if (!device->init()) {
         MessageBoxA(nullptr, "Failed to initialize pipeline.", "Error", MB_ICONERROR | MB_OK);
@@ -302,6 +267,7 @@ int main() {
     }
 
     dx11->set_vsync(false);
+	dx11->set_clear_color({25, 50, 150});
 
     segoe = dx11->register_font({"Segoe UI", 12, FW_THIN, true});
 

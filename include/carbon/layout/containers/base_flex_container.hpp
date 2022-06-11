@@ -8,7 +8,12 @@ namespace carbon {
 	public:
 		friend class flex_line;
 
+		// Separate flow constructors
 		void set_flow(const flex_flow& flow);
+
+		void set_axis(flex_direction axis);
+		void set_wrap(flex_wrap wrap);
+		void set_align(flex_align align);
 		void set_justify_content(flex_justify_content justify_content);
 
 	protected:

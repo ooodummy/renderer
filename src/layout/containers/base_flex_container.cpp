@@ -29,15 +29,27 @@ void carbon::base_flex_container::measure_contents() {
 
 	content_min_axes_.cross += cross_min;
 	content_min_ = glm::vec2(content_min_axes_);
-
-	// This is unneeded but just used for trying to see
-	// what's currently causing issues with computing all of this
-	final_content_min_width_ = content_min_axes_.main;
 }
 
 void carbon::base_flex_container::set_flow(const flex_flow& flow) {
 	mark_dirty_and_propagate();
 	flow_ = flow;
+}
+
+void carbon::base_flex_container::set_axis(flex_direction axis) {
+	mark_dirty_and_propagate();
+	flow_.main = axis;
+	flow_.cross = (axis == row || axis == row_reversed) ? column : row;
+}
+
+void carbon::base_flex_container::set_wrap(flex_wrap wrap) {
+	mark_dirty_and_propagate();
+	flow_.wrap = wrap;
+}
+
+void carbon::base_flex_container::set_align(flex_align align) {
+	mark_dirty_and_propagate();
+	flow_.align = align;
 }
 
 void carbon::base_flex_container::set_justify_content(const flex_justify_content justify_content) {

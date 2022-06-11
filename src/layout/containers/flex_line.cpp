@@ -7,11 +7,13 @@
 void carbon::flex_line::adjust_min() {
 	measure_contents();
 
-	auto size_axes = get_axes(size_);
-	size_axes.main = std::max(size_axes.main, content_min_axes_.main);
-	size_axes.cross = std::max(size_axes.cross, content_min_axes_.cross);
+	if (!parent) {
+		auto size_axes = get_axes(size_);
+		size_axes.main = std::max(size_axes.main, content_min_axes_.main);
+		size_axes.cross = std::max(size_axes.cross, content_min_axes_.cross);
 
-	size_ = glm::vec2(size_axes);
+		size_ = glm::vec2(size_axes);
+	}
 
 	compute_box_model();
 
@@ -230,7 +232,7 @@ void carbon::flex_line::increment_justify_content(float item_size) {
 }
 
 float carbon::flex_line::clamp(const flex_item* item, float src, float& dst) {
-	dst = std::clamp(src, item->final_content_min_width_, item->max_width_);
+	dst = std::clamp(src, get_main(item->content_min_), item->max_width_);
 
 	return dst - src;
 }

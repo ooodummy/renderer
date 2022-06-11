@@ -6,11 +6,12 @@
 #include <glm/vec2.hpp>
 #include <unordered_map>
 
+// https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
+
 namespace renderer {
 	// Texture atlas can be used for font's to reduce sizes and batch
 	// Could create a buffer and then when drawing textured quads I could just add them to the texture and draw that
-	//  I don't know how ordering the z position can be handled hen doing this though
-
+	// I don't know how ordering the z position can be handled when doing this though
 	enum text_align {
 		text_align_top,
 		text_align_left,

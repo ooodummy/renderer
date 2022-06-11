@@ -14,7 +14,7 @@ namespace carbon {
 		void arrange();
 		void position();
 
-		static float clamp(const flex_item* item, float src, float& dst);
+		float clamp(const flex_item* item, float src, float& dst);
 		float get_base_size(const flex_item* item, float scale);
 
 		bool calculate_flex();

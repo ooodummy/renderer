@@ -2,12 +2,12 @@
 
 #include "renderer/buffer.hpp"
 #include "renderer/pipeline.hpp"
-#include "renderer/types/constant_buffers.hpp"
+#include "renderer/shaders/constant_buffers.hpp"
 
 #include <d3d11.h>
 
 // Code gets a bit messy in here
-renderer::d3d11_renderer::d3d11_renderer(renderer::pipeline* pipeline) :
+renderer::d3d11_renderer::d3d11_renderer(renderer::d3d11_pipeline* pipeline) :
 	pipeline_(pipeline) {}
 
 void renderer::d3d11_renderer::draw() {
@@ -18,6 +18,10 @@ void renderer::d3d11_renderer::draw() {
 
 void renderer::d3d11_renderer::set_vsync(bool vsync) {
 	vsync_ = vsync;
+}
+
+void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color) {
+	clear_color_ = color;
 }
 
 // TODO: Buffer priority
@@ -64,47 +68,61 @@ bool renderer::d3d11_renderer::init() {
 }
 
 void renderer::d3d11_renderer::begin() {
-	FLOAT background_color[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
-	pipeline_->context_->ClearRenderTargetView(pipeline_->frame_buffer_view_, background_color);
+	clear();
 
-	{
-		const auto size = pipeline_->window_->get_size();
+	const auto size = pipeline_->window_->get_size();
 
-		HRESULT hr;
-		D3D11_MAPPED_SUBRESOURCE mapped_resource;
-
-		if (size != glm::i16vec2{}) {
-			D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)(size.x), (FLOAT)(size.y), 0.0f, 1.0f };
-			pipeline_->context_->RSSetViewports(1, &viewport);
-
-			DirectX::XMStoreFloat4x4(&pipeline_->projection,
-									 DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX,
-																			  viewport.Width,
-																			  viewport.Height,
-																			  viewport.TopLeftY,
-																			  viewport.MinDepth,
-																			  viewport.MaxDepth));
-
-			hr =
-			pipeline_->context_->Map(pipeline_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-			assert(SUCCEEDED(hr));
-			{ std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMFLOAT4X4)); }
-			pipeline_->context_->Unmap(pipeline_->projection_buffer_, 0);
-
-			pipeline_->context_->VSSetConstantBuffers(0, 1, &pipeline_->projection_buffer_);
-		}
-
-		global_buffer global{};
-		global.dimensions = { static_cast<float>(size.x), static_cast<float>(size.y) };
-
-		hr = pipeline_->context_->Map(pipeline_->global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-		assert(SUCCEEDED(hr));
-		{ std::memcpy(mapped_resource.pData, &global, sizeof(global_buffer)); }
-		pipeline_->context_->Unmap(pipeline_->global_buffer_, 0);
-
-		pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->global_buffer_);
+	if (size != size_) {
+		size_ = size;
+		resize_projection();
 	}
 
+	prepare_context();
+
+	update_buffers();
+	render_buffers();
+}
+
+void renderer::d3d11_renderer::clear() {
+	pipeline_->context_->ClearRenderTargetView(pipeline_->frame_buffer_view_, (FLOAT*)&clear_color_);
+}
+
+void renderer::d3d11_renderer::resize_projection() {
+	HRESULT hr;
+	D3D11_MAPPED_SUBRESOURCE mapped_resource;
+
+	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)(size_.x), (FLOAT)(size_.y), 0.0f, 1.0f };
+	pipeline_->context_->RSSetViewports(1, &viewport);
+
+	DirectX::XMStoreFloat4x4(&pipeline_->projection,
+							 DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX,
+																	  viewport.Width,
+																	  viewport.Height,
+																	  viewport.TopLeftY,
+																	  viewport.MinDepth,
+																	  viewport.MaxDepth));
+
+	hr =
+	pipeline_->context_->Map(pipeline_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+	assert(SUCCEEDED(hr));
+	{ std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMFLOAT4X4)); }
+	pipeline_->context_->Unmap(pipeline_->projection_buffer_, 0);
+
+	pipeline_->context_->VSSetConstantBuffers(0, 1, &pipeline_->projection_buffer_);
+
+	// TODO: Global elsewhere
+	global_buffer global{};
+	global.dimensions = { static_cast<float>(size_.x), static_cast<float>(size_.y) };
+
+	hr = pipeline_->context_->Map(pipeline_->global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+	assert(SUCCEEDED(hr));
+	{ std::memcpy(mapped_resource.pData, &global, sizeof(global_buffer)); }
+	pipeline_->context_->Unmap(pipeline_->global_buffer_, 0);
+
+	pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->global_buffer_);
+}
+
+void renderer::d3d11_renderer::prepare_context() {
 	pipeline_->context_->OMSetBlendState(pipeline_->blend_state_, nullptr, 0xffffffff);
 
 	pipeline_->context_->OMSetRenderTargets(1,
@@ -117,9 +135,6 @@ void renderer::d3d11_renderer::begin() {
 
 	pipeline_->context_->PSSetSamplers(0, 1, &pipeline_->sampler_state_);
 	pipeline_->context_->PSSetShader(pipeline_->pixel_shader_, nullptr, 0);
-
-	update_buffers();
-	render_buffers();
 }
 
 void renderer::d3d11_renderer::populate() {
@@ -145,8 +160,8 @@ void renderer::d3d11_renderer::populate() {
 				pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->command_buffer_);
 			}
 
-			// if (batch.rv)
-			//	pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
+			if (batch.rv)
+				pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
 
 			pipeline_->context_->IASetPrimitiveTopology(batch.type);
 			pipeline_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));

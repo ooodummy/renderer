@@ -2,8 +2,8 @@
 #define _RENDERER_RENDERER_HPP_
 
 #include "types/font.hpp"
+#include "types/color.hpp"
 
-#include <DirectXMath.h>
 #include <d3d11.h>
 #include <map>
 #include <shared_mutex>
@@ -19,13 +19,15 @@ namespace renderer {
 		std::unique_ptr<buffer> working;
 	};
 
-	class pipeline;
+	class d3d11_pipeline;
 
+	// TODO: Should we add abstraction? Thing is it's never actually needed for my usage case I just like things being
+	//  made fully, and to handle absolutely everything. Wonder if I have OCD.
 	class d3d11_renderer {
 		friend class buffer;
 
 	public:
-		explicit d3d11_renderer(pipeline* pipeline);
+		explicit d3d11_renderer(d3d11_pipeline* pipeline);
 
 		size_t register_buffer(size_t priority = 0);
 		buffer* get_working_buffer(size_t id);
@@ -37,7 +39,9 @@ namespace renderer {
 		glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id);
 
 		bool init();
+
 		void set_vsync(bool vsync);
+		void set_clear_color(const color_rgba& color);
 
 		void begin();
 		void populate();
@@ -47,12 +51,20 @@ namespace renderer {
 		void draw();
 
 	private:
+		void clear();
+		void resize_projection();
+		void prepare_context();
+
 		glyph get_font_glyph(size_t id, char c);
 
 		void update_buffers();
 		void render_buffers();
 
-		pipeline* pipeline_;
+		d3d11_pipeline* pipeline_;
+
+		// Begin
+		DirectX::XMFLOAT4 clear_color_;
+		glm::i16vec2 size_;
 
 		std::shared_mutex buffer_list_mutex_;
 		std::vector<buffer_node> buffers_;

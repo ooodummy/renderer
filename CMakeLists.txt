@@ -51,7 +51,7 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm)
-target_link_libraries(${PROJECT_NAME} PRIVATE d3d11)# freetype)
+target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 freetype)
 
 add_dependencies(${PROJECT_NAME} shaders)
 

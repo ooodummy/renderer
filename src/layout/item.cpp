@@ -77,6 +77,14 @@ void carbon::flex_item::set_hidden(bool hidden) {
 	hidden_ = hidden;
 }
 
+bool carbon::flex_item::get_disabled() const {
+	return disabled_;
+}
+
+void carbon::flex_item::set_disabled(bool disabled) {
+	disabled_ = disabled;
+}
+
 void carbon::flex_item::mark_dirty_and_propagate() {// NOLINT(misc-no-recursion)
 	dirty_ = true;
 
