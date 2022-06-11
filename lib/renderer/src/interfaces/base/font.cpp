@@ -1,4 +1,4 @@
-#include "renderer/types/font.hpp"
+#include "renderer/font.hpp"
 
 #include <ShlObj.h>
 

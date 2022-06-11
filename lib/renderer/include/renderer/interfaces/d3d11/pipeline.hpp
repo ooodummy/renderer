@@ -1,7 +1,7 @@
 #ifndef _RENDERER_IMPL_DEVICE_HPP_
 #define _RENDERER_IMPL_DEVICE_HPP_
 
-#include "util/window.hpp"
+#include "renderer/util/win32_window.hpp"
 
 #include <DirectXMath.h>
 #include <d3d11_1.h>

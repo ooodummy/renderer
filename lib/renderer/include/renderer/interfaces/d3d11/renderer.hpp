@@ -1,8 +1,10 @@
 #ifndef _RENDERER_RENDERER_HPP_
 #define _RENDERER_RENDERER_HPP_
 
-#include "types/font.hpp"
-#include "types/color.hpp"
+#include "../base/renderer.hpp"
+
+#include "renderer/font.hpp"
+#include "renderer/color.hpp"
 
 #include <d3d11.h>
 #include <map>
@@ -12,13 +14,6 @@
 #include <glm/vec4.hpp>
 
 namespace renderer {
-	class buffer;
-
-	struct buffer_node {
-		std::unique_ptr<buffer> active;
-		std::unique_ptr<buffer> working;
-	};
-
 	class d3d11_pipeline;
 
 	// TODO: Should we add abstraction? Thing is it's never actually needed for my usage case I just like things being

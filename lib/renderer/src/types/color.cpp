@@ -1,4 +1,4 @@
-#include "renderer/types/color.hpp"
+#include "renderer/color.hpp"
 
 #include "renderer/util/easing.hpp"
 

@@ -31,32 +31,6 @@ void carbon::base_flex_container::measure_contents() {
 	content_min_ = glm::vec2(content_min_axes_);
 }
 
-void carbon::base_flex_container::set_flow(const flex_flow& flow) {
-	mark_dirty_and_propagate();
-	flow_ = flow;
-}
-
-void carbon::base_flex_container::set_axis(flex_direction axis) {
-	mark_dirty_and_propagate();
-	flow_.main = axis;
-	flow_.cross = (axis == row || axis == row_reversed) ? column : row;
-}
-
-void carbon::base_flex_container::set_wrap(flex_wrap wrap) {
-	mark_dirty_and_propagate();
-	flow_.wrap = wrap;
-}
-
-void carbon::base_flex_container::set_align(flex_align align) {
-	mark_dirty_and_propagate();
-	flow_.align = align;
-}
-
-void carbon::base_flex_container::set_justify_content(const flex_justify_content justify_content) {
-	mark_dirty_and_propagate();
-	flow_.justify_content = justify_content;
-}
-
 carbon::axes_vec4 carbon::base_flex_container::get_axes(glm::vec4 src) const {
 	if (flow_.main == row || flow_.main == row_reversed) {
 		return {
@@ -106,4 +80,31 @@ void carbon::base_flex_container::set_main(glm::vec2& dst, float src) const {
 	else {
 		dst.y = src;
 	}
+}
+
+const carbon::flex_flow& carbon::base_flex_container::get_flow() const {
+	return flow_;
+}
+
+void carbon::base_flex_container::set_flow(flex_direction axis) {
+	mark_dirty_and_propagate();
+	flow_.main = axis;
+	flow_.cross = (axis == row || axis == row_reversed) ? column : row;
+}
+
+void carbon::base_flex_container::set_flow(flex_wrap wrap) {
+	mark_dirty_and_propagate();
+	flow_.wrap = wrap;
+}
+
+void carbon::base_flex_container::set_flow(flex_direction axis, flex_wrap wrap) {
+	mark_dirty_and_propagate();
+	flow_.main = axis;
+	flow_.cross = (axis == row || axis == row_reversed) ? column : row;
+	flow_.wrap = wrap;
+}
+
+void carbon::base_flex_container::set_justify_content(const flex_justify_content justify_content) {
+	mark_dirty_and_propagate();
+	flow_.justify_content = justify_content;
 }

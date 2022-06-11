@@ -3,13 +3,10 @@
 carbon::flex_width::flex_width(float value) : value(value), unit(unit_aspect) {}
 carbon::flex_width::flex_width(carbon::flex_unit unit) : unit(unit), value(0.0f) {}
 carbon::flex_width::flex_width(float value, flex_unit unit) : value(value), unit(unit) {}
-// carbon::flex_width::flex_width(float value, carbon::flex_item* relative) : value(value), relative(relative),
-// unit(unit_relative) {}
 
 carbon::flex_basis::flex_basis(float value) : width(value) {}
 carbon::flex_basis::flex_basis(flex_unit unit) : width(unit) {}
 carbon::flex_basis::flex_basis(float value, flex_unit unit) : width(value, unit) {}
-// carbon::flex_basis::flex_basis(float value, carbon::flex_item* relative) : width(value, relative) {}
 carbon::flex_basis::flex_basis(bool minimum) : minimum(minimum) {}
 
 carbon::flex::flex(float grow) : grow(grow) {}

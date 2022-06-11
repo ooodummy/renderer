@@ -59,7 +59,6 @@ namespace carbon {
 		flex_basis(float value);
 		flex_basis(flex_unit unit);
 		flex_basis(float value, flex_unit unit);
-		flex_basis(float value, flex_item* relative);
 		flex_basis(bool minimum);
 
 		bool minimum = false;

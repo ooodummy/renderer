@@ -1,7 +1,7 @@
-#include "renderer/renderer.hpp"
+#include "renderer/interfaces/d3d11/renderer.hpp"
 
 #include "renderer/buffer.hpp"
-#include "renderer/pipeline.hpp"
+#include "renderer/interfaces/d3d11/pipeline.hpp"
 #include "renderer/shaders/constant_buffers.hpp"
 
 #include <d3d11.h>

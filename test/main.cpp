@@ -155,25 +155,24 @@ void draw_test_flex(renderer::buffer* buf) {
 	if (!init) {
 		flex_container->set_pos({50.0f, 50.0f});
 		const auto container1 = flex_container->add_child<carbon::flex_line>();
-		container1->set_flex({1.0f});
-		container1->set_axis(carbon::column);
+		container1->set_flex(1.0f, carbon::column);
 		const auto item3 = flex_container->add_child<carbon::flex_item>();
-		item3->set_flex({1.0f});
+		item3->set_flex(1.0f);
 		const auto container11 = container1->add_child<carbon::flex_line>();
-		container11->set_flex({1.0f});
+		container11->set_flex(1.0);
 		container11->set_min_width(100.0f);
 		container11->set_max_width(200.0f);
 		const auto container111 = container11->add_child<carbon::flex_item>();
-		container111->set_flex({1.0f});
+		container111->set_flex(1.0f);
 		const auto container112 = container11->add_child<carbon::flex_item>();
-		container112->set_flex({1.0f});
+		container112->set_flex(1.0f);
 		const auto container113 = container11->add_child<carbon::flex_item>();
-		container113->set_flex({1.0f});
+		container113->set_flex(1.0f);
 		const auto container12 = container1->add_child<carbon::flex_item>();
-		container12->set_flex({1.0f});
+		container12->set_flex(1.0f);
 		//container12->set_max_width(50.0f); // >:( causes issues
 		auto container2 = container1->add_child<carbon::flex_line>();
-		container2->set_flex({1.0f});
+		container2->set_flex(1.0f);
 
 		init = true;
 	}
@@ -193,14 +192,14 @@ void draw_thread() {
 		carbon::buf = buf;
 
 		//draw_test_primitives(buf);
-		draw_test_bezier(buf);
+		//draw_test_bezier(buf);
 		//draw_test_flex(buf);
 
 		// Testing arc performance
-		//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
-		//buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
-		//buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
-		//buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
+		buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
+		buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
+		buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
+		buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
 
         dx11->swap_buffers(id);
         updated_buf.notify();

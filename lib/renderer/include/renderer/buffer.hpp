@@ -3,12 +3,12 @@
 
 #define NOMINMAX
 
-#include "geometry/bezier.hpp"
+#include "renderer/geometry/bezier.hpp"
 #include "geometry/polyline.hpp"
 
 #include "shaders/constant_buffers.hpp"
 
-#include "types/font.hpp"
+#include "font.hpp"
 
 #include <cmath>
 #include <stack>
@@ -80,7 +80,7 @@ namespace renderer {
 
 				const auto angle = atan2f(normal.y, normal.x);
 
-				vertices[offset] = {glm::rotate(glm::vec2(thickness, 0.0f), angle) + point, col}; 
+				vertices[offset] = {glm::rotate(glm::vec2(thickness, 0.0f), angle) + point, col};
 				vertices[offset + 1] = {glm::rotate(glm::vec2(thickness, 0.0f), angle + static_cast<float>(M_PI)) + point, col};
 
 				offset += 2;

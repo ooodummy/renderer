@@ -1,7 +1,7 @@
 #ifndef _CARBON_THEME_HPP_
 #define _CARBON_THEME_HPP_
 
-#include "renderer/types/color.hpp"
+#include "renderer/color.hpp"
 
 namespace carbon {
 	struct style_sheet {

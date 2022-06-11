@@ -22,7 +22,17 @@ namespace carbon {
 		flex_item* parent = nullptr;
 
 		const flex& get_flex() const;
-		void set_flex(const flex& flex);
+
+		void set_flex(float grow);
+		void set_flex(float grow, float shrink);
+		void set_flex(float grow, float shrink, flex_basis basis);
+		void set_flex(flex_basis basis);
+		void set_flex(float grow, flex_basis basis);
+
+		void set_basis(float value);
+		void set_basis(flex_unit unit);
+		void set_basis(float value, flex_unit unit);
+		void set_basis(bool minimum);
 
 		float get_min_width() const;
 		void set_min_width(float min_width);

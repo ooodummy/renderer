@@ -1,7 +1,7 @@
-#include "renderer/pipeline.hpp"
+#include "renderer/interfaces/d3d11/pipeline.hpp"
 
 #include "renderer/shaders/constant_buffers.hpp"
-#include "renderer/types/vertex.hpp"
+#include "renderer/vertex.hpp"
 
 bool renderer::d3d11_pipeline::init() {
 	if (!device_) {

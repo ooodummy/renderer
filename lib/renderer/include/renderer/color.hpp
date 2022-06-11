@@ -1,7 +1,7 @@
 #ifndef _RENDERER_TYPES_COLOR_HPP_
 #define _RENDERER_TYPES_COLOR_HPP_
 
-#include "../util/easing.hpp"
+#include "renderer/util/easing.hpp"
 
 #include <DirectXMath.h>
 

@@ -1,7 +1,7 @@
 #ifndef _RENDERER_UTIL_POLYLINE_HPP_
 #define _RENDERER_UTIL_POLYLINE_HPP_
 
-#include "../types/vertex.hpp"
+#include "renderer/vertex.hpp"
 
 #include <glm/glm.hpp>
 #include <optional>

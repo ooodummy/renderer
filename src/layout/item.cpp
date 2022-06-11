@@ -41,15 +41,6 @@ carbon::flex_item* carbon::flex_item::get_top_parent() const {
 	}
 }
 
-const carbon::flex& carbon::flex_item::get_flex() const {
-	return flex_;
-}
-
-void carbon::flex_item::set_flex(const flex& flex) {
-	mark_dirty_and_propagate();
-	flex_ = flex;
-}
-
 float carbon::flex_item::get_min_width() const {
 	return min_width_;
 }
@@ -90,4 +81,57 @@ void carbon::flex_item::mark_dirty_and_propagate() {// NOLINT(misc-no-recursion)
 
 	if (parent)
 		parent->mark_dirty_and_propagate();
+}
+
+const carbon::flex& carbon::flex_item::get_flex() const {
+	return flex_;
+}
+
+void carbon::flex_item::set_flex(float grow) {
+	mark_dirty_and_propagate();
+	flex_.grow = grow;
+}
+
+void carbon::flex_item::set_flex(float grow, float shrink) {
+	mark_dirty_and_propagate();
+	flex_.grow = grow;
+	flex_.shrink = shrink;
+}
+
+void carbon::flex_item::set_flex(float grow, float shrink, flex_basis basis) {
+	mark_dirty_and_propagate();
+	flex_.grow = grow;
+	flex_.shrink = shrink;
+	flex_.basis = basis;
+}
+
+void carbon::flex_item::set_flex(flex_basis basis) {
+	mark_dirty_and_propagate();
+	flex_.basis = basis;
+}
+
+void carbon::flex_item::set_flex(float grow, flex_basis basis) {
+	mark_dirty_and_propagate();
+	flex_.grow = grow;
+	flex_.basis = basis;
+}
+
+void carbon::flex_item::set_basis(float value) {
+	mark_dirty_and_propagate();
+	flex_.basis.width.value = value;
+}
+
+void carbon::flex_item::set_basis(flex_unit unit) {
+	mark_dirty_and_propagate();
+	flex_.basis.width.unit = unit;
+}
+
+void carbon::flex_item::set_basis(float value, flex_unit unit) {
+	mark_dirty_and_propagate();
+	flex_.basis.width.value = value;
+	flex_.basis.width.unit = unit;
+}
+
+void carbon::flex_item::set_basis(bool minimum) {
+	flex_.basis.minimum = minimum;
 }

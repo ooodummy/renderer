@@ -8,6 +8,7 @@
 
 // https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
 
+// Font shouldn't be in interfaces
 namespace renderer {
 	// Texture atlas can be used for font's to reduce sizes and batch
 	// Could create a buffer and then when drawing textured quads I could just add them to the texture and draw that

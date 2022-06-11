@@ -1,6 +1,6 @@
 #include "renderer/buffer.hpp"
 
-#include "renderer/renderer.hpp"
+#include "renderer/interfaces/d3d11/renderer.hpp"
 
 void renderer::buffer::clear() {
 	vertices_ = {};
