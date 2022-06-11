@@ -3,9 +3,10 @@
 
 #define NOMINMAX
 #include <Windows.h>
-#include <glm/vec2.hpp>
 #include <memory>
 #include <string>
+
+#include <glm/vec2.hpp>
 
 namespace renderer {
 	// https://docs.microsoft.com/en-us/windows/win32/learnwin32/creating-a-window

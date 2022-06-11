@@ -4,49 +4,53 @@
 
 #include <xutility>
 
-renderer::color_hsv::color_hsv(float h, float s, float v) : h(h), s(s), v(v) {}
+renderer::color_hsva::color_hsva(float h, float s, float v, uint8_t a) : h(h), s(s), v(v), a(a) {}
 
-renderer::color_rgba renderer::color_hsv::get_rgb() const {
+renderer::color_rgba renderer::color_hsva::get_rgb() const {
 	const auto c = v * s;
 	const auto x = c * (1.0f - std::abs(fmodf(h / 60.0f, 2.0f) - 1.0f));
 	const auto m = v - c;
 
 	float r, g, b;
 
-	if (0.0f <= h && h < 60.0f) {
-		r = c;
-		g = x;
-		b = 0.0f;
-	}
-	else if (60.0f <= h && h < 120.0f) {
-		r = x;
-		g = c;
-		b = 0.0f;
-	}
-	else if (120.0f <= h && h < 180.0f) {
-		r = 0.0f;
-		g = c;
-		b = x;
-	}
-	else if (180.0f <= h && h < 240.0f) {
-		r = 0.0f;
-		g = x;
-		b = c;
-	}
-	else if (240.0f <= h && h < 300.0f) {
-		r = x;
-		g = 0.0f;
-		b = c;
-	}
-	else if (300.0f <= h && h < 360.0f) {
-		r = c;
-		g = 0.0f;
-		b = x;
-	}
-	else {
-		r = 0.0f;
-		g = 0.0f;
-		b = 0.0f;
+	const auto segment = static_cast<int>(h / 60.0f);
+
+	switch (segment) {
+		case 0:
+			r = c;
+			g = x;
+			b = 0.0f;
+			break;
+		case 1:
+			r = x;
+			g = c;
+			b = 0.0f;
+			break;
+		case 2:
+			r = 0.0f;
+			g = c;
+			b = x;
+			break;
+		case 3:
+			r = 0.0f;
+			g = x;
+			b = c;
+			break;
+		case 4:
+			r = x;
+			g = 0.0f;
+			b = c;
+			break;
+		case 5:
+			r = c;
+			g = 0.0f;
+			b = x;
+			break;
+		default:
+			r = 0.0f;
+			g = 0.0f;
+			b = 0.0f;
+			break;
 	}
 
 	return {
@@ -56,18 +60,21 @@ renderer::color_rgba renderer::color_hsv::get_rgb() const {
 	};
 }
 
-[[nodiscard]] renderer::color_hsv
-renderer::color_hsv::ease(const color_hsv& o, float p, renderer::ease_type type) const {
+[[nodiscard]] renderer::color_hsva
+renderer::color_hsva::ease(const color_hsva& o, float p, renderer::ease_type type) const {
+	// Would something like this be quicker?
+	// (sin(num)127+128)/255, (sin(num+2)127+128)/255, (sin(num+4)*127+128)/255
+
 	if (p > 1.0f)
 		p = 1.0f;
 
-	const color_hsv hsv = { renderer::ease(h, o.h, p, 1.0f, type), renderer::ease(s, o.s, p, 1.0f, type),
+	const color_hsva hsv = { renderer::ease(h, o.h, p, 1.0f, type), renderer::ease(s, o.s, p, 1.0f, type),
 							renderer::ease(v, o.v, p, 1.0f, type) };
 
 	return hsv;
 }
 
-renderer::color_hsv::operator renderer::color_rgba() const {
+renderer::color_hsva::operator renderer::color_rgba() const {
 	return get_rgb();
 }
 
@@ -83,7 +90,7 @@ renderer::color_rgba::operator uint32_t() const {
 	return static_cast<uint32_t>((((a)&0xff) << 24) | (((b)&0xff) << 16) | (((g)&0xff) << 8) | ((r)&0xff));
 }
 
-renderer::color_rgba::operator renderer::color_hsv() const {
+renderer::color_rgba::operator renderer::color_hsva() const {
 	return get_hsv();
 }
 
@@ -92,7 +99,7 @@ renderer::color_rgba::operator DirectX::XMFLOAT4() const {
 			 static_cast<float>(a) / 255.0f };
 }
 
-renderer::color_hsv renderer::color_rgba::get_hsv() const {
+renderer::color_hsva renderer::color_rgba::get_hsv() const {
 	const auto fr = static_cast<float>(r) / 255.0f;
 	const auto fg = static_cast<float>(g) / 255.0f;
 	const auto fb = static_cast<float>(b) / 255.0f;
@@ -114,7 +121,7 @@ renderer::color_hsv renderer::color_rgba::get_hsv() const {
 		hue *= 60.0f;
 	}
 
-	return { hue, max == 0.0f ? 0.0f : delta / max, max };
+	return { hue, max == 0.0f ? 0.0f : delta / max, max, a };
 }
 
 renderer::color_rgba

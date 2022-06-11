@@ -22,28 +22,29 @@
 namespace renderer {
 	class color_rgba;
 
-	class color_hsv {
+	class color_hsva {
 	public:
-		color_hsv(float h = 0.0f, float s = 1.0f, float v = 1.0f);// NOLINT(google-explicit-constructor)
+		color_hsva(float h = 0.0f, float s = 1.0f, float v = 1.0f, uint8_t a = 255);
 
 		[[nodiscard]] explicit operator color_rgba() const;
 
 		[[nodiscard]] color_rgba get_rgb() const;
-		[[nodiscard]] color_hsv ease(const color_hsv& o, float p, renderer::ease_type type = renderer::linear) const;
+		[[nodiscard]] color_hsva ease(const color_hsva& o, float p, renderer::ease_type type = renderer::linear) const;
 
 		float h, s, v;
+		uint8_t a;
 	};
 
 	class color_rgba {
 	public:
-		color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);// NOLINT(google-explicit-constructor)
+		color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);
 		explicit color_rgba(uint32_t color);
 
 		[[nodiscard]] operator uint32_t() const;
-		[[nodiscard]] operator color_hsv() const;
+		[[nodiscard]] operator color_hsva() const;
 		[[nodiscard]] operator DirectX::XMFLOAT4() const;
 
-		[[nodiscard]] color_hsv get_hsv() const;
+		[[nodiscard]] color_hsva get_hsv() const;
 		[[nodiscard]] color_rgba ease(const color_rgba& o, float p, renderer::ease_type type = renderer::linear) const;
 
 		uint8_t r, g, b, a;

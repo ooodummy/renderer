@@ -1,5 +1,5 @@
-#include <renderer/core.hpp>
 #include <carbon/carbon.hpp>
+#include <renderer/core.hpp>
 
 #include <dwmapi.h>
 #include <thread>
@@ -46,13 +46,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 		if (elapsed_ms > 5000)
 			rainbow_timer.reset();
 
-		// TODO: Should I macro start and end hsv?
-		rainbow = renderer::color_hsv(0.0f).ease(renderer::color_hsv(359.0f), static_cast<float>(elapsed_ms) / 5000).get_rgb();
+		rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.0f), static_cast<float>(elapsed_ms) / 5000).get_rgb();
 	}
-
-	/*for (uint8_t i = 0; i < 255; i++) {
-		carbon::buf->draw_rect_filled({i * 2, 10, 2, 10}, {i, i, i});
-	}*/
 
 	const glm::vec4 scissor_bounds = {
 		static_cast<float>(carbon::mouse_pos.x) - 50.0f,
@@ -104,18 +99,6 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
-	/*const auto size = window->get_size();
-	int i = 0;
-	int j = size.y;
-
-	while (i < size.x || j > 0) {
-		i += 15;
-		j -= 15;
-
-		buf->draw_line({i, 0.0f}, {0.0f, j});
-	}*/
-
-	// TODO: Fix inconsistent sizes
 	buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
 	buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
 }
@@ -210,8 +193,8 @@ void draw_thread() {
 		carbon::buf = buf;
 
 		//draw_test_primitives(buf);
-		//draw_test_bezier(buf);
-		draw_test_flex(buf);
+		draw_test_bezier(buf);
+		//draw_test_flex(buf);
 
 		// Testing arc performance
 		//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);

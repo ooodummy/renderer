@@ -1,7 +1,7 @@
 #ifndef _RENDERER_UTIL_BEZIER_HPP_
 #define _RENDERER_UTIL_BEZIER_HPP_
 
-#include "renderer/util/easing.hpp"
+#include "../util/easing.hpp"
 
 #include <array>
 #include <vector>
