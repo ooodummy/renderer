@@ -47,4 +47,7 @@ void renderer::win32_window::set_proc(WNDPROC WndProc) {
 HWND renderer::win32_window::get_hwnd() const {
 	return hwnd_;
 }
-renderer::win32_window::~win32_window() {}
+
+UINT renderer::win32_window::get_dpi() const {
+	return GetDpiForWindow(hwnd_);
+}

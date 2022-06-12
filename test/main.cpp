@@ -95,7 +95,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	const std::string test_string = "Hello World!";
 	buf->draw_text({250.0f, 250.0f}, test_string, segoe);
-	buf->draw_rect(dx11->get_text_bounds({250.0f, 250.0f}, test_string, segoe), COLOR_YELLOW);
+	//buf->draw_rect(dx11->get_text_bounds({250.0f, 250.0f}, test_string, segoe), COLOR_YELLOW);
 
 	buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
@@ -186,23 +186,23 @@ void draw_thread() {
     const auto id = dx11->register_buffer();
 
     while (!close_requested) {
-		updated_draw.wait();
+		//updated_draw.wait();
 
 		const auto buf = dx11->get_working_buffer(id);
 		carbon::buf = buf;
 
 		//draw_test_primitives(buf);
-		//draw_test_bezier(buf);
+		draw_test_bezier(buf);
 		//draw_test_flex(buf);
 
 		// Testing arc performance
-		buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
-		buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
-		buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
-		buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
+		//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
+		//buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
+		//buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
+		//buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
 
         dx11->swap_buffers(id);
-        updated_buf.notify();
+        //updated_buf.notify();
     }
 }
 
@@ -232,16 +232,7 @@ int main() {
         DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
     }*/
 
-    window->set_visibility(true);
-
-    auto device = std::make_unique<renderer::d3d11_pipeline>(window.get());
-
-    if (!device->init()) {
-        MessageBoxA(nullptr, "Failed to initialize pipeline.", "Error", MB_ICONERROR | MB_OK);
-        return 1;
-    }
-
-    dx11 = std::make_unique<renderer::d3d11_renderer>(device.get());
+    dx11 = std::make_unique<renderer::d3d11_renderer>(window.get());
 
     if (!dx11->init()) {
         MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);
@@ -257,6 +248,8 @@ int main() {
 
     std::thread draw(draw_thread);
 
+	window->set_visibility(true);
+
 	MSG msg{};
     while (!close_requested && msg.message != WM_QUIT) {
         while (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
@@ -270,7 +263,7 @@ int main() {
 		}
 
         if (update_size) {
-            device->resize();
+			dx11->resize();
 			dx11->reset();
 
             update_size = false;
@@ -278,12 +271,13 @@ int main() {
 
         dx11->draw();
 
-		updated_draw.notify();
-        updated_buf.wait();
+		//updated_draw.notify();
+        //updated_buf.wait();
     }
 
     draw.join();
 
+	dx11->release();
     window->destroy();
 
     return 0;

@@ -121,15 +121,15 @@ namespace renderer {
 		bool split_batch_ = false;
 
 		struct scissor_command {
-			scissor_command(DirectX::XMFLOAT4 bounds, bool in, bool circle);
+			scissor_command(glm::vec4 bounds, bool in, bool circle);
 
-			DirectX::XMFLOAT4 bounds;
+			glm::vec4 bounds;
 			bool in;
 			bool circle;
 		};
 
 		std::stack<scissor_command> scissor_list_;
-		std::stack<DirectX::XMFLOAT4> key_list_;
+		std::stack<color_rgba> key_list_;
 		std::stack<float> blur_list_;
 		std::stack<size_t> font_list_;
 

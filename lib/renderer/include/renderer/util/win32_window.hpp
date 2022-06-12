@@ -18,7 +18,8 @@ namespace renderer {
 
 		void set_proc(WNDPROC WndProc);
 		[[nodiscard]] HWND get_hwnd() const;
-		virtual ~win32_window();
+
+		UINT get_dpi() const;
 
 	protected:
 		WNDPROC proc_;

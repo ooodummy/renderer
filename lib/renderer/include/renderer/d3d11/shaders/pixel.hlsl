@@ -27,8 +27,7 @@ float4 ps_main(VS_Output input) : SV_TARGET
     {
         if (input.color.x == key_color.x &&
             input.color.y == key_color.y &&
-            input.color.z == key_color.z &&
-            input.color.w == key_color.w)
+            input.color.z == key_color.z)
         {
             return float4(0.0f, 0.0f, 0.0f, 0.0f);
         }
@@ -61,7 +60,8 @@ float4 ps_main(VS_Output input) : SV_TARGET
     {
         uint value = tex.Load(int3(input.uv * glyph_size, 0));
 
-        if (value == 0) {
+        if (value == 0)
+        {
             return float4(0.0f, 0.0f, 0.0f, 0.0f);
         }
 

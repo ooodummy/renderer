@@ -368,13 +368,13 @@ void renderer::buffer::draw_text(glm::vec2 pos,
 	draw_text(pos, text, active_font, col, h_align, v_align);
 }
 
-renderer::buffer::scissor_command::scissor_command(DirectX::XMFLOAT4 bounds, bool in, bool circle) :
+renderer::buffer::scissor_command::scissor_command(glm::vec4 bounds, bool in, bool circle) :
 	bounds(bounds),
 	in(in),
 	circle(circle) {}
 
 void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circle) {
-	scissor_list_.emplace(DirectX::XMFLOAT4(bounds.x, bounds.y, bounds.z, bounds.w), in, circle);
+	scissor_list_.emplace(bounds, in, circle);
 	update_scissor();
 }
 
@@ -420,7 +420,7 @@ void renderer::buffer::update_key() {
 	}
 	else {
 		active_command.key_enable = true;
-		active_command.key_color = key_list_.top();
+		active_command.key_color = glm::vec4(key_list_.top());
 	}
 }
 

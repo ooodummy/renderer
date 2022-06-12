@@ -5,6 +5,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 namespace renderer {
 	struct vertex {
@@ -15,9 +16,9 @@ namespace renderer {
 			pos(pos.x, pos.y, 0.0f),
 			col(col), uv(u, v) {}
 
-		DirectX::XMFLOAT3 pos;
-		DirectX::XMFLOAT4 col;
-		DirectX::XMFLOAT2 uv;
+		glm::vec3 pos;
+		glm::vec4 col;
+		glm::vec2 uv;
 	};
 }// namespace renderer
 

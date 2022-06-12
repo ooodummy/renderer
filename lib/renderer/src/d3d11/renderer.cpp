@@ -1,14 +1,15 @@
 #include "renderer/d3d11/renderer.hpp"
 
+#include "renderer/util/win32_window.hpp"
+
 #include "renderer/buffer.hpp"
-#include "renderer/d3d11/pipeline.hpp"
 #include "renderer/d3d11/shaders/constant_buffers.hpp"
 
 #include <d3d11.h>
 
-// Code gets a bit messy in here
-renderer::d3d11_renderer::d3d11_renderer(renderer::d3d11_pipeline* pipeline) :
-	pipeline_(pipeline) {}
+#include <glm/gtc/matrix_transform.hpp>
+
+renderer::d3d11_renderer::d3d11_renderer(renderer::win32_window* window) : d3d11_pipeline(window) {}
 
 void renderer::d3d11_renderer::draw() {
 	begin();
@@ -21,7 +22,7 @@ void renderer::d3d11_renderer::set_vsync(bool vsync) {
 }
 
 void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color) {
-	clear_color_ = color;
+	clear_color_ = glm::vec4(color);
 }
 
 size_t renderer::d3d11_renderer::register_font(const font& font) {
@@ -32,6 +33,8 @@ size_t renderer::d3d11_renderer::register_font(const font& font) {
 }
 
 bool renderer::d3d11_renderer::init() {
+	init_pipeline();
+
 	// if (FT_Init_FreeType(&library_))
 	//	return false;
 
@@ -39,7 +42,7 @@ bool renderer::d3d11_renderer::init() {
 }
 
 bool renderer::d3d11_renderer::release() {
-	pipeline_->release();
+	release_pipeline();
 
 	return true;
 }
@@ -47,11 +50,21 @@ bool renderer::d3d11_renderer::release() {
 void renderer::d3d11_renderer::begin() {
 	clear();
 
-	const auto size = pipeline_->window_->get_size();
+	const auto size = window_->get_size();
 
 	if (size != size_) {
 		size_ = size;
-		resize_projection();
+
+		global_buffer global{};
+		global.dimensions = { static_cast<float>(size_.x), static_cast<float>(size_.y) };
+
+		D3D11_MAPPED_SUBRESOURCE mapped_resource;
+		HRESULT hr = context_->Map(global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+		assert(SUCCEEDED(hr));
+		memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
+		context_->Unmap(global_buffer_, 0);
+
+		context_->PSSetConstantBuffers(1, 1, &global_buffer_);
 	}
 
 	prepare_context();
@@ -61,57 +74,18 @@ void renderer::d3d11_renderer::begin() {
 }
 
 void renderer::d3d11_renderer::clear() {
-	pipeline_->context_->ClearRenderTargetView(pipeline_->frame_buffer_view_, (FLOAT*)&clear_color_);
-}
-
-void renderer::d3d11_renderer::resize_projection() {
-	HRESULT hr;
-	D3D11_MAPPED_SUBRESOURCE mapped_resource;
-
-	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)(size_.x), (FLOAT)(size_.y), 0.0f, 1.0f };
-	pipeline_->context_->RSSetViewports(1, &viewport);
-
-	DirectX::XMStoreFloat4x4(&pipeline_->projection,
-							 DirectX::XMMatrixOrthographicOffCenterLH(viewport.TopLeftX,
-																	  viewport.Width,
-																	  viewport.Height,
-																	  viewport.TopLeftY,
-																	  viewport.MinDepth,
-																	  viewport.MaxDepth));
-
-	hr =
-	pipeline_->context_->Map(pipeline_->projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-	assert(SUCCEEDED(hr));
-	{ std::memcpy(mapped_resource.pData, &pipeline_->projection, sizeof(DirectX::XMFLOAT4X4)); }
-	pipeline_->context_->Unmap(pipeline_->projection_buffer_, 0);
-
-	pipeline_->context_->VSSetConstantBuffers(0, 1, &pipeline_->projection_buffer_);
-
-	// TODO: Global elsewhere
-	global_buffer global{};
-	global.dimensions = { static_cast<float>(size_.x), static_cast<float>(size_.y) };
-
-	hr = pipeline_->context_->Map(pipeline_->global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-	assert(SUCCEEDED(hr));
-	{ std::memcpy(mapped_resource.pData, &global, sizeof(global_buffer)); }
-	pipeline_->context_->Unmap(pipeline_->global_buffer_, 0);
-
-	pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->global_buffer_);
+	context_->ClearRenderTargetView(frame_buffer_view_, (FLOAT*)&clear_color_);
 }
 
 void renderer::d3d11_renderer::prepare_context() {
-	pipeline_->context_->OMSetBlendState(pipeline_->blend_state_, nullptr, 0xffffffff);
+	context_->OMSetBlendState(blend_state_, nullptr, 0xffffffff);
+	context_->OMSetRenderTargets(1, &frame_buffer_view_, depth_stencil_view_);
+	context_->OMSetDepthStencilState(depth_stencil_state_, NULL);
 
-	pipeline_->context_->OMSetRenderTargets(1,
-											&pipeline_->frame_buffer_view_,
-											pipeline_->depth_stencil_view_);// pipeline_->depth_stencil_view_);
+	context_->PSSetSamplers(0, 1, &sampler_state_);
 
-	pipeline_->context_->OMSetDepthStencilState(pipeline_->depth_stencil_state_, NULL);
-
-	pipeline_->context_->VSSetShader(pipeline_->vertex_shader_, nullptr, 0);
-
-	pipeline_->context_->PSSetSamplers(0, 1, &pipeline_->sampler_state_);
-	pipeline_->context_->PSSetShader(pipeline_->pixel_shader_, nullptr, 0);
+	context_->VSSetShader(vertex_shader_, nullptr, 0);
+	context_->PSSetShader(pixel_shader_, nullptr, 0);
 }
 
 void renderer::d3d11_renderer::populate() {
@@ -120,28 +94,22 @@ void renderer::d3d11_renderer::populate() {
 	size_t offset = 0;
 
 	// TODO: Buffer priority
-
-	// IDK if any of this code here is correct position_at all
 	// God bless http://www.rastertek.com/dx11tut11.html
 	for (const auto& [active, working] : buffers_) {
 		auto& batches = active->get_batches();
 		for (auto& batch : batches) {
-			{
-				D3D11_MAPPED_SUBRESOURCE mapped_resource;
-				const auto hr =
-				pipeline_->context_->Map(pipeline_->command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-				assert(SUCCEEDED(hr));
-				{ std::memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer)); }
-				pipeline_->context_->Unmap(pipeline_->command_buffer_, 0);
+			D3D11_MAPPED_SUBRESOURCE mapped_resource;
+			HRESULT hr = context_->Map(command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+			assert(SUCCEEDED(hr));
+			memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
+			context_->Unmap(command_buffer_, 0);
 
-				pipeline_->context_->PSSetConstantBuffers(1, 1, &pipeline_->command_buffer_);
-			}
+			context_->PSSetConstantBuffers(1, 1, &command_buffer_);
 
-			if (batch.rv)
-				pipeline_->context_->PSSetShaderResources(0, 1, &batch.rv);
+			context_->PSSetShaderResources(0, 1, &batch.rv);
 
-			pipeline_->context_->IASetPrimitiveTopology(batch.type);
-			pipeline_->context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
+			context_->IASetPrimitiveTopology(batch.type);
+			context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
 
 			offset += batch.size;
 		}
@@ -149,7 +117,7 @@ void renderer::d3d11_renderer::populate() {
 }
 
 void renderer::d3d11_renderer::end() {
-	const auto hr = pipeline_->swap_chain_->Present(vsync_, 0);
+	const auto hr = swap_chain_->Present(vsync_, 0);
 
 	// https://docs.microsoft.com/en-us/windows/uwp/gaming/handling-device-lost-scenarios
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
@@ -158,7 +126,7 @@ void renderer::d3d11_renderer::end() {
 }
 
 void renderer::d3d11_renderer::reset() {
-	pipeline_->release_buffers();
+	release_buffers();
 
 	{
 		std::unique_lock lock_guard(buffer_list_mutex_);
@@ -191,18 +159,16 @@ void renderer::d3d11_renderer::update_buffers() {
 	if (vertex_count > 0) {
 		static size_t vertex_buffer_size = 0;
 
-		if (!pipeline_->vertex_buffer_ || vertex_buffer_size < vertex_count) {
+		if (!vertex_buffer_ || vertex_buffer_size < vertex_count) {
 			vertex_buffer_size = vertex_count + 500;
 
-			pipeline_->release_buffers();
-			pipeline_->create_vertex_buffers(vertex_buffer_size);
+			release_buffers();
+			resize_vertex_buffer(vertex_buffer_size);
 		}
 
-		if (pipeline_->vertex_buffer_) {
+		if (vertex_buffer_) {
 			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-
-			HRESULT hr =
-			pipeline_->context_->Map(pipeline_->vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+			HRESULT hr = context_->Map(vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
 			assert(SUCCEEDED(hr));
 
 			for (const auto& [active, working] : buffers_) {
@@ -212,7 +178,7 @@ void renderer::d3d11_renderer::update_buffers() {
 				mapped_subresource.pData = static_cast<char*>(mapped_subresource.pData) + vertices.size();
 			}
 
-			pipeline_->context_->Unmap(pipeline_->vertex_buffer_, 0);
+			context_->Unmap(vertex_buffer_, 0);
 		}
 	}
 }
@@ -220,16 +186,15 @@ void renderer::d3d11_renderer::update_buffers() {
 void renderer::d3d11_renderer::render_buffers() {
 	UINT stride = sizeof(vertex);
 	UINT offset = 0;
-	pipeline_->context_->IASetVertexBuffers(0, 1, &pipeline_->vertex_buffer_, &stride, &offset);
+	context_->IASetVertexBuffers(0, 1, &vertex_buffer_, &stride, &offset);
 
-	// pipeline_->context_->IASetIndexBuffer(pipeline_->index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+	context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 
-	pipeline_->context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	pipeline_->context_->IASetInputLayout(pipeline_->input_layout_);
+	context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	context_->IASetInputLayout(input_layout_);
 }
 
-// TODO: This makes a new font face every time a glyph is requested which is not ideal position_at all I just need it to
-// be functional
+// TODO: Font texture atlas
 bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	auto& font = fonts_[id];
 
@@ -237,7 +202,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 		// if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
 		//	return false;
 
-		const auto dpi = GetDpiForWindow(pipeline_->get_window()->get_hwnd());
+		const auto dpi = window_->get_dpi();
 
 		// if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
 		//	return false;
@@ -320,21 +285,19 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	texture_desc.MiscFlags = 0;
 
 	ID3D11Texture2D* texture;
-	auto hr = pipeline_->device_->CreateTexture2D(&texture_desc, &texture_data, &texture);
+	auto hr = device_->CreateTexture2D(&texture_desc, &texture_data, &texture);
 	assert(SUCCEEDED(hr));
 
 	delete[] data;
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
 	srv_desc.Format = texture_desc.Format;
-	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D; // TODO: Might need to be MS
 	srv_desc.Texture2D.MostDetailedMip = 0;
 	srv_desc.Texture2D.MipLevels = 1;
 
-	// TODO: Creating the shader resource view is killing RenderDoc for some reason
-	hr = pipeline_->device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);
+	hr = device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);
 	assert(SUCCEEDED(hr));
-
 	texture->Release();
 
 	return true;

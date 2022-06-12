@@ -1,23 +1,24 @@
 #ifndef _RENDERER_D3D11_SHADERS_CONSTANT_BUFFERS_HPP_
 #define _RENDERER_D3D11_SHADERS_CONSTANT_BUFFERS_HPP_
 
-#include <DirectXMath.h>
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 namespace renderer {
 	struct global_buffer {
-		alignas(16) DirectX::XMFLOAT2 dimensions;
+		alignas(16) glm::vec2 dimensions;
 	};
 
 	struct command_buffer {
 		alignas(4) bool scissor_enable;
-		alignas(16) DirectX::XMFLOAT4 scissor_bounds;
+		alignas(16) glm::vec4 scissor_bounds;
 		alignas(4) bool scissor_in;
 		alignas(4) bool scissor_circle;
 		alignas(4) bool key_enable;
-		alignas(16) DirectX::XMFLOAT4 key_color;
+		alignas(16) glm::vec4 key_color;
 		alignas(4) float blur_strength;
 		alignas(4) bool is_glyph;
-		alignas(8) DirectX::XMINT2 glyph_size;
+		alignas(8) glm::i32vec2 glyph_size;
 	};
 }// namespace renderer
 

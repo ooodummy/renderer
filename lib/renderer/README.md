@@ -275,18 +275,18 @@ Hopefully this list is actually feasible.
   - How much worse is it drawing things as simple as rectangles as a shape?
     - Probably not that bad since we could still be doing less.
   - Estimate saved CPU time by not constantly recalculating vertices.
-    - Mesure each calculate mesh time then multiply that by the amount of avoided uses.
+    - Measure each calculate mesh time then multiply that by the amount of avoided uses.
   - Should shapes be marked as modified then computed before swapping buffers so we don't recompute over and over in the odd event that could happenn.
     - Probably not since this should only happen when they are used incorrectly, I think.
-    - If this is done should we asynchronouly split it up? Or is it still not expensive enough to benefit from that.
+    - If this is done should we asynchronously split it up? Or is it still not expensive enough to benefit from that.
   - Feels super nasty to do this type of rendering for things that are not retained and are immediate like when drawing ESP.
 - Font manager
   - Setup texture for each glyph.
     - I'll just use Freetype to construct textures since it's really nice as a library, its flaw is that it increases binary size a ton but whatever.
-    - I should be able to setup RGB textures fine but for greyscale textures I would just want to use the texture format that best matches that case which would be just using the R channel. Then how should I properly override this to be white?
-  - For each font create a texture atlas then copy each glyphs texture into the atlas and store a glyph map in each font with information about where each is in the atlas and it's basic information.
+    - I should be able to set up RGB textures fine but for greyscale textures I would just want to use the texture format that best matches that case which would be just using the R channel. Then how should I properly override this to be white?
+  - For each font create a texture atlas then copy each glyph's texture into the atlas and store a glyph map in each font with information about where each is in the atlas and it's basic information.
   - Proper way to draw textured rectangles, and potentially batch them with instancing.
-  - What can we do to allow drawing the same font at any size other then drawing glyphs as vertices.
+  - What can we do to allow drawing the same font at any size other than drawing glyphs as vertices.
   - Batch static text, instance dynamic text
     - How should these be done?
 - Carbon
