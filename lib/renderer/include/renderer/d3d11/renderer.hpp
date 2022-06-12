@@ -1,7 +1,7 @@
-#ifndef _RENDERER_RENDERER_HPP_
-#define _RENDERER_RENDERER_HPP_
+#ifndef _RENDERER_D3D11_RENDERER_HPP_
+#define _RENDERER_D3D11_RENDERER_HPP_
 
-#include "../base/renderer.hpp"
+#include "../renderer.hpp"
 
 #include "renderer/font.hpp"
 #include "renderer/color.hpp"
@@ -18,22 +18,18 @@ namespace renderer {
 
 	// TODO: Should we add abstraction? Thing is it's never actually needed for my usage case I just like things being
 	//  made fully, and to handle absolutely everything. Wonder if I have OCD.
-	class d3d11_renderer {
+	class d3d11_renderer : public base_renderer {
 		friend class buffer;
 
 	public:
 		explicit d3d11_renderer(d3d11_pipeline* pipeline);
 
-		size_t register_buffer(size_t priority = 0);
-		buffer* get_working_buffer(size_t id);
-
-		void swap_buffers(size_t id);
-
 		size_t register_font(const font& font);
-		glm::vec2 get_text_size(const std::string& text, size_t id);
-		glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id);
+		glm::vec2 get_text_size(const std::string& text, size_t id) override;
+		glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) override;
 
 		bool init();
+		bool release();
 
 		void set_vsync(bool vsync);
 		void set_clear_color(const color_rgba& color);
@@ -50,19 +46,15 @@ namespace renderer {
 		void resize_projection();
 		void prepare_context();
 
-		glyph get_font_glyph(size_t id, char c);
+		glyph get_font_glyph(size_t id, char c) override;
 
 		void update_buffers();
 		void render_buffers();
 
 		d3d11_pipeline* pipeline_;
 
-		// Begin
 		DirectX::XMFLOAT4 clear_color_;
 		glm::i16vec2 size_;
-
-		std::shared_mutex buffer_list_mutex_;
-		std::vector<buffer_node> buffers_;
 
 		bool vsync_ = false;
 

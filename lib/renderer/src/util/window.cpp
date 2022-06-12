@@ -8,7 +8,7 @@ void renderer::base_window::set_pos(const glm::i16vec2& pos) {
 	pos_ = pos;
 }
 
-[[maybe_unused]] glm::i16vec2 renderer::base_window::get_pos() {
+glm::i16vec2 renderer::base_window::get_pos() {
 	return pos_;
 }
 

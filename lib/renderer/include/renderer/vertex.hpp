@@ -4,6 +4,7 @@
 #include "color.hpp"
 
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 namespace renderer {
 	struct vertex {

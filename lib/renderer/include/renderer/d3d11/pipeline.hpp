@@ -1,5 +1,5 @@
-#ifndef _RENDERER_IMPL_DEVICE_HPP_
-#define _RENDERER_IMPL_DEVICE_HPP_
+#ifndef _RENDERER_D3D11_PIPELINE_HPP_
+#define _RENDERER_D3D11_PIPELINE_HPP_
 
 #include "renderer/util/win32_window.hpp"
 
@@ -14,9 +14,8 @@ namespace renderer {
 		friend class d3d11_renderer;
 
 	public:
-		// TODO: Setup the pipeline helper to just be given a pipeline that already exist
 		explicit d3d11_pipeline(win32_window* window) :
-			window_(window) {}// NOLINT(cppcoreguidelines-pro-type-member-init)
+			window_(window) {}
 
 		bool init();
 		void release();
@@ -40,7 +39,6 @@ namespace renderer {
 
 		win32_window* window_;
 
-	public:
 		// Basic context
 		ID3D11Device1* device_ = nullptr;
 		ID3D11DeviceContext1* context_;

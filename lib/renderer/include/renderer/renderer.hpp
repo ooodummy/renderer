@@ -1,0 +1,38 @@
+#ifndef _RENDERER_INTERFACES_RENDERER_HPP_
+#define _RENDERER_INTERFACES_RENDERER_HPP_
+
+#include "font.hpp"
+
+#include <shared_mutex>
+#include <vector>
+
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
+
+namespace renderer {
+	class buffer;
+
+	struct buffer_node {
+		std::unique_ptr<buffer> active;
+		std::unique_ptr<buffer> working;
+	};
+
+	class base_renderer {
+	public:
+		size_t register_buffer(size_t priority = 0);
+		buffer* get_working_buffer(size_t id);
+
+		void swap_buffers(size_t id);
+
+		virtual glyph get_font_glyph(size_t id, char c) = 0;
+
+		virtual glm::vec2 get_text_size(const std::string& text, size_t id) = 0;
+		virtual glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) = 0;
+
+	protected:
+		std::shared_mutex buffer_list_mutex_;
+		std::vector<buffer_node> buffers_;
+	};
+}
+
+#endif

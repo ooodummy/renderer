@@ -7,10 +7,10 @@
 
 #include "util/easing.hpp"
 #include "util/util.hpp"
-#include "renderer/interfaces/windows/window.hpp"
+#include "util/win32_window.hpp"
 
 #include "buffer.hpp"
-#include "renderer/interfaces/d3d11/pipeline.hpp"
-#include "renderer/interfaces/d3d11/renderer.hpp"
+#include "d3d11/pipeline.hpp"
+#include "d3d11/renderer.hpp"
 
 #endif

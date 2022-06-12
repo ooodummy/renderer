@@ -1,6 +1,6 @@
-#include "renderer/interfaces/d3d11/pipeline.hpp"
+#include "renderer/d3d11/pipeline.hpp"
 
-#include "renderer/shaders/constant_buffers.hpp"
+#include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/vertex.hpp"
 
 bool renderer::d3d11_pipeline::init() {
@@ -187,8 +187,8 @@ void renderer::d3d11_pipeline::create_frame_buffer_view() {
 	frame_buffer->Release();
 }
 
-#include "renderer/shaders/compiled/pixel.h"
-#include "renderer/shaders/compiled/vertex.h"
+#include "renderer/d3d11/shaders/compiled/pixel.h"
+#include "renderer/d3d11/shaders/compiled/vertex.h"
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
 void renderer::d3d11_pipeline::create_shaders() {

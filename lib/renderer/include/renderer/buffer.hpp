@@ -6,7 +6,7 @@
 #include "renderer/geometry/bezier.hpp"
 #include "geometry/polyline.hpp"
 
-#include "shaders/constant_buffers.hpp"
+#include "d3d11/shaders/constant_buffers.hpp"
 
 #include "font.hpp"
 
@@ -32,11 +32,11 @@ namespace renderer {
 		command_buffer command{};
 	};
 
-	class d3d11_renderer;
+	class base_renderer;
 
 	class buffer {
 	public:
-		explicit buffer(d3d11_renderer* renderer) : renderer_(renderer) {}
+		explicit buffer(base_renderer* renderer) : renderer_(renderer) {}
 		~buffer() = default;
 
 		void clear();
@@ -111,7 +111,7 @@ namespace renderer {
 		const std::vector<batch>& get_batches();
 
 	private:
-		d3d11_renderer* renderer_;
+		base_renderer* renderer_;
 
 		// Should we be using vector?
 		std::vector<vertex> vertices_;

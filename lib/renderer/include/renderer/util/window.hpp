@@ -21,7 +21,6 @@ namespace renderer {
 
 	protected:
 		std::string title_;
-
 		glm::i16vec2 pos_;
 		glm::i16vec2 size_;
 	};

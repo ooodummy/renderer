@@ -18,12 +18,9 @@ namespace renderer {
 
 		void set_proc(WNDPROC WndProc);
 		[[nodiscard]] HWND get_hwnd() const;
+		virtual ~win32_window();
 
 	protected:
-		std::string title_;
-		glm::i16vec2 pos_;
-		glm::i16vec2 size_;
-
 		WNDPROC proc_;
 		WNDCLASS wc_;
 		HWND hwnd_;

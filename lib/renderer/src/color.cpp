@@ -117,7 +117,6 @@ renderer::color_hsva renderer::color_rgba::get_hsv() const {
 			hue = ((fb - fr) / delta) + 2.0f;
 		else
 			hue = ((fr - fg) / delta) + 4.0f;
-
 		hue *= 60.0f;
 	}
 
