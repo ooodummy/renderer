@@ -43,10 +43,11 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	{
 		const auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
+
 		if (elapsed_ms > 5000)
 			rainbow_timer.reset();
 
-		rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.0f), static_cast<float>(elapsed_ms) / 5000).get_rgb();
+		rainbow = renderer::color_rgba(renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.0f), static_cast<float>(elapsed_ms) / 5000.0f));
 	}
 
 	const glm::vec4 scissor_bounds = {

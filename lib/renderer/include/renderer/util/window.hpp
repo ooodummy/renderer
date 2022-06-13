@@ -1,9 +1,8 @@
 #ifndef _RENDERER_UTIL_WINDOW_HPP_
 #define _RENDERER_UTIL_WINDOW_HPP_
 
-#include <string>
-
 #include <glm/vec2.hpp>
+#include <string>
 
 namespace renderer {
 	class base_window {
@@ -24,6 +23,6 @@ namespace renderer {
 		glm::i16vec2 pos_;
 		glm::i16vec2 size_;
 	};
-}
+}// namespace renderer
 
 #endif

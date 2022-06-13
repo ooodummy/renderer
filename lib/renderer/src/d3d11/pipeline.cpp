@@ -134,7 +134,8 @@ void renderer::d3d11_pipeline::create_swap_chain() {
 	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swap_chain_desc.Flags = 0;
 
-	hr = dxgi_factory->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
+	hr = dxgi_factory
+		 ->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
 	assert(SUCCEEDED(hr));
 	dxgi_factory->Release();
 }
@@ -346,7 +347,12 @@ void renderer::d3d11_pipeline::resize() {
 	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)(size.x), (FLOAT)(size.y), 0.0f, 1.0f };
 	context_->RSSetViewports(1, &viewport);
 
-	projection_matrix_ = glm::ortho(viewport.TopLeftX, viewport.Width, viewport.Height, viewport.TopLeftY, viewport.MinDepth, viewport.MaxDepth);
+	projection_matrix_ = glm::ortho(viewport.TopLeftX,
+									viewport.Width,
+									viewport.Height,
+									viewport.TopLeftY,
+									viewport.MinDepth,
+									viewport.MaxDepth);
 
 	D3D11_MAPPED_SUBRESOURCE mapped_resource;
 	HRESULT hr = context_->Map(projection_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);

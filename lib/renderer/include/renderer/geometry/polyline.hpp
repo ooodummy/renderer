@@ -1,11 +1,12 @@
-#ifndef _RENDERER_UTIL_POLYLINE_HPP_
-#define _RENDERER_UTIL_POLYLINE_HPP_
+#ifndef _RENDERER_GEOMETRY_POLYLINE_HPP_
+#define _RENDERER_GEOMETRY_POLYLINE_HPP_
 
-#include "renderer/vertex.hpp"
+#include "../vertex.hpp"
 
-#include <glm/glm.hpp>
 #include <optional>
 #include <vector>
+
+#include <glm/glm.hpp>
 
 namespace renderer {
 	enum joint_type {
@@ -58,8 +59,22 @@ namespace renderer {
 		void set_points(std::vector<glm::vec2>& points);
 
 	private:
-		void create_joint(vertex* vertices, size_t& offset, const poly_segment& segment1, const poly_segment& segment2, glm::vec2& end1, glm::vec2& end2, glm::vec2& next_start1, glm::vec2& next_start2, bool allow_overlap = false) const;
-		void create_triangle_fan(vertex* vertices, size_t& offset, const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise) const;
+		void create_joint(vertex* vertices,
+						  size_t& offset,
+						  const poly_segment& segment1,
+						  const poly_segment& segment2,
+						  glm::vec2& end1,
+						  glm::vec2& end2,
+						  glm::vec2& next_start1,
+						  glm::vec2& next_start2,
+						  bool allow_overlap = false) const;
+		void create_triangle_fan(vertex* vertices,
+								 size_t& offset,
+								 const glm::vec2& connect_to,
+								 const glm::vec2& origin,
+								 const glm::vec2& start,
+								 const glm::vec2& end,
+								 bool clockwise) const;
 
 		color_rgba col_;
 		joint_type joint_;

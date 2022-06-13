@@ -1,10 +1,11 @@
-#ifndef _RENDERER_TYPES_FONT_HPP_
-#define _RENDERER_TYPES_FONT_HPP_
+#ifndef _RENDERER_FONT_HPP_
+#define _RENDERER_FONT_HPP_
 
 #include <d3d11.h>
+#include <unordered_map>
+
 #include <freetype/freetype.h>
 #include <glm/vec2.hpp>
-#include <unordered_map>
 
 // https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
 

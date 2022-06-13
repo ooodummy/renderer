@@ -1,18 +1,16 @@
 #ifndef _RENDERER_D3D11_RENDERER_HPP_
 #define _RENDERER_D3D11_RENDERER_HPP_
 
-#include "../renderer.hpp"
-#include "../font.hpp"
 #include "../color.hpp"
-
+#include "../font.hpp"
+#include "../renderer.hpp"
 #include "pipeline.hpp"
 
 #include <d3d11.h>
+#include <glm/vec4.hpp>
 #include <map>
 #include <shared_mutex>
 #include <vector>
-
-#include <glm/vec4.hpp>
 
 namespace renderer {
 	// TODO: Should we add abstraction? Thing is it's never actually needed for my usage case I just like things being

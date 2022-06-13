@@ -23,11 +23,11 @@ namespace renderer {
 		uint32_t* indices_;
 	};
 
-	template <size_t N>
+	template<size_t N>
 	class static_shape : public shape {
 		vertex vertices_[N];
 		uint32_t indices_[N];
 	};
-}
+}// namespace renderer
 
 #endif

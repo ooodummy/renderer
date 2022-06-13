@@ -1,5 +1,5 @@
-#ifndef _RENDERER_UTIL_HPP_
-#define _RENDERER_UTIL_HPP_
+#ifndef _RENDERER_UTIL_UTIL_HPP_
+#define _RENDERER_UTIL_UTIL_HPP_
 
 #include <condition_variable>
 
@@ -35,7 +35,8 @@ namespace renderer {
 		}
 
 		std::chrono::milliseconds get_elapsed_duration() {
-			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begin);
+			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() -
+																		 begin);
 		}
 
 	private:

@@ -2,9 +2,8 @@
 #define _RENDERER_D3D11_PIPELINE_HPP_
 
 #include <d3d11_1.h>
-#include <memory>
-
 #include <glm/mat4x4.hpp>
+#include <memory>
 
 namespace renderer {
 	template<typename T>

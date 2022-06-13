@@ -3,11 +3,10 @@
 
 #include "font.hpp"
 
-#include <shared_mutex>
-#include <vector>
-
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <shared_mutex>
+#include <vector>
 
 namespace renderer {
 	class buffer;
@@ -37,6 +36,6 @@ namespace renderer {
 		std::shared_mutex buffer_list_mutex_;
 		std::vector<buffer_node> buffers_;
 	};
-}
+}// namespace renderer
 
 #endif

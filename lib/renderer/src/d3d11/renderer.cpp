@@ -1,12 +1,10 @@
 #include "renderer/d3d11/renderer.hpp"
 
-#include "renderer/util/win32_window.hpp"
-
 #include "renderer/buffer.hpp"
 #include "renderer/d3d11/shaders/constant_buffers.hpp"
+#include "renderer/util/win32_window.hpp"
 
 #include <d3d11.h>
-
 #include <glm/gtc/matrix_transform.hpp>
 
 renderer::d3d11_renderer::d3d11_renderer(renderer::win32_window* window) : d3d11_pipeline(window) {}
@@ -292,7 +290,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
 	srv_desc.Format = texture_desc.Format;
-	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D; // TODO: Might need to be MS
+	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;// TODO: Might need to be MS
 	srv_desc.Texture2D.MostDetailedMip = 0;
 	srv_desc.Texture2D.MipLevels = 1;
 
