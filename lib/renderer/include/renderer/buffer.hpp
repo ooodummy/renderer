@@ -4,8 +4,10 @@
 #define NOMINMAX
 #include "d3d11/shaders/constant_buffers.hpp"
 
+#include "geometry/shapes/polyline.hpp"
+#include "geometry/shapes/shape.hpp"
+
 #include "geometry/bezier.hpp"
-#include "geometry/polyline.hpp"
 
 #include "font.hpp"
 
@@ -26,7 +28,7 @@ namespace renderer {
 		D3D_PRIMITIVE_TOPOLOGY type;
 
 		// Fonts
-		ID3D11ShaderResourceView* rv = nullptr;
+		ID3D11ShaderResourceView* srv = nullptr;
 		color_rgba color;
 
 		command_buffer command{};
@@ -45,14 +47,16 @@ namespace renderer {
 		void add_vertices(vertex* vertices,
 						  size_t N,
 						  D3D_PRIMITIVE_TOPOLOGY type,
-						  ID3D11ShaderResourceView* rv = nullptr,
+						  ID3D11ShaderResourceView* srv = nullptr,
 						  color_rgba col = { 255, 255, 255, 255 });
 
 		template<size_t N>
 		void add_vertices(vertex (&vertices)[N],
 						  D3D_PRIMITIVE_TOPOLOGY type,
-						  ID3D11ShaderResourceView* rv = nullptr,
+						  ID3D11ShaderResourceView* srv = nullptr,
 						  color_rgba col = { 255, 255, 255, 255 });
+
+		void add_shape(shape& shape);
 
 		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
 		void draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col = COLOR_WHITE);
@@ -79,7 +83,7 @@ namespace renderer {
 									  color_rgba = COLOR_WHITE,
 									  size_t segments = 16);
 
-		void draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* rv, color_rgba col = COLOR_WHITE);
+		void draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col = COLOR_WHITE);
 
 		void draw_circle(
 		const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
@@ -117,12 +121,6 @@ namespace renderer {
 			add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 			delete[] vertices;
 		}
-
-		void draw_polyline(std::vector<glm::vec2>& points,
-						   color_rgba col = COLOR_WHITE,
-						   float thickness = 1.0f,
-						   joint_type joint = joint_miter,
-						   cap_type cap = cap_butt);
 
 		void draw_text(glm::vec2 pos,
 					   const std::string& text,

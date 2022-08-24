@@ -213,3 +213,11 @@ renderer::color_rgba renderer::color_rgba::ease(const renderer::color_rgba& o, f
 
 	return color_rgba(color_hsva(*this).ease(color_hsva(o), p, type));
 }
+
+bool renderer::color_rgba::operator==(const renderer::color_rgba& o) const {
+	return memcmp(this, &o, sizeof(color_rgba)) == 0;
+}
+
+bool renderer::color_rgba::operator!=(const renderer::color_rgba& o) const {
+	return memcmp(this, &o, sizeof(color_rgba)) != 0;
+}

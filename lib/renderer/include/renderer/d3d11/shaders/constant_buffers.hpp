@@ -17,8 +17,8 @@ namespace renderer {
 		alignas(4) bool key_enable;
 		alignas(16) glm::vec4 key_color;
 		alignas(4) float blur_strength;
-		alignas(4) bool is_glyph;
-		alignas(8) glm::i32vec2 glyph_size;
+		alignas(4) bool is_texture;
+		alignas(8) glm::i32vec2 texture_size;
 	};
 }// namespace renderer
 

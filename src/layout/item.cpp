@@ -1,6 +1,6 @@
 #include "carbon/layout/item.hpp"
 
-#include "carbon/global.hpp"
+#include "carbon/globals.hpp"
 
 void carbon::flex_item::measure_contents() {
 	compute_box_model();
@@ -18,11 +18,15 @@ void carbon::flex_item::compute() {
 }
 
 void carbon::flex_item::decorate() {
-	buf->draw_rect(margin_.get_edge(), COLOR_GREEN);
-	// buf->draw_rect(border_.get_edge(), COLOR_GREEN);
-	// buf->draw_rect(padding_.get_edge(), COLOR_RED);
-	buf->draw_rect(content_, COLOR_BLUE);
-	// buf->draw_rect(glm::vec4(carbon::get_pos(content_), flex_.basis.content), COLOR_PURPLE);
+	buf->draw_rect_filled(margin_.get_edge(), {153, 93, 181});
+	buf->draw_rect(margin_.get_edge(), {24, 26, 27});
+	buf->draw_rect_filled(content_, {247, 148, 31});
+
+	//buf->draw_rect(margin_.get_edge(), COLOR_GREEN);
+	//buf->draw_rect(border_.get_edge(), COLOR_GREEN);
+	//buf->draw_rect(padding_.get_edge(), COLOR_RED);
+	//buf->draw_rect(content_, COLOR_BLUE);
+	//buf->draw_rect(glm::vec4(carbon::get_pos(content_), flex_.basis.content), COLOR_PURPLE);
 }
 
 void carbon::flex_item::input() {}

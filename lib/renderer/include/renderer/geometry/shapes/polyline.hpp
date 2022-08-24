@@ -1,12 +1,11 @@
-#ifndef _RENDERER_GEOMETRY_POLYLINE_HPP_
-#define _RENDERER_GEOMETRY_POLYLINE_HPP_
+#ifndef _RENDERER_GEOMETRY_SHAPES_POLYLINE_HPP_
+#define _RENDERER_GEOMETRY_SHAPES_POLYLINE_HPP_
 
-#include "../vertex.hpp"
+#include "shape.hpp"
 
-#include <optional>
+#include <utility>
 #include <vector>
-
-#include <glm/glm.hpp>
+#include <optional>
 
 namespace renderer {
 	enum joint_type {
@@ -47,42 +46,38 @@ namespace renderer {
 	static constexpr float miter_min_angle = 0.349066;// ~20 degrees
 	static constexpr float round_min_angle = 0.174533;// ~10 degrees
 
-	// This is a one to one copy of https://github.com/CrushedPixel/Polyline2D
-	// TODO: Different colors and weights at each poly point
-	class polyline {
+	class polyline_shape : public shape {
 	public:
-		polyline() = default;
-		polyline(color_rgba col, float thickness = 1.0f, joint_type joint = joint_miter, cap_type cap = cap_square);
+		polyline_shape(std::vector<glm::vec2> points, color_rgba col = COLOR_WHITE,
+					   float thickness = 1.0f,
+					   joint_type joint = joint_miter,
+					   cap_type cap = cap_butt, bool allow_overlap = false);
 
-		[[nodiscard]] std::pair<vertex*, size_t> compute(bool allow_overlap = false) const;
+		void set_color(color_rgba col);
 
-		void set_points(std::vector<glm::vec2>& points);
+	protected:
+		void recalculate_buffer() override;
 
-	private:
-		void create_joint(vertex* vertices,
-						  size_t& offset,
-						  const poly_segment& segment1,
+		void create_joint(const poly_segment& segment1,
 						  const poly_segment& segment2,
 						  glm::vec2& end1,
 						  glm::vec2& end2,
 						  glm::vec2& next_start1,
-						  glm::vec2& next_start2,
-						  bool allow_overlap = false) const;
-		void create_triangle_fan(vertex* vertices,
-								 size_t& offset,
-								 const glm::vec2& connect_to,
+						  glm::vec2& next_start2);
+		void create_triangle_fan(const glm::vec2& connect_to,
 								 const glm::vec2& origin,
 								 const glm::vec2& start,
 								 const glm::vec2& end,
-								 bool clockwise) const;
+								 bool clockwise);
 
-		color_rgba col_;
+		std::vector<glm::vec2> points_;
+		float thickness_;
 		joint_type joint_;
 		cap_type cap_;
-		float thickness_;
+		bool allow_overlap_;
 
-		std::vector<glm::vec2>* points_ = nullptr;
+		std::vector<vertex> temp_vertices_;
 	};
-}// namespace renderer
+}
 
 #endif

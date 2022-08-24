@@ -1,6 +1,6 @@
 #include "carbon/theme.hpp"
 
-#include "carbon/global.hpp"
+#include "carbon/globals.hpp"
 
 void carbon::init_default_theme() {
 	theme.body = { 26, 26, 28 };

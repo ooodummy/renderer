@@ -1,4 +1,4 @@
-#include "carbon/global.hpp"
+#include "carbon/globals.hpp"
 
 namespace carbon {
 	renderer::buffer* buf;

@@ -39,15 +39,30 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 void draw_test_primitives(renderer::buffer* buf) {
 	static renderer::timer rainbow_timer;
-	static renderer::color_rgba rainbow;
+	auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
 
-	{
-		const auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
+	if (elapsed_ms > 5000)
+		rainbow_timer.reset();
 
-		if (elapsed_ms > 5000)
-			rainbow_timer.reset();
+	const renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(360.0f), static_cast<float>(elapsed_ms) / 5000.0f);
 
-		rainbow = renderer::color_rgba(renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.0f), static_cast<float>(elapsed_ms) / 5000.0f));
+	static std::vector<glm::vec2> points = {
+		{400.0f, 500.0f},
+		{700.0f, 500.0f},
+		{600.0f, 350.0f},
+		{700.0f, 300.0f},
+		{500.0f, 200.0f},
+		{500.0f, 600.0f},
+		{600.0f, 600.0f}};
+
+	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
+
+	static renderer::timer timer;
+	elapsed_ms = timer.get_elapsed_duration().count();
+
+	if (elapsed_ms > 500) {
+		polyline.set_color(rainbow);
+		timer.reset();
 	}
 
 	const glm::vec4 scissor_bounds = {
@@ -81,17 +96,10 @@ void draw_test_primitives(renderer::buffer* buf) {
 	//buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
 	//buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
-	static std::vector<glm::vec2> points = {
-		{400.0f, 500.0f},
-		{700.0f, 500.0f},
-		{600.0f, 350.0f},
-		{700.0f, 300.0f},
-		{500.0f, 200.0f},
-		{500.0f, 600.0f},
-		{600.0f, 600.0f}};
-
 	buf->push_scissor(scissor_bounds, true);
-	buf->draw_polyline(points, rainbow, 20.0f, renderer::joint_miter);
+
+	buf->add_shape(polyline);
+
 	buf->pop_scissor();
 
 	const std::string test_string = "Hello World!";
@@ -102,6 +110,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
 	buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
+
+	//D3DX11CreateShaderResourceViewFromFile(dx11->, L"braynzar.jpg",NULL, NULL, &CubesTexture, NULL );
 }
 
 void draw_test_bezier(renderer::buffer* buf) {
@@ -151,29 +161,38 @@ void draw_test_bezier(renderer::buffer* buf) {
 void draw_test_flex(renderer::buffer* buf) {
 	static bool init = false;
 	static auto flex_container = std::make_unique<carbon::flex_line>();
-	static carbon::flex_item* item111;
 
 	if (!init) {
 		flex_container->set_pos({50.0f, 50.0f});
 		const auto container1 = flex_container->add_child<carbon::flex_line>();
-		container1->set_flex(1.0f, carbon::column);
+		container1->set_flex(1.0f);
+		container1->set_flow(carbon::column);
+		container1->set_max_width(300.0f);
 		const auto item3 = flex_container->add_child<carbon::flex_item>();
 		item3->set_flex(1.0f);
 		const auto container11 = container1->add_child<carbon::flex_line>();
 		container11->set_flex(1.0);
-		container11->set_min_width(100.0f);
-		container11->set_max_width(200.0f);
-		const auto container111 = container11->add_child<carbon::flex_item>();
-		container111->set_flex(1.0f);
-		const auto container112 = container11->add_child<carbon::flex_item>();
-		container112->set_flex(1.0f);
-		const auto container113 = container11->add_child<carbon::flex_item>();
-		container113->set_flex(1.0f);
-		const auto container12 = container1->add_child<carbon::flex_item>();
+		container11->set_min_width(50.0f);
+		container11->set_max_width(100.0f);
+		const auto item111 = container11->add_child<carbon::flex_item>();
+		item111->set_flex(1.0f);
+		const auto item112 = container11->add_child<carbon::flex_item>();
+		item112->set_flex(1.0f);
+		const auto item113 = container11->add_child<carbon::flex_item>();
+		item113->set_flex(1.0f);
+		const auto container12 = container1->add_child<carbon::flex_line>();
 		container12->set_flex(1.0f);
-		//container12->set_max_width(50.0f); // >:( causes issues
+		container12->set_flow(carbon::column);
+		const auto item121 = container12->add_child<carbon::flex_item>();
+		item121->set_flex(1.0f);
+		const auto item122 = container12->add_child<carbon::flex_item>();
+		item122->set_flex(1.0f);
+		container12->set_max_width(100.0f);
 		auto container2 = container1->add_child<carbon::flex_line>();
 		container2->set_flex(1.0f);
+		// bug if greater than 100 since other mins add up to that?
+		// I hate this, hard to wrap head around
+		//container2->set_min_width(150.0f);
 
 		init = true;
 	}
@@ -193,8 +212,8 @@ void draw_thread() {
 		carbon::buf = buf;
 
 		//draw_test_primitives(buf);
-		draw_test_bezier(buf);
-		//draw_test_flex(buf);
+		//draw_test_bezier(buf);
+		draw_test_flex(buf);
 
 		// Testing arc performance
 		//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
@@ -210,7 +229,7 @@ void draw_thread() {
 int main() {
     window = std::make_unique<renderer::win32_window>();
     window->set_title("D3D11 Renderer");
-    window->set_size({1280, 720});
+    window->set_size({1280, 1280});
 
     // Center window position
     {
@@ -241,7 +260,7 @@ int main() {
     }
 
     dx11->set_vsync(false);
-	dx11->set_clear_color({25, 50, 150});
+	dx11->set_clear_color({88, 122, 202});
 
     segoe = dx11->register_font({"Segoe UI", 12, FW_THIN, true});
 

@@ -1,7 +1,7 @@
 #ifndef _CARBON_CARBON_HPP_
 #define _CARBON_CARBON_HPP_
 
-#include "global.hpp"
+#include "globals.hpp"
 #include "input.hpp"
 #include "theme.hpp"
 #include "widgets/containers/panel.hpp"

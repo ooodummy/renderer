@@ -103,10 +103,9 @@ void renderer::d3d11_renderer::populate() {
 			context_->Unmap(command_buffer_, 0);
 
 			context_->PSSetConstantBuffers(1, 1, &command_buffer_);
-
-			context_->PSSetShaderResources(0, 1, &batch.rv);
-
+			context_->PSSetShaderResources(0, 1, &batch.srv);
 			context_->IASetPrimitiveTopology(batch.type);
+
 			context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
 
 			offset += batch.size;
@@ -313,6 +312,13 @@ renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, char c) {
 	}
 
 	return glyph->second;
+}
+
+// https://www.rastertek.com/dx11s2tut05.html
+ID3D11ShaderResourceView* renderer::d3d11_renderer::create_srv_from_file(LPCTSTR file) {
+	ID3D11ShaderResourceView* srv;
+
+	return srv;
 }
 
 glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_t id) {

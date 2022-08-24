@@ -1,7 +1,7 @@
 #ifndef _CARBON_WIDGETS_WIDGET_HPP_
 #define _CARBON_WIDGETS_WIDGET_HPP_
 
-#include "../global.hpp"
+#include "../globals.hpp"
 #include "../layout/containers/flex_container.hpp"
 #include "../layout/containers/grid_container.hpp"
 

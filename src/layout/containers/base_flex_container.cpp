@@ -1,5 +1,7 @@
 #include "carbon/layout/containers/base_flex_container.hpp"
 
+#include "carbon/globals.hpp"
+
 void carbon::base_flex_container::measure_contents() {
 	compute_box_model();
 
@@ -107,4 +109,19 @@ void carbon::base_flex_container::set_flow(flex_direction axis, flex_wrap wrap) 
 void carbon::base_flex_container::set_justify_content(const flex_justify_content justify_content) {
 	mark_dirty_and_propagate();
 	flow_.justify_content = justify_content;
+}
+
+void carbon::base_flex_container::decorate() {
+	buf->draw_rect_filled(margin_.get_edge(), {153, 93, 181});
+	buf->draw_rect(margin_.get_edge(), {24, 26, 27});
+	buf->draw_rect_filled(content_, {247, 148, 31});
+
+	auto margin = get_axes(margin_.get_edge());
+
+	auto start = get_axes(carbon::get_pos(margin_.get_edge()));
+	start.cross += margin.cross.y / 2.0f;
+	auto end = start;
+	end.main += margin.main.y;
+
+	buf->draw_line(glm::vec2(start), glm::vec2(end), COLOR_WHITE);
 }

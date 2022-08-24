@@ -22,6 +22,8 @@ namespace renderer {
 		size_t register_font(const font& font) override;
 		glyph get_font_glyph(size_t id, char c) override;
 
+		ID3D11ShaderResourceView* create_srv_from_file(LPCTSTR file);
+
 		glm::vec2 get_text_size(const std::string& text, size_t id) override;
 		glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) override;
 

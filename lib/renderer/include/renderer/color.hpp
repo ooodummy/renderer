@@ -5,6 +5,9 @@
 
 #include <glm/vec4.hpp>
 
+#define COLOR_START renderer::color_hsva(0.0f, 1.0f, 1.0f)
+#define COLOR_END renderer::color_hsva(359.0f, 1.0f, 1.0f)
+
 #define COLOR_BLACK renderer::color_rgba(0, 0, 0)
 #define COLOR_GREY renderer::color_rgba(128, 128, 128)
 #define COLOR_WHITE renderer::color_rgba(255, 255, 255)
@@ -26,7 +29,7 @@ namespace renderer {
 	public:
 		color_cmyka(float c = 0.0f, float m = 0.0f, float y = 0.0f, float k = 0.0f, uint8_t a = 255);
 
-		explicit operator color_rgba() const;
+		operator color_rgba() const;
 
 		float c, m, y, k;
 		uint8_t a;
@@ -36,7 +39,7 @@ namespace renderer {
 	public:
 		color_hex(uint32_t hex);
 
-		explicit operator color_rgba() const;
+		operator color_rgba() const;
 
 		uint32_t hex;
 	};
@@ -45,7 +48,7 @@ namespace renderer {
 	public:
 		color_hsla(float h = 0.0f, float s = 0.0f, float l = 0.0f, uint8_t a = 255);
 
-		explicit operator color_rgba() const;
+		operator color_rgba() const;
 
 		float h, s, l;
 		uint8_t a;
@@ -53,9 +56,9 @@ namespace renderer {
 
 	class color_hsva {
 	public:
-		color_hsva(float h = 0.0f, float s = 0.0f, float v = 0.0f, uint8_t a = 255);
+		color_hsva(float h = 0.0f, float s = 1.0f, float v = 1.0f, uint8_t a = 255);
 
-		explicit operator color_rgba() const;
+		operator color_rgba() const;
 
 		color_hsva ease(const color_hsva& o, float p, ease_type type = linear) const;
 
@@ -67,11 +70,14 @@ namespace renderer {
 	public:
 		color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);
 
-		explicit operator color_cmyka() const;
-		explicit operator color_hex() const;
-		explicit operator color_hsla() const;
-		explicit operator color_hsva() const;
-		explicit operator glm::vec4() const;
+		operator color_cmyka() const;
+		operator color_hex() const;
+		operator color_hsla() const;
+		operator color_hsva() const;
+		operator glm::vec4() const;
+
+		bool operator == (const color_rgba& o) const;
+		bool operator != (const color_rgba& o) const;
 
 		color_rgba ease(const color_rgba& o, float p, ease_type type = linear) const;
 

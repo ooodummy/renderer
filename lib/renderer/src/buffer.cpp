@@ -34,7 +34,7 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t N) {
 }
 
 void renderer::buffer::add_vertices(
-vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* rv, color_rgba col) {
+vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* srv, color_rgba col) {
 	if (batches_.empty()) {
 		batches_.emplace_back(0, type);
 		split_batch_ = false;
@@ -47,7 +47,7 @@ vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceVie
 				batches_.emplace_back(0, type);
 			split_batch_ = false;
 		}
-		else if (previous.type != type || rv != nullptr || rv != previous.rv) {
+		else if (previous.type != type || srv != nullptr || srv != previous.srv) {
 			batches_.emplace_back(0, type);
 		}
 		else {
@@ -72,7 +72,7 @@ vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceVie
 
 	auto& new_batch = batches_.back();
 
-	new_batch.rv = rv;
+	new_batch.srv = srv;
 	new_batch.color = col;
 	new_batch.command = active_command;
 
@@ -82,9 +82,14 @@ vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceVie
 template<size_t N>
 void renderer::buffer::add_vertices(vertex (&vertices)[N],
 									D3D_PRIMITIVE_TOPOLOGY type,
-									ID3D11ShaderResourceView* rv,
+									ID3D11ShaderResourceView* srv,
 									color_rgba col) {
-	add_vertices(vertices, N, type, rv, col);
+	add_vertices(vertices, N, type, srv, col);
+}
+
+void renderer::buffer::add_shape(shape& shape) {
+	shape.check_recalculation();
+	add_vertices(shape.vertices_, shape.vertex_count, shape.type_, shape.srv_, shape.col_);
 }
 
 void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
@@ -292,13 +297,12 @@ void renderer::buffer::draw_rect_rounded_filled(const glm::vec4& rect,
 	delete[] vertices;
 }
 
-void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* rv, color_rgba col) {
+void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col) {
 	split_batch_ = true;
 
-	// I'm pretty sure this is a terrible way of doing glyph uv's
-	active_command.is_glyph = true;
-	active_command.glyph_size.x = static_cast<int>(rect.z);
-	active_command.glyph_size.y = static_cast<int>(rect.w);
+	active_command.is_texture = true;
+	active_command.texture_size.x = static_cast<int>(rect.z);
+	active_command.texture_size.y = static_cast<int>(rect.w);
 
 	vertex vertices[] = {
 		{rect.x,			  rect.y,		  col, 0.0f, 0.0f},
@@ -307,9 +311,9 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 		{ rect.x + rect.z, rect.y + rect.w, col, 1.0f, 1.0f}
 	};
 
-	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, rv, col);
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, srv, col);
 
-	active_command.is_glyph = false;
+	active_command.is_texture = false;
 
 	split_batch_ = true;
 }
@@ -322,16 +326,6 @@ const glm::vec2& pos, float radius, color_rgba col, float thickness, size_t segm
 
 void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col, size_t segments) {
 	draw_arc(pos, 3 * M_PI / 2.0f, M_PI * 2.0f, radius, col, 0.0f, segments, true);
-}
-
-// TODO: This is unstable since the estimate vertex count can be wrong
-void renderer::buffer::draw_polyline(
-std::vector<glm::vec2>& points, color_rgba col, float thickness, joint_type joint, cap_type cap) {
-	polyline line(col, thickness, joint, cap);
-	line.set_points(points);
-	const auto pair = line.compute();
-	add_vertices(pair.first, pair.second, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	delete[] pair.first;
 }
 
 void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {

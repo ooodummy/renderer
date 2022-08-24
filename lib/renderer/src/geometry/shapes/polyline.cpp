@@ -1,8 +1,10 @@
-#include "renderer/geometry/polyline.hpp"
+#include "renderer/geometry/shapes/polyline.hpp"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <cmath>
+#include <glm/glm.hpp>
+
+static constexpr float miter_min_angle = 0.349066;// ~20 degrees
+static constexpr float round_min_angle = 0.174533;// ~10 degrees
 
 renderer::line_segment::line_segment(glm::vec2 a, glm::vec2 b) : a(a), b(b) {}
 
@@ -60,31 +62,29 @@ renderer::poly_segment::poly_segment(const renderer::line_segment& _center, floa
 	edge1(center + center.normal() * thickness),
 	edge2(center - center.normal() * thickness) {}
 
-renderer::polyline::polyline(renderer::color_rgba col,
-							 float thickness,
-							 renderer::joint_type joint,
-							 renderer::cap_type cap) :
-	col_(col),
-	thickness_(thickness),
-	joint_(joint),
-	cap_(cap) {}
+renderer::polyline_shape::polyline_shape(std::vector<glm::vec2> points,
+										 renderer::color_rgba col,
+										 float thickness,
+										 joint_type joint,
+										 cap_type cap, bool allow_overlap) : points_(std::move(points)), thickness_(thickness), joint_(joint), cap_(cap), allow_overlap_(allow_overlap) {
+	type_ = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+	col_ = col;
+    recalculate_buffer();
+}
 
-std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_overlap) const {
-	assert(points_);
-
-	// TODO: Kinda don't want to use position_at() since it does a bounds check and I have no point in checking that
-	if (points_->empty())
-		return {};
+void renderer::polyline_shape::recalculate_buffer() {
+	if (points_.empty())
+		return;
 
 	const auto half_thickness_ = thickness_ / 2.0f;
 
 	// Create segments
 	std::vector<poly_segment> segments;
-	segments.reserve(points_->size());
+	segments.reserve(points_.size());
 
-	for (size_t i = 0; i < points_->size() - 1; i++) {
-		const auto a = points_->at(i);
-		const auto b = points_->at(i + 1);
+	for (size_t i = 0; i < points_.size() - 1; i++) {
+		const auto a = points_[i];
+		const auto b = points_[i + 1];
 
 		if (a != b) {
 			segments.emplace_back(line_segment(a, b), half_thickness_);
@@ -92,12 +92,12 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 	}
 
 	if (segments.empty())
-		return {};
+		return;
 
 	// Connect cap joint
 	if (cap_ == cap_joint) {
-		const auto a = points_->at(points_->size() - 1);
-		const auto b = points_->at(0);
+		const auto a = points_[points_.size() - 1];
+		const auto b = points_[0];
 
 		if (a != b) {
 			segments.emplace_back(line_segment(a, b), half_thickness_);
@@ -112,9 +112,11 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 	auto path_end1 = last_segment.edge1.b;
 	auto path_end2 = last_segment.edge2.b;
 
-	// TODO: This will fail when doing rounded joints since I'm not computing the vertex count!
-	size_t vertex_count = segments.size() * 4;
-	auto* vertices = new vertex[vertex_count];
+	if (joint_ == joint_round || cap_ == cap_round)
+		temp_vertices_.reserve(segments.size() * 4 + 200);
+	else
+		temp_vertices_.reserve(segments.size() * 4);
+
 	size_t offset = 0;
 
 	if (cap_ == cap_square) {
@@ -125,14 +127,13 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 		path_end2 += last_segment.edge2.direction() * half_thickness_;
 	}
 	else if (cap_ == cap_round) {
-		create_triangle_fan(vertices, offset, first_segment.center.a, first_segment.center.a, first_segment.edge1.a,
+		create_triangle_fan(first_segment.center.a, first_segment.center.a, first_segment.edge1.a,
 							first_segment.edge2.a, false);
-		create_triangle_fan(vertices, offset, last_segment.center.b, last_segment.center.b, last_segment.edge1.b,
+		create_triangle_fan(last_segment.center.b, last_segment.center.b, last_segment.edge1.b,
 							last_segment.edge2.b, true);
 	}
 	else if (cap_ == cap_joint) {
-		create_joint(vertices, offset, last_segment, first_segment, path_end1, path_end2, path_start1, path_start2,
-					 allow_overlap);
+		create_joint(last_segment, first_segment, path_end1, path_end2, path_start1, path_start2);
 	}
 
 	glm::vec2 next_start1;
@@ -150,25 +151,17 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 			end2 = path_end2;
 		}
 		else {
-			create_joint(vertices, offset, segment, segments[i + 1], end1, end2, next_start1, next_start2,
-						 allow_overlap);
+			create_joint(segment, segments[i + 1], end1, end2, next_start1, next_start2);
 		}
 
-		vertices[offset] = { start1, col_ };
-		offset++;
-		vertices[offset] = { end1, col_ };
-		offset++;
-		vertices[offset] = { start2, col_ };
-		offset++;
-		vertices[offset] = { end2, col_ };
-		offset++;
+		temp_vertices_.emplace_back(start1, col_);
+		temp_vertices_.emplace_back(end1, col_);
+		temp_vertices_.emplace_back(start2, col_);
+		temp_vertices_.emplace_back(end2, col_);
 
 		start1 = next_start1;
 		start2 = next_start2;
 	}
-
-	// If this throws then change vertex count calculation
-	assert(vertex_count == offset);
 
 	/*float whole;
 	const auto fractional = std::modf(half_thickness_, &whole);
@@ -177,22 +170,22 @@ std::pair<renderer::vertex*, size_t> renderer::polyline::compute(bool allow_over
 		vertex -= fractional;
 	}*/
 
-	return std::make_pair(vertices, vertex_count);
+	vertex_count = temp_vertices_.size();
+	delete[] vertices_;
+	vertices_ = new vertex[vertex_count];
+	for (size_t i = 0; i < vertex_count; i++) {
+		vertices_[i] = temp_vertices_[i];
+	}
+
+	temp_vertices_ = {};
 }
 
-void renderer::polyline::set_points(std::vector<glm::vec2>& points) {
-	points_ = &points;
-}
-
-void renderer::polyline::create_joint(vertex* vertices,
-									  size_t& offset,
-									  const renderer::poly_segment& segment1,
-									  const renderer::poly_segment& segment2,
-									  glm::vec2& end1,
-									  glm::vec2& end2,
-									  glm::vec2& next_start1,
-									  glm::vec2& next_start2,
-									  bool allow_overlap) const {
+void renderer::polyline_shape::create_joint(const renderer::poly_segment& segment1,
+											const renderer::poly_segment& segment2,
+											glm::vec2& end1,
+											glm::vec2& end2,
+											glm::vec2& next_start1,
+											glm::vec2& next_start2) {
 	const auto dir1 = segment1.center.direction();
 	const auto dir2 = segment2.center.direction();
 
@@ -238,7 +231,7 @@ void renderer::polyline::create_joint(vertex* vertices,
 			inner2 = &segment2.edge1;
 		}
 
-		const auto inner_sec_opt = inner1->intersection(*inner2, allow_overlap);
+		const auto inner_sec_opt = inner1->intersection(*inner2, allow_overlap_);
 		const auto inner_sec = inner_sec_opt ? *inner_sec_opt : inner1->b;
 
 		glm::vec2 inner_start;
@@ -269,15 +262,12 @@ void renderer::polyline::create_joint(vertex* vertices,
 
 		// TODO: Fix for triangle strip :(
 		if (override_joint == joint_bevel) {
-			vertices[offset] = { outer1->b, col_ };
-			offset++;
-			vertices[offset] = { outer2->a, col_ };
-			offset++;
-			vertices[offset] = { inner_sec, col_ };
-			offset++;
+			temp_vertices_.emplace_back(outer1->b, col_);
+			temp_vertices_.emplace_back(outer2->a, col_);
+			temp_vertices_.emplace_back(inner_sec, col_);
 		}
 		else if (override_joint == joint_round) {
-			create_triangle_fan(vertices, offset, inner_sec, segment1.center.b, outer1->b, outer2->a, clockwise);
+			create_triangle_fan(inner_sec, segment1.center.b, outer1->b, outer2->a, clockwise);
 		}
 		else {
 			assert(false);
@@ -285,13 +275,11 @@ void renderer::polyline::create_joint(vertex* vertices,
 	}
 }
 
-void renderer::polyline::create_triangle_fan(vertex* vertices,
-											 size_t& offset,
-											 const glm::vec2& connect_to,
-											 const glm::vec2& origin,
-											 const glm::vec2& start,
-											 const glm::vec2& end,
-											 bool clockwise) const {
+void renderer::polyline_shape::create_triangle_fan(const glm::vec2& connect_to,
+												   const glm::vec2& origin,
+												   const glm::vec2& start,
+												   const glm::vec2& end,
+												   bool clockwise) {
 	const auto point1 = start - origin;
 	const auto point2 = end - origin;
 
@@ -330,13 +318,18 @@ void renderer::polyline::create_triangle_fan(vertex* vertices,
 			end_point += origin;
 		}
 
-		vertices[offset] = { start_point, col_ };
-		offset++;
-		vertices[offset] = { end_point, col_ };
-		offset++;
-		vertices[offset] = { connect_to, col_ };
-		offset++;
+		temp_vertices_.emplace_back(start_point, col_);
+		temp_vertices_.emplace_back(end_point, col_);
+		temp_vertices_.emplace_back(connect_to, col_);
 
 		start_point = end_point;
 	}
+}
+
+void renderer::polyline_shape::set_color(color_rgba col) {
+	if (col_ == col)
+		return;
+
+	needs_recalculate_ = true;
+	col_ = col;
 }

@@ -134,8 +134,7 @@ void renderer::d3d11_pipeline::create_swap_chain() {
 	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swap_chain_desc.Flags = 0;
 
-	hr = dxgi_factory
-		 ->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
+	hr = dxgi_factory->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
 	assert(SUCCEEDED(hr));
 	dxgi_factory->Release();
 }
@@ -176,7 +175,7 @@ void renderer::d3d11_pipeline::create_frame_buffer_view() {
 	assert(SUCCEEDED(hr));
 
 	D3D11_RENDER_TARGET_VIEW_DESC frame_buffer_desc{};
-	frame_buffer_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	frame_buffer_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	frame_buffer_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 
 	hr = device_->CreateRenderTargetView(frame_buffer, &frame_buffer_desc, &frame_buffer_view_);

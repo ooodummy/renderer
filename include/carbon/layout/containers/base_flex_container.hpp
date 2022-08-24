@@ -17,6 +17,7 @@ namespace carbon {
 
 	protected:
 		void measure_contents() override;
+		void decorate() override;
 
 		flex_flow flow_;
 
