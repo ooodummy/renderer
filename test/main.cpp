@@ -229,7 +229,7 @@ void draw_thread() {
 int main() {
     window = std::make_unique<renderer::win32_window>();
     window->set_title("D3D11 Renderer");
-    window->set_size({1280, 1280});
+    window->set_size({720, 720});
 
     // Center window position
     {

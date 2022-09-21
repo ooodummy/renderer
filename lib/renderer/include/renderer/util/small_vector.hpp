@@ -27,7 +27,7 @@ namespace renderer {
 			}
 		}
 
-		void push_bacK(const T& val) {
+		void push_back(const T& val) {
 			if (size == capacity_) {
 				resize(capacity_ + IncrementSize);
 			}
