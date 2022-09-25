@@ -1,6 +1,9 @@
 #include "renderer/buffer.hpp"
 
 #include "renderer/renderer.hpp"
+#include "renderer/geometry/shapes/polyline.hpp"
+
+#include <glm/gtx/quaternion.hpp>
 
 void renderer::buffer::clear() {
 	vertices_ = {};
@@ -101,13 +104,19 @@ void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 }
 
-void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col) {
+void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col, float thickness) {
+	// I bet doing all this math for a line is not a good idea
+	const line_segment segment(start, end);
+	const auto normal = segment.normal() * (thickness / 2.0f);
+
 	vertex vertices[] = {
-		{start.x, start.y, col},
-		{ end.x,	 end.y,	col}
+		{ start.x + normal.x, start.y + normal.y, col},
+		{ end.x + normal.x, end.y + normal.y,	col},
+		{ start.x - normal.x, start.y - normal.y, col},
+		{ end.x - normal.x,	end.y - normal.y,   col}
 	};
 
-	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
 // TODO: Optimized circle points

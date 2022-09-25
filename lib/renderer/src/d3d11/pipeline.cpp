@@ -123,7 +123,7 @@ void renderer::d3d11_pipeline::create_swap_chain() {
 	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc;
 	swap_chain_desc.Width = size.x;
 	swap_chain_desc.Height = size.y;
-	swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swap_chain_desc.Stereo = FALSE;
 	swap_chain_desc.SampleDesc.Count = 4;
 	swap_chain_desc.SampleDesc.Quality = 0;
@@ -337,7 +337,7 @@ void renderer::d3d11_pipeline::resize() {
 	context_->OMSetRenderTargets(0, nullptr, nullptr);
 	context_->OMSetDepthStencilState(nullptr, NULL);
 
-	HRESULT res = swap_chain_->ResizeBuffers(2, size.x, size.y, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, 0);
+	HRESULT res = swap_chain_->ResizeBuffers(2, size.x, size.y, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
 	assert(SUCCEEDED(res));
 
 	create_frame_buffer_view();

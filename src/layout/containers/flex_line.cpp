@@ -62,9 +62,7 @@ void carbon::flex_line::arrange() {
 		shrink_scaled_total = 0.0f;
 
 		for (auto& child : children_) {
-			const auto shrink = child->flex_.shrink;
-
-			if (shrink > 0.0f) {
+			if (child->flex_.shrink > 0.0f) {
 				child->shrink_scaled_ = child->base_size_ * remaining_space_ - child->flex_.shrink;
 				shrink_scaled_total += child->shrink_scaled_;
 			}
@@ -76,6 +74,7 @@ void carbon::flex_line::arrange() {
 	}
 }
 
+// Clamping is done incorrectly in hear causing weird breaks
 bool carbon::flex_line::calculate_flex() {
 	auto adjusted_space = 0.0f;
 

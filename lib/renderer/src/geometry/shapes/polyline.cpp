@@ -330,6 +330,9 @@ void renderer::polyline_shape::set_color(color_rgba col) {
 	if (col_ == col)
 		return;
 
-	needs_recalculate_ = true;
 	col_ = col;
+
+	for (size_t i = 0; i < vertex_count; i++) {
+		vertices_[i].col = col_;
+	}
 }

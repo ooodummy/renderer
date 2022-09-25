@@ -44,7 +44,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 	if (elapsed_ms > 5000)
 		rainbow_timer.reset();
 
-	const renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(360.0f), static_cast<float>(elapsed_ms) / 5000.0f);
+	const renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f),
+																		 static_cast<float>(elapsed_ms) / 5000.0f);
 
 	static std::vector<glm::vec2> points = {
 		{400.0f, 500.0f},
@@ -56,14 +57,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 		{600.0f, 600.0f}};
 
 	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
-
-	static renderer::timer timer;
-	elapsed_ms = timer.get_elapsed_duration().count();
-
-	if (elapsed_ms > 500) {
-		polyline.set_color(rainbow);
-		timer.reset();
-	}
+	polyline.set_color(rainbow);
 
 	const glm::vec4 scissor_bounds = {
 		static_cast<float>(carbon::mouse_pos.x) - 50.0f,
@@ -108,33 +102,40 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
-	buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
-	buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
+	//buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
+	//buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
+
+	// Testing arc performance
+	buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW, 15.0f);
+	buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
+	buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
+	buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
 
 	//D3DX11CreateShaderResourceViewFromFile(dx11->, L"braynzar.jpg",NULL, NULL, &CubesTexture, NULL );
 }
 
 void draw_test_bezier(renderer::buffer* buf) {
 	static renderer::timer timer;
-
-	constexpr size_t steps = 24;
-	const auto step = 1.0f / steps;
-	static auto t = 0.0f;
-
-	if (timer.get_elapsed_duration() > std::chrono::milliseconds(10)) {
+	if (timer.get_elapsed_duration() > std::chrono::seconds(1))
 		timer.reset();
 
-		t += 0.005f;
-
-		if (t > 1.0f)
-			t = 0.0f;
-	}
+	const auto t = renderer::ease(0.0f, 1.0f, std::chrono::duration<float>(timer.get_elapsed_duration()).count(),
+								  renderer::ease_type::in_sine);
 
 	static renderer::bezier_curve<3> bezier;
 	bezier[0] = {200.0f, 300.0f};
 	bezier[1] = carbon::mouse_pos;
 	bezier[2] = {400.0f, 400.0f};
 	bezier[3] = {500.0f, 200.0f};
+
+	buf->draw_bezier_curve(bezier, COLOR_RED, 5.0f, renderer::cap_butt, 32);
+
+	const auto point = bezier.position_at(t);
+	const auto tangent = bezier.tangent_at(t);
+	const auto angle = atan2f(tangent.y, tangent.x);
+
+	buf->draw_line(point, glm::rotate(glm::vec2(60.0f, 0.0f), angle) + point, COLOR_GREEN);
+	buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
 
 	glm::vec2 prev{};
 	for (size_t i = 0; i < bezier.size(); i++) {
@@ -143,19 +144,10 @@ void draw_test_bezier(renderer::buffer* buf) {
 		buf->draw_circle_filled(control_point, 5.0f, {255, 255, 255, 100});
 
 		if (prev != glm::vec2{})
-			buf->draw_line(prev, control_point, COLOR_GREY);
+			buf->draw_line(prev, control_point, COLOR_WHITE);
 
 		prev = control_point;
 	}
-
-	buf->draw_bezier_curve(bezier, {255, 0, 0, 155}, 5.0f, renderer::cap_butt, 32);
-
-	const auto point = bezier.position_at(t);
-	const auto tangent = bezier.tangent_at(t);
-	const auto angle = atan2f(tangent.y, tangent.x);
-
-	buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
-	buf->draw_line(point, glm::rotate(glm::vec2(60.0f, 0.0f), angle) + point, COLOR_GREEN);
 }
 
 void draw_test_flex(renderer::buffer* buf) {
@@ -192,7 +184,7 @@ void draw_test_flex(renderer::buffer* buf) {
 		container2->set_flex(1.0f);
 		// bug if greater than 100 since other mins add up to that?
 		// I hate this, hard to wrap head around
-		//container2->set_min_width(150.0f);
+		container2->set_min_width(150.0f);
 
 		init = true;
 	}
@@ -214,12 +206,6 @@ void draw_thread() {
 		//draw_test_primitives(buf);
 		//draw_test_bezier(buf);
 		draw_test_flex(buf);
-
-		// Testing arc performance
-		//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW);
-		//buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
-		//buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
-		//buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
 
         dx11->swap_buffers(id);
         //updated_buf.notify();
