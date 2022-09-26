@@ -1,7 +1,7 @@
 #include "renderer/buffer.hpp"
 
-#include "renderer/renderer.hpp"
 #include "renderer/geometry/shapes/polyline.hpp"
+#include "renderer/renderer.hpp"
 
 #include <glm/gtx/quaternion.hpp>
 
@@ -110,10 +110,10 @@ void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, c
 	const auto normal = segment.normal() * (thickness / 2.0f);
 
 	vertex vertices[] = {
-		{ start.x + normal.x, start.y + normal.y, col},
-		{ end.x + normal.x, end.y + normal.y,	col},
+		{start.x + normal.x,  start.y + normal.y, col},
+		{ end.x + normal.x,	end.y + normal.y,	  col},
 		{ start.x - normal.x, start.y - normal.y, col},
-		{ end.x - normal.x,	end.y - normal.y,   col}
+		{ end.x - normal.x,	end.y - normal.y,	  col}
 	};
 
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);

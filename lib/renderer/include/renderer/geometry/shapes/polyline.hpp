@@ -3,9 +3,9 @@
 
 #include "shape.hpp"
 
+#include <optional>
 #include <utility>
 #include <vector>
-#include <optional>
 
 namespace renderer {
 	enum joint_type {
@@ -48,10 +48,12 @@ namespace renderer {
 
 	class polyline_shape : public shape {
 	public:
-		polyline_shape(std::vector<glm::vec2> points, color_rgba col = COLOR_WHITE,
+		polyline_shape(std::vector<glm::vec2> points,
+					   color_rgba col = COLOR_WHITE,
 					   float thickness = 1.0f,
 					   joint_type joint = joint_miter,
-					   cap_type cap = cap_butt, bool allow_overlap = false);
+					   cap_type cap = cap_butt,
+					   bool allow_overlap = false);
 
 		void set_color(color_rgba col);
 
@@ -78,6 +80,6 @@ namespace renderer {
 
 		std::vector<vertex> temp_vertices_;
 	};
-}
+}// namespace renderer
 
 #endif

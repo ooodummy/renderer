@@ -152,11 +152,21 @@ void draw_test_bezier(renderer::buffer* buf) {
 
 void draw_test_flex(renderer::buffer* buf) {
 	static bool init = false;
-	static auto flex_container = std::make_unique<carbon::flex_line>();
+	static auto flex_container = std::make_unique<carbon::flex_container>();
 
 	if (!init) {
 		flex_container->set_pos({50.0f, 50.0f});
-		const auto container1 = flex_container->add_child<carbon::flex_line>();
+		//flex_container->set_justify_content(carbon::justify_center);
+		const auto item1 = flex_container->add_child<carbon::flex_item>();
+		item1->set_basis(25.0f, carbon::unit_pixel);
+		const auto item2 = flex_container->add_child<carbon::flex_item>();
+		item2->set_basis(50.0f, carbon::unit_pixel);
+		const auto item3 = flex_container->add_child<carbon::flex_item>();
+		item3->set_basis(50.0f, carbon::unit_pixel);
+		//const auto item4 = flex_container->add_child<carbon::flex_item>();
+		//item4->set_basis(125.0f, carbon::unit_pixel);
+
+		/*const auto container1 = flex_container->add_child<carbon::flex_line>();
 		container1->set_flex(1.0f);
 		container1->set_flow(carbon::column);
 		container1->set_max_width(300.0f);
@@ -182,9 +192,7 @@ void draw_test_flex(renderer::buffer* buf) {
 		container12->set_max_width(100.0f);
 		auto container2 = container1->add_child<carbon::flex_line>();
 		container2->set_flex(1.0f);
-		// bug if greater than 100 since other mins add up to that?
-		// I hate this, hard to wrap head around
-		container2->set_min_width(150.0f);
+		container2->set_min_width(150.0f);*/
 
 		init = true;
 	}
@@ -192,6 +200,16 @@ void draw_test_flex(renderer::buffer* buf) {
 	flex_container->set_size(carbon::mouse_pos - flex_container->get_pos());
 	flex_container->compute();
 	flex_container->draw();
+}
+
+void draw_test_window(renderer::buffer* buf) {
+	static auto menu = std::make_unique<carbon::window>();
+
+	menu->set_pos({50.0f, 50.0f});
+	menu->set_size({580.0f, 500.0f});
+
+	menu->compute();
+	menu->draw();
 }
 
 void draw_thread() {
@@ -205,7 +223,8 @@ void draw_thread() {
 
 		//draw_test_primitives(buf);
 		//draw_test_bezier(buf);
-		draw_test_flex(buf);
+		//draw_test_flex(buf);
+		draw_test_window(buf);
 
         dx11->swap_buffers(id);
         //updated_buf.notify();

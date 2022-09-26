@@ -2,6 +2,7 @@
 #define _RENDERER_IMAGE_NINE_SLICE_HPP_
 
 #include "../d3d11/texture2d.hpp"
+
 #include <cstdint>
 
 // TODO: Implement 9 patch/slice scheme similar to android
@@ -18,11 +19,11 @@ namespace renderer {
 		float width;
 	};
 
-	template <size_t N>
+	template<size_t N>
 	class npatch {
 		patch patches[N];
 		texture2d unscaled_texture;
 	};
-}
+}// namespace renderer
 
 #endif

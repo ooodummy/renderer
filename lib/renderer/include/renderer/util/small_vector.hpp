@@ -4,7 +4,7 @@
 namespace renderer {
 	// Probably bad code, but it works.
 	// Stopped working on this currently.
-	template <typename T, size_t StartSize, size_t IncrementSize>
+	template<typename T, size_t StartSize, size_t IncrementSize>
 	class small_vector {
 	public:
 		small_vector() {
@@ -41,6 +41,6 @@ namespace renderer {
 	private:
 		size_t capacity_ = StartSize;
 	};
-}
+}// namespace renderer
 
 #endif

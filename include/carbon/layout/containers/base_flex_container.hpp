@@ -6,7 +6,7 @@
 namespace carbon {
 	class base_flex_container : public base_container {
 	public:
-		friend class flex_line;
+		friend class flex_container;
 
 		const flex_flow& get_flow() const;
 

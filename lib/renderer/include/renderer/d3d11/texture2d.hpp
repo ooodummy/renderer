@@ -2,9 +2,7 @@
 #define _RENDERER_D3D11_TEXTURE2D_HPP_
 
 namespace renderer {
-	class texture2d {
-
-	};
-}
+	class texture2d {};
+}// namespace renderer
 
 #endif

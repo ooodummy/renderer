@@ -13,7 +13,7 @@ namespace carbon {
 
 		template<typename T, typename... Args>
 		T* add_child(Args&&... args) {
-			return reinterpret_cast<T*>(add_child(std::unique_ptr<T>(new T(std::forward<Args>(args)...))));
+			return reinterpret_cast<T*>(add_child(std::unique_ptr<T>(new T(static_cast<const flex_container>(std::forward<Args>(args))...))));
 		}
 
 		carbon::flex_item* add_child(std::unique_ptr<flex_item> item);

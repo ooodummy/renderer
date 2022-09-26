@@ -134,7 +134,8 @@ void renderer::d3d11_pipeline::create_swap_chain() {
 	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swap_chain_desc.Flags = 0;
 
-	hr = dxgi_factory->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
+	hr = dxgi_factory
+		 ->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
 	assert(SUCCEEDED(hr));
 	dxgi_factory->Release();
 }

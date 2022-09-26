@@ -11,7 +11,7 @@ namespace carbon {
 		~flex_item() = default;
 
 		friend class base_flex_container;
-		friend class flex_line;
+		friend class flex_container;
 
 		virtual void compute();
 
@@ -65,13 +65,15 @@ namespace carbon {
 		bool disabled_ = false;
 
 		// Compute data
-		glm::vec2 content_min_;		   // Used to provide min content size to parent
+		glm::vec2 content_min_;// Used to provide min content size to parent
 
-		bool flexible_;
-		float base_size_; // Starts as the basis size then gets flexed repeatedly if needed
-		float final_size_;// Final size, once set we also no longer make the item flexable
-		float shrink_scaled_;
-		float shrink_ratio_;
+		bool frozen_;
+		float base_size_;
+		float hypothetical_size_;
+		float target_size_;
+		float scaled_shrink_factor_;
+		float scaled_shrink_factor_ratio_;
+		float adjustment_;
 	};
 }// namespace carbon
 

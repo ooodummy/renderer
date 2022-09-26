@@ -66,10 +66,16 @@ renderer::polyline_shape::polyline_shape(std::vector<glm::vec2> points,
 										 renderer::color_rgba col,
 										 float thickness,
 										 joint_type joint,
-										 cap_type cap, bool allow_overlap) : points_(std::move(points)), thickness_(thickness), joint_(joint), cap_(cap), allow_overlap_(allow_overlap) {
+										 cap_type cap,
+										 bool allow_overlap) :
+	points_(std::move(points)),
+	thickness_(thickness),
+	joint_(joint),
+	cap_(cap),
+	allow_overlap_(allow_overlap) {
 	type_ = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 	col_ = col;
-    recalculate_buffer();
+	recalculate_buffer();
 }
 
 void renderer::polyline_shape::recalculate_buffer() {
@@ -129,8 +135,8 @@ void renderer::polyline_shape::recalculate_buffer() {
 	else if (cap_ == cap_round) {
 		create_triangle_fan(first_segment.center.a, first_segment.center.a, first_segment.edge1.a,
 							first_segment.edge2.a, false);
-		create_triangle_fan(last_segment.center.b, last_segment.center.b, last_segment.edge1.b,
-							last_segment.edge2.b, true);
+		create_triangle_fan(last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b,
+							true);
 	}
 	else if (cap_ == cap_joint) {
 		create_joint(last_segment, first_segment, path_end1, path_end2, path_start1, path_start2);
@@ -275,11 +281,8 @@ void renderer::polyline_shape::create_joint(const renderer::poly_segment& segmen
 	}
 }
 
-void renderer::polyline_shape::create_triangle_fan(const glm::vec2& connect_to,
-												   const glm::vec2& origin,
-												   const glm::vec2& start,
-												   const glm::vec2& end,
-												   bool clockwise) {
+void renderer::polyline_shape::create_triangle_fan(
+const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, const glm::vec2& end, bool clockwise) {
 	const auto point1 = start - origin;
 	const auto point2 = end - origin;
 

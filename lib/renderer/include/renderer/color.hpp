@@ -76,8 +76,8 @@ namespace renderer {
 		operator color_hsva() const;
 		operator glm::vec4() const;
 
-		bool operator == (const color_rgba& o) const;
-		bool operator != (const color_rgba& o) const;
+		bool operator==(const color_rgba& o) const;
+		bool operator!=(const color_rgba& o) const;
 
 		color_rgba ease(const color_rgba& o, float p, ease_type type = linear) const;
 

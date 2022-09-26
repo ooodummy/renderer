@@ -1,6 +1,7 @@
 #ifndef _CARBON_CARBON_HPP_
 #define _CARBON_CARBON_HPP_
 
+#include "carbon/widgets/containers/window.hpp"
 #include "globals.hpp"
 #include "input.hpp"
 #include "theme.hpp"
@@ -8,7 +9,6 @@
 #include "widgets/containers/tab_bar.hpp"
 #include "widgets/controls/button.hpp"
 #include "widgets/widget.hpp"
-#include "widgets/window.hpp"
 
 // https://pugixml.org/
 

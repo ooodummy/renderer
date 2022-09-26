@@ -27,7 +27,7 @@ namespace carbon {
 	};
 
 	// Base widget class for windows, pages, groupboxes, pop outs, etc.
-	class widget_flex_container : public base_widget, public flex_line {
+	class widget_flex_container : public base_widget, public flex_container {
 	public:
 	};
 }// namespace carbon

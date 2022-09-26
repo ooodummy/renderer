@@ -5,23 +5,16 @@
 renderer::color_cmyka::color_cmyka(float c, float m, float y, float k, uint8_t a) : c(c), m(m), y(y), k(k), a(a) {}
 
 renderer::color_cmyka::operator renderer::color_rgba() const {
-	return {
-		static_cast<uint8_t>(255.0f * (1.0f - c) * (1.0f - k)),
-		static_cast<uint8_t>(255.0f * (1.0f - m) * (1.0f - k)),
-		static_cast<uint8_t>(255.0f * (1.0f - y) * (1.0f - k)),
-		a
-	};
+	return { static_cast<uint8_t>(255.0f * (1.0f - c) * (1.0f - k)),
+			 static_cast<uint8_t>(255.0f * (1.0f - m) * (1.0f - k)),
+			 static_cast<uint8_t>(255.0f * (1.0f - y) * (1.0f - k)), a };
 }
 
 renderer::color_hex::color_hex(uint32_t hex) : hex(hex) {}
 
 renderer::color_hex::operator renderer::color_rgba() const {
-	return {
-		static_cast<uint8_t>(hex & 0xff),
-		static_cast<uint8_t>((hex >> 8) & 0xff),
-		static_cast<uint8_t>((hex >> 16) & 0xff),
-		static_cast<uint8_t>((hex >> 24) & 0xff)
-	};
+	return { static_cast<uint8_t>(hex & 0xff), static_cast<uint8_t>((hex >> 8) & 0xff),
+			 static_cast<uint8_t>((hex >> 16) & 0xff), static_cast<uint8_t>((hex >> 24) & 0xff) };
 }
 
 renderer::color_hsla::color_hsla(float h, float s, float l, uint8_t a) : h(h), s(s), l(l), a(a) {}
@@ -77,7 +70,8 @@ renderer::color_hsla::operator renderer::color_rgba() const {
 		static_cast<uint8_t>((r + m) * 255.0f),
 		static_cast<uint8_t>((g + m) * 255.0f),
 		static_cast<uint8_t>((b + m) * 255.0f),
-	};;
+	};
+	;
 }
 
 renderer::color_hsva::color_hsva(float h, float s, float v, uint8_t a) : h(h), s(s), v(v), a(a) {}
@@ -140,12 +134,9 @@ renderer::color_hsva renderer::color_hsva::ease(const color_hsva& o, float p, ea
 	if (p > 1.0f)
 		p = 1.0f;
 
-	return {
-		renderer::ease(h, o.h, p, 1.0f, type),
-		renderer::ease(s, o.s, p, 1.0f, type),
-		renderer::ease(v, o.v, p, 1.0f, type),
-		static_cast<uint8_t>(renderer::ease(static_cast<float>(a), static_cast<float>(o.a), p, 1.0f, type))
-	};
+	return { renderer::ease(h, o.h, p, 1.0f, type), renderer::ease(s, o.s, p, 1.0f, type),
+			 renderer::ease(v, o.v, p, 1.0f, type),
+			 static_cast<uint8_t>(renderer::ease(static_cast<float>(a), static_cast<float>(o.a), p, 1.0f, type)) };
 }
 
 renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
@@ -157,12 +148,7 @@ renderer::color_rgba::operator renderer::color_cmyka() const {
 
 	const auto k = 1.0f - std::max(std::max(fr, fg), fb);
 
-	return {
-		(1.0f - fr - k) / (1.0f - k),
-		(1.0f - fg - k) / (1.0f - k),
-		(1.0f - fb - k) / (1.0f - k),
-		k
-	};
+	return { (1.0f - fr - k) / (1.0f - k), (1.0f - fg - k) / (1.0f - k), (1.0f - fb - k) / (1.0f - k), k };
 }
 
 renderer::color_rgba::operator renderer::color_hex() const {
@@ -207,7 +193,8 @@ renderer::color_rgba::operator glm::vec4() const {
 			 static_cast<float>(a) / 255.0f };
 }
 
-renderer::color_rgba renderer::color_rgba::ease(const renderer::color_rgba& o, float p, renderer::ease_type type) const {
+renderer::color_rgba
+renderer::color_rgba::ease(const renderer::color_rgba& o, float p, renderer::ease_type type) const {
 	if (p > 1.0f)
 		p = 1.0f;
 

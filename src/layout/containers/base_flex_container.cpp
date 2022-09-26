@@ -112,9 +112,9 @@ void carbon::base_flex_container::set_justify_content(const flex_justify_content
 }
 
 void carbon::base_flex_container::decorate() {
-	buf->draw_rect_filled(margin_.get_edge(), {153, 93, 181});
-	buf->draw_rect(margin_.get_edge(), {24, 26, 27});
-	buf->draw_rect_filled(content_, {247, 148, 31});
+	buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
+	buf->draw_rect(margin_.get_edge(), { 24, 26, 27 });
+	buf->draw_rect_filled(content_, { 247, 148, 31 });
 
 	auto margin = get_axes(margin_.get_edge());
 

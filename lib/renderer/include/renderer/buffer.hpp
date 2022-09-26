@@ -3,20 +3,16 @@
 
 #define NOMINMAX
 #include "d3d11/shaders/constant_buffers.hpp"
-
+#include "font.hpp"
+#include "geometry/bezier.hpp"
 #include "geometry/shapes/polyline.hpp"
 #include "geometry/shapes/shape.hpp"
 
-#include "geometry/bezier.hpp"
-
-#include "font.hpp"
-
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <glm/gtx/rotate_vector.hpp>
 #include <memory>
 #include <stack>
-
-#include <glm/gtx/rotate_vector.hpp>
 
 namespace renderer {
 	class batch {
@@ -59,8 +55,8 @@ namespace renderer {
 		void add_shape(shape& shape);
 
 		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
-		void draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col = COLOR_WHITE, float thickness =
-																								   1.0f);
+		void
+		draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 
 		void draw_arc(const glm::vec2& pos,
 					  float start,
