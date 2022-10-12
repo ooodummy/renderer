@@ -56,7 +56,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 		{500.0f, 600.0f},
 		{600.0f, 600.0f}};
 
-	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
+	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_bevel);
 	polyline.set_color(rainbow);
 
 	const glm::vec4 scissor_bounds = {
@@ -157,22 +157,22 @@ void draw_test_flex(renderer::buffer* buf) {
 	if (!init) {
 		flex_container->set_pos({50.0f, 50.0f});
 		//flex_container->set_justify_content(carbon::justify_center);
-		const auto item1 = flex_container->add_child<carbon::flex_item>();
+		/*const auto item1 = flex_container->add_child<carbon::flex_item>();
 		item1->set_basis(25.0f, carbon::unit_pixel);
 		const auto item2 = flex_container->add_child<carbon::flex_item>();
 		item2->set_basis(50.0f, carbon::unit_pixel);
 		const auto item3 = flex_container->add_child<carbon::flex_item>();
-		item3->set_basis(50.0f, carbon::unit_pixel);
+		item3->set_basis(50.0f, carbon::unit_pixel);*/
 		//const auto item4 = flex_container->add_child<carbon::flex_item>();
 		//item4->set_basis(125.0f, carbon::unit_pixel);
 
-		/*const auto container1 = flex_container->add_child<carbon::flex_line>();
+		const auto container1 = flex_container->add_child<carbon::flex_container>();
 		container1->set_flex(1.0f);
 		container1->set_flow(carbon::column);
 		container1->set_max_width(300.0f);
 		const auto item3 = flex_container->add_child<carbon::flex_item>();
 		item3->set_flex(1.0f);
-		const auto container11 = container1->add_child<carbon::flex_line>();
+		const auto container11 = container1->add_child<carbon::flex_container>();
 		container11->set_flex(1.0);
 		container11->set_min_width(50.0f);
 		container11->set_max_width(100.0f);
@@ -182,7 +182,7 @@ void draw_test_flex(renderer::buffer* buf) {
 		item112->set_flex(1.0f);
 		const auto item113 = container11->add_child<carbon::flex_item>();
 		item113->set_flex(1.0f);
-		const auto container12 = container1->add_child<carbon::flex_line>();
+		const auto container12 = container1->add_child<carbon::flex_container>();
 		container12->set_flex(1.0f);
 		container12->set_flow(carbon::column);
 		const auto item121 = container12->add_child<carbon::flex_item>();
@@ -190,9 +190,9 @@ void draw_test_flex(renderer::buffer* buf) {
 		const auto item122 = container12->add_child<carbon::flex_item>();
 		item122->set_flex(1.0f);
 		container12->set_max_width(100.0f);
-		auto container2 = container1->add_child<carbon::flex_line>();
+		auto container2 = container1->add_child<carbon::flex_container>();
 		container2->set_flex(1.0f);
-		container2->set_min_width(150.0f);*/
+		container2->set_min_width(150.0f);
 
 		init = true;
 	}
@@ -224,7 +224,16 @@ void draw_thread() {
 		//draw_test_primitives(buf);
 		//draw_test_bezier(buf);
 		//draw_test_flex(buf);
-		draw_test_window(buf);
+		//draw_test_window(buf);
+
+		static std::vector<glm::vec2> points = {
+			{100.0f, 500.0f},
+			{100.0f, 100.0f},
+			{500.0f, 100.0f}
+		};
+
+		static auto polyline = renderer::polyline_shape(points, {255, 255, 255, 150}, 50.0f, renderer::joint_miter);
+		buf->add_shape(polyline);
 
         dx11->swap_buffers(id);
         //updated_buf.notify();

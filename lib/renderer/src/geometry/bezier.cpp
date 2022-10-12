@@ -13,5 +13,5 @@ size_t renderer::binomial(size_t n, size_t k) {
 }
 
 float renderer::polynomial_pair::at(float t) const {
-	return float(pow(1.0f - t, one_minus_t) * pow(t, float(this->t)));
+	return std::powf(1.0f - t, static_cast<float>(one_minus_t)) * std::powf(t, float(this->t));
 }

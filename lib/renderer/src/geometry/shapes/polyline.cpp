@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/norm.hpp>
 
 static constexpr float miter_min_angle = 0.349066;// ~20 degrees
 static constexpr float round_min_angle = 0.174533;// ~10 degrees
@@ -23,10 +25,10 @@ glm::vec2 renderer::line_segment::normal() const {
 }
 
 glm::vec2 renderer::line_segment::direction(bool normalized) const {
-	const auto dir = a - b;
+	const auto dir = b - a;
 
 	if (normalized) {
-		return dir / std::sqrt(dir.x * dir.x + dir.y * dir.y);
+		return glm::normalize(dir);
 	}
 	else {
 		return dir;
@@ -196,8 +198,8 @@ void renderer::polyline_shape::create_joint(const renderer::poly_segment& segmen
 	const auto dir2 = segment2.center.direction();
 
 	// Ignore me not using GLM properly because I'm lazy
-	const auto angle = std::acos(glm::dot(dir1, dir2) / std::sqrt(dir1.x * dir1.x + dir1.y * dir1.y) *
-								 std::sqrt(dir2.x * dir2.x + dir2.y * dir2.y));
+	const auto angle = glm::acos(glm::dot(dir1, dir2) / glm::length2(dir1) * glm::length2(dir2));
+
 	auto wrapped_angle = angle;
 
 	if (wrapped_angle > M_PI / 2.0f)
@@ -266,7 +268,6 @@ void renderer::polyline_shape::create_joint(const renderer::poly_segment& segmen
 			next_start2 = outer2->a;
 		}
 
-		// TODO: Fix for triangle strip :(
 		if (override_joint == joint_bevel) {
 			temp_vertices_.emplace_back(outer1->b, col_);
 			temp_vertices_.emplace_back(outer2->a, col_);
@@ -305,7 +306,7 @@ const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, co
 	const auto segments = std::max(1, (int)std::floor(std::abs(joint_angle) / round_min_angle));
 	const auto seg_angle = joint_angle / static_cast<float>(segments);
 
-	glm::vec2 start_point = start;
+	temp_vertices_.emplace_back(start, col_);
 	glm::vec2 end_point;
 
 	for (size_t i = 0; i < segments; i++) {
@@ -313,20 +314,15 @@ const glm::vec2& connect_to, const glm::vec2& origin, const glm::vec2& start, co
 			end_point = end;
 		}
 		else {
-			const auto rot = (static_cast<float>(i) + 1.0f) * seg_angle;
-
-			end_point = { std::cos(rot) * point1.x - std::sin(rot) * point1.y,
-						  std::sin(rot) * point1.x + std::cos(rot) * point1.y };
-
-			end_point += origin;
+			end_point = glm::rotate(point1, (static_cast<float>(i) + 1.0f) * seg_angle) + origin;
 		}
 
-		temp_vertices_.emplace_back(start_point, col_);
-		temp_vertices_.emplace_back(end_point, col_);
 		temp_vertices_.emplace_back(connect_to, col_);
-
-		start_point = end_point;
+		temp_vertices_.emplace_back(end_point, col_);
 	}
+
+	temp_vertices_.emplace_back(connect_to, col_);
+	temp_vertices_.emplace_back(connect_to, col_);
 }
 
 void renderer::polyline_shape::set_color(color_rgba col) {
