@@ -5,16 +5,16 @@
 
 #include <glm/vec4.hpp>
 #include <memory>
-#include <vector>
+#include <map>
 
 namespace renderer {
 	class texture_atlas {
 	private:
 		std::unique_ptr<texture2d> texture;
-		std::vector<glm::vec4> textures;
+		std::map<size_t, glm::vec4> textures;
 
 	public:
-		// size_t add_texture(texture2d* texture);
+		//size_t add_texture(texture2d* texture);
 	};
 }// namespace renderer
 

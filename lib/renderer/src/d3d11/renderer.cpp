@@ -315,10 +315,13 @@ renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, char c) {
 }
 
 // https://www.rastertek.com/dx11s2tut05.html
-ID3D11ShaderResourceView* renderer::d3d11_renderer::create_srv_from_file(LPCTSTR file) {
-	ID3D11ShaderResourceView* srv;
+renderer::texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
+	texture2d texture;
 
-	return srv;
+	texture.texture = nullptr;
+	texture.srv = D3DX
+
+	return texture;
 }
 
 glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_t id) {
