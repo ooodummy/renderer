@@ -318,8 +318,8 @@ renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, char c) {
 renderer::texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
 	texture2d texture;
 
-	texture.texture = nullptr;
-	texture.srv = D3DX
+	/*texture.texture = nullptr;
+	texture.srv = D3DX*/
 
 	return texture;
 }

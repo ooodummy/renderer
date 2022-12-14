@@ -44,8 +44,9 @@ void draw_test_primitives(renderer::buffer* buf) {
 	if (elapsed_ms > 5000)
 		rainbow_timer.reset();
 
-	const renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f),
+	renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f),
 																		 static_cast<float>(elapsed_ms) / 5000.0f);
+	rainbow.a = 75;
 
 	static std::vector<glm::vec2> points = {
 		{400.0f, 500.0f},
@@ -56,7 +57,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 		{500.0f, 600.0f},
 		{600.0f, 600.0f}};
 
-	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_bevel);
+	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
 	polyline.set_color(rainbow);
 
 	const glm::vec4 scissor_bounds = {
@@ -212,6 +213,58 @@ void draw_test_window(renderer::buffer* buf) {
 	menu->draw();
 }
 
+#include "force_engine/simulation.hpp"
+
+void draw_force_simulation(renderer::buffer* buf) {
+	buf->draw_rect_filled({0.0f, 0.0f, window->get_size()}, COLOR_WHITE);
+
+	static glm::vec2 simulation_offset = {200.0f, 200.0f};
+	static auto simulation = std::make_unique<engine::simulation>();
+	static bool test = false;
+
+	if (!test) {
+		test = true;
+
+		for (size_t i = 0; i < 50; i++) {
+			simulation->nodes_.emplace_back(std::make_unique<engine::node>());
+		}
+
+		simulation->initialize_nodes();
+	}
+
+	static renderer::timer timer;
+	if (timer.get_elapsed_duration() > std::chrono::milliseconds(10)) {
+		timer.reset();
+
+		simulation->step();
+	}
+
+	std::vector<engine::node*> hovered_nodes;
+
+	for (auto& node : simulation->nodes_) {
+		const auto draw_position = node->position + simulation_offset;
+
+		if (glm::distance(carbon::mouse_pos, draw_position) < 30.0f) {
+			hovered_nodes.push_back(node.get());
+		}
+	}
+
+	for (auto& node : hovered_nodes) {
+		const auto draw_position = node->position + simulation_offset;
+
+		buf->draw_line(carbon::mouse_pos, draw_position, COLOR_RED);
+	}
+
+	for (auto& node : simulation->nodes_) {
+		const auto draw_position = node->position + simulation_offset;
+
+		buf->draw_circle_filled(draw_position, 5.0f, COLOR_BLACK, 12);
+		//buf->draw_circle_filled(draw_position, 3.0f, COLOR_WHITE, 12);
+	}
+
+	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);
+}
+
 void draw_thread() {
     const auto id = dx11->register_buffer();
 
@@ -225,15 +278,16 @@ void draw_thread() {
 		//draw_test_bezier(buf);
 		//draw_test_flex(buf);
 		//draw_test_window(buf);
+		draw_force_simulation(buf);
 
-		static std::vector<glm::vec2> points = {
+		/*static std::vector<glm::vec2> points = {
 			{100.0f, 500.0f},
 			{100.0f, 100.0f},
 			{500.0f, 100.0f}
 		};
 
 		static auto polyline = renderer::polyline_shape(points, {255, 255, 255, 150}, 50.0f, renderer::joint_miter);
-		buf->add_shape(polyline);
+		buf->add_shape(polyline);*/
 
         dx11->swap_buffers(id);
         //updated_buf.notify();
