@@ -5,20 +5,14 @@
 
 #include "force.hpp"
 
-#include "../quadtree.hpp"
-
 namespace engine {
 	class force_collide : public force {
 	public:
 		using force::force;
 
-		force_collide(std::vector<engine::node*> nodes) : force(std::move(nodes)) {
-			strength_ = 1.0f;
-		}
+		force_collide(std::vector<engine::node*> nodes);
 
 		void tick(float alpha) override;
-
-		engine::quadtree tree{};
 	};
 }
 

@@ -3,6 +3,7 @@
 
 #include "force_engine/forces/center.hpp"
 #include "force_engine/forces/link.hpp"
+#include "quadtree.hpp"
 
 #include <cmath>
 #include <memory>
@@ -30,8 +31,15 @@ namespace engine {
 			return static_cast<T*>(reinterpret_cast<T*>(forces_[name].get()));
 		}
 
-		[[nodiscard]] const std::vector<std::shared_ptr<engine::node>>& get_nodes() const {
-			return nodes_;
+		[[nodiscard]] std::vector<node*> get_nodes() const {
+			std::vector<node*> raw_nodes;
+			raw_nodes.reserve(nodes_.size());
+
+			for (const auto& node : nodes_) {
+				raw_nodes.push_back(node.get());
+			}
+
+			return raw_nodes;
 		}
 
 		// Find the closest node to given position inside of radius

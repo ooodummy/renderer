@@ -222,6 +222,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	static auto simulation = std::make_unique<engine::simulation>();
 	static engine::force_link* simulation_links = nullptr;
 	static engine::force_collide* simulation_colliders = nullptr;
+	//static engine::node* mouse_collider = nullptr;
 	static bool test = false;
 
 	if (!test) {
@@ -234,6 +235,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 		const auto f = simulation->add_node();
 		const auto g = simulation->add_node();
 		const auto h = simulation->add_node();
+		//mouse_collider = simulation->add_node();
 
 		/*for (size_t i = 0; i < 50; i++) {
 			simulation->nodes_.emplace_back(std::make_shared<engine::node>());
@@ -252,10 +254,18 @@ void draw_force_simulation(renderer::buffer* buf) {
 
 		//simulation->add_force<engine::force_center>("center", simulation->get_nodes());
 		simulation_links = simulation->add_force<engine::force_link>("link", links);
+
+		//mouse_collider->radius = 100.0f;
+
+		//auto colliders = simulation->get_nodes();
+		//colliders.push_back(mouse_collider.get());
+
 		simulation_colliders = simulation->add_force<engine::force_collide>("collide", simulation->get_nodes());
 
 		simulation->initialize_forces();
 	}
+
+	//mouse_collider->fixed_position = carbon::mouse_pos - simulation_offset;
 
 	static renderer::timer timer;
 	if (timer.get_elapsed_duration() > std::chrono::milliseconds(25)) {
@@ -264,7 +274,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 		simulation->step();
 	}
 
-	auto draw_quad = [&buf](const engine::quadtree& tree, auto self_ref) -> void { // NOLINT(misc-no-recursion)
+	auto draw_quad = [&buf](engine::quadtree& tree, auto self_ref) -> void { // NOLINT(misc-no-recursion)
 		for (auto& quad : tree.get_children()) {
 			if (quad) {
 				const auto bounds = quad->get_bounds();
@@ -274,7 +284,8 @@ void draw_force_simulation(renderer::buffer* buf) {
 		}
 	};
 
-	draw_quad(simulation_colliders->tree, draw_quad);
+	engine::quadtree quadtree(simulation->get_nodes());
+	draw_quad(quadtree, draw_quad);
 
 	std::vector<engine::node*> hovered_nodes;
 	engine::node* closest = nullptr;
@@ -287,10 +298,10 @@ void draw_force_simulation(renderer::buffer* buf) {
 		if (distance < 30.0f) {
 			if (distance < closest_distance) {
 				closest_distance = distance;
-				closest = node.get();
+				closest = node;
 			}
 
-			hovered_nodes.push_back(node.get());
+			hovered_nodes.push_back(node);
 		}
 	}
 
@@ -310,8 +321,8 @@ void draw_force_simulation(renderer::buffer* buf) {
 	for (auto& node : simulation->get_nodes()) {
 		const auto draw_position = node->position + simulation_offset;
 
-		buf->draw_circle_filled(draw_position, node->radius, COLOR_BLACK, 12);
-		buf->draw_circle_filled(draw_position, node->radius - 3.0f, COLOR_WHITE, 12);
+		buf->draw_circle_filled(draw_position, node->radius, COLOR_BLACK, 32);
+		buf->draw_circle_filled(draw_position, node->radius - 3.0f, COLOR_WHITE, 32);
 	}
 
 	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);

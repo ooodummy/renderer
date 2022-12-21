@@ -5,9 +5,13 @@
 #include <functional>
 #include <glm/geometric.hpp>
 
+engine::force_collide::force_collide(std::vector<engine::node*> nodes) : force(std::move(nodes)) {
+	strength_ = 1.0f;
+}
+
 void engine::force_collide::tick(float alpha) {
 	for (size_t i = 0; i < 1; i++) {
-		tree = engine::quadtree(nodes_);
+		engine::quadtree tree = engine::quadtree(nodes_);
 		for (auto& node : nodes_) {
 			glm::vec2 ip = node->position + node->velocity;
 			const auto ri2 = node->radius * node->radius;
