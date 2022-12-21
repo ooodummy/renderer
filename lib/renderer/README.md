@@ -113,7 +113,7 @@ quality drastically gets even worse.
               slightly difficult.
             - [ ] Find a good blur implementation and steal it :smiling_imp:.
             - [ ] Get others opinion on what order arguments should be in given there are currently some
-              inconsistencies. I imagine that the final order will be its bounds and extra needed information such as
+              inconsistencies. I imagine that the final order will be its bounds_ and extra needed information such as
               position, size, angle, and thickness. Proceeding after that information should be it's color or colors, I
               think making all the geometry. The final arguments should ever really care to set, but it's still an
               option for customization, the amount of segments used in anything with a curve perfectly falls in these
@@ -220,7 +220,7 @@ quality drastically gets even worse.
     - [ ] Input over utilities then maybe pushing the input area should be an opinion, and we could have another for
       checking if hovered in scissored input area. This would be useful if we showed tooltips when test is hovered and
       that text exceeds the groupbox this way the tooltip would not appear when hovering to the side. Another fix could
-      be allowing things like labels to shrink and to then just use the bounds of the label text container for input
+      be allowing things like labels to shrink and to then just use the bounds_ of the label text container for input
       checks.
     - No idea what design to go with for this part maybe io struct or just make the data global
 - Widgets

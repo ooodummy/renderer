@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+engine::force_link::force_link(std::vector<engine::link> links) : links_(std::move(links)) {}
+
 void engine::force_link::tick(float alpha) {
 	for (size_t i = 0; i < 10; i++) {
 		for (auto& link : links_) {
@@ -23,11 +25,15 @@ void engine::force_link::tick(float alpha) {
 
 void engine::force_link::initialize() {
 	for (auto& link : links_) {
-		const auto source = link.source->index + 1.0f;
-		const auto target = link.target->index + 1.0f;
+		const auto source = static_cast<float>(link.source->index) + 1.0f;
+		const auto target = static_cast<float>(link.target->index) + 1.0f;
 
 		link.bias = source / (source + target);
 		link.strength = 1.0f / std::min(source, target);
 		link.distance = 30.0f;
 	}
+}
+
+const std::vector<engine::link>& engine::force_link::get_links() const {
+	return links_;
 }

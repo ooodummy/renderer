@@ -18,23 +18,24 @@ namespace engine {
 		// Manually steps simulation
 		void tick(size_t iterations = 1);
 
-		template <typename T = engine::force>
-		void add_force(const std::string& name, T force) {
-			forces_[name] = std::make_unique<T>(force);
+		template<typename T = engine::node, typename... Args>
+		T* add_node(Args&&... args) {
+			nodes_.push_back(std::make_shared<T>(std::forward<Args>(args)...));
+			return nodes_.back().get();
+		}
+
+		template <typename T = engine::force,typename... Args>
+		T* add_force(const std::string& name, Args&&... args) {
+			forces_[name] = std::make_shared<T>(std::forward<Args>(args)...);
+			return static_cast<force_link*>(reinterpret_cast<T*>(forces_[name].get()));
+		}
+
+		[[nodiscard]] const std::vector<std::shared_ptr<engine::node>>& get_nodes() const {
+			return nodes_;
 		}
 
 		// Find the closest node to given position inside of radius
 		engine::node* find(const glm::vec2& position, float radius = std::numeric_limits<float>::infinity());
-
-		std::vector<engine::node*> get_nodes() const {
-			std::vector<engine::node*> ret;
-
-			for (auto& node : nodes_) {
-				ret.push_back(node.get());
-			}
-
-			return ret;
-		}
 
 		void initialize_nodes();
 		void initialize_forces();
@@ -46,10 +47,8 @@ namespace engine {
 		float alpha_target_ = 0.0f;
 		float velocity_decay = 0.6f;
 
-		// Temp
-	public:
 		std::vector<std::shared_ptr<engine::node>> nodes_;
-		std::unordered_map<std::string, std::unique_ptr<engine::force>> forces_;
+		std::unordered_map<std::string, std::shared_ptr<engine::force>> forces_;
 	};
 }
 

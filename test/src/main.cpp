@@ -213,31 +213,25 @@ void draw_test_window(renderer::buffer* buf) {
 	menu->draw();
 }
 
+#include "force_engine/quadtree.hpp"
 #include "force_engine/simulation.hpp"
 
 void draw_force_simulation(renderer::buffer* buf) {
 	static glm::vec2 simulation_offset = { window->get_size().x / 2.0f, window->get_size().y / 2.0f };
 	static auto simulation = std::make_unique<engine::simulation>();
+	static engine::force_link* simulation_links = nullptr;
 	static bool test = false;
 
 	if (!test) {
 		test = true;
 
-		const auto a = std::make_shared<engine::node>();
-		const auto b = std::make_shared<engine::node>();
-		const auto c = std::make_shared<engine::node>();
-		const auto e = std::make_shared<engine::node>();
-		const auto f = std::make_shared<engine::node>();
-		const auto g = std::make_shared<engine::node>();
-		const auto h = std::make_shared<engine::node>();
-
-		simulation->nodes_.emplace_back(a);
-		simulation->nodes_.emplace_back(b);
-		simulation->nodes_.emplace_back(c);
-		simulation->nodes_.emplace_back(e);
-		simulation->nodes_.emplace_back(f);
-		simulation->nodes_.emplace_back(g);
-		simulation->nodes_.emplace_back(h);
+		const auto a = simulation->add_node();
+		const auto b = simulation->add_node();
+		const auto c = simulation->add_node();
+		const auto e = simulation->add_node();
+		const auto f = simulation->add_node();
+		const auto g = simulation->add_node();
+		const auto h = simulation->add_node();
 
 		/*for (size_t i = 0; i < 50; i++) {
 			simulation->nodes_.emplace_back(std::make_shared<engine::node>());
@@ -246,16 +240,16 @@ void draw_force_simulation(renderer::buffer* buf) {
 		simulation->initialize_nodes();
 
 		std::vector<engine::link> links = {
-			{a.get(), b.get()},
-			{b.get(), c.get()},
-			{c.get(), a.get()},
-			{e.get(), c.get()},
-			{f.get(), e.get()},
-			{g.get(), h.get()}
+			{a, b},
+			{b, c},
+			{c, a},
+			{e, c},
+			{f, e},
+			{g, h}
 		};
 
 		//simulation->add_force<engine::force_center>("center", simulation->get_nodes());
-		simulation->add_force<engine::force_link>("link", links);
+		simulation_links = simulation->add_force<engine::force_link>("link", links);
 
 		simulation->initialize_forces();
 	}
@@ -267,11 +261,30 @@ void draw_force_simulation(renderer::buffer* buf) {
 		simulation->step();
 	}
 
+	engine::quadtree tree;
+	tree.set_bounds({0.0f - simulation_offset.x, 0.0f - simulation_offset.y, window->get_size().x, window->get_size().y});
+
+	for (auto& node : simulation->get_nodes()) {
+		tree.add(node.get());
+	}
+
+	auto draw_quad = [&buf](const engine::quadtree& tree, auto self_ref) -> void { // NOLINT(misc-no-recursion)
+		for (auto& quad : tree.get_children()) {
+			if (quad) {
+				const auto bounds = quad->get_bounds();
+				buf->draw_rect({bounds.x + simulation_offset.x, bounds.y + simulation_offset.y, bounds.z, bounds.w}, { 255, 255, 255, 75 }, 1.0f);
+				self_ref(*quad, self_ref);
+			}
+		}
+	};
+
+	draw_quad(tree, draw_quad);
+
 	std::vector<engine::node*> hovered_nodes;
 	engine::node* closest = nullptr;
 	float closest_distance = std::numeric_limits<float>::infinity();
 
-	for (auto& node : simulation->nodes_) {
+	for (auto& node : simulation->get_nodes()) {
 		const auto draw_position = node->position + simulation_offset;
 
 		const  auto distance = glm::distance(carbon::mouse_pos, draw_position);
@@ -291,20 +304,14 @@ void draw_force_simulation(renderer::buffer* buf) {
 		buf->draw_line(carbon::mouse_pos, draw_position, COLOR_RED);
 	}
 
-	for (auto& force : simulation->forces_) {
-		if (force.first != "link")
-			continue;
+	for (auto& link : simulation_links->get_links()) {
+		const auto a = link.source->position + simulation_offset;
+		const auto b = link.target->position + simulation_offset;
 
-		const auto list = reinterpret_cast<engine::force_link*>(force.second.get());
-		for (auto& link : list->links_) {
-			const auto a = link.source->position + simulation_offset;
-			const auto b = link.target->position + simulation_offset;
-
-			buf->draw_line(a, b, COLOR_BLACK);
-		}
+		buf->draw_line(a, b, COLOR_BLACK);
 	}
 
-	for (auto& node : simulation->nodes_) {
+	for (auto& node : simulation->get_nodes()) {
 		const auto draw_position = node->position + simulation_offset;
 
 		buf->draw_circle_filled(draw_position, 5.0f, COLOR_BLACK, 12);

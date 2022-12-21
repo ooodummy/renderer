@@ -17,13 +17,14 @@ namespace engine {
 	public:
 		using force::force;
 
-		force_link(std::vector<engine::link> links) : links_(std::move(links)) {}
+		force_link(std::vector<engine::link> links);
 
 		void initialize() override;
 		void tick(float alpha) override;
 
+		[[nodiscard]] const std::vector<engine::link>& get_links() const;
+
 	private:
-	public:
 		std::vector<engine::link> links_;
 	};
 }
