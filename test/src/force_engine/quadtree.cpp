@@ -2,6 +2,25 @@
 
 #include <glm/glm.hpp>
 
+engine::quadtree::quadtree(const std::vector<engine::node*>& nodes) {
+	if (bounds_ == glm::vec4{}) {
+		bounds_ = {FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN};
+		for (auto& node : nodes) {
+			bounds_.x = std::min(bounds_.x, node->position.x);
+			bounds_.y = std::min(bounds_.y, node->position.y);
+			bounds_.z = std::max(bounds_.z, node->position.x);
+			bounds_.w = std::max(bounds_.w, node->position.y);
+		}
+
+		bounds_.z -= bounds_.x;
+		bounds_.w -= bounds_.y;
+	}
+
+	for (auto& node : nodes) {
+		add(node);
+	}
+}
+
 void engine::quadtree::add(engine::node* node) { // NOLINT(misc-no-recursion)
 	if (node == nullptr)
 		return;
@@ -62,12 +81,31 @@ void engine::quadtree::make_quadrants() {
 
 	parent = true;
 }
+
+void engine::quadtree::visit(std::function<bool(engine::quadtree&)> callback) {
+	auto pre_order_traversal = [&callback](engine::quadtree* quad, auto self_ref) -> void { // NOLINT(misc-no-recursion)
+		for (auto& child : quad->get_children()) {
+			if (child) {
+				if (!callback(*child))
+					return;
+				self_ref(child.get(), self_ref);
+			}
+		}
+	};
+
+	pre_order_traversal(this, pre_order_traversal);
+}
+
 glm::vec4 engine::quadtree::get_bounds() {
 	return bounds_;
 }
 
 void engine::quadtree::set_bounds(const glm::vec4& bounds) {
 	bounds_ = bounds;
+}
+
+engine::node* engine::quadtree::get_node() {
+	return node_;
 }
 
 const std::array<std::shared_ptr<engine::quadtree>, 4>& engine::quadtree::get_children() const {

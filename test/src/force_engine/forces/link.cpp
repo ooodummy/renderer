@@ -5,7 +5,7 @@
 engine::force_link::force_link(std::vector<engine::link> links) : links_(std::move(links)) {}
 
 void engine::force_link::tick(float alpha) {
-	for (size_t i = 0; i < 10; i++) {
+	for (size_t i = 0; i < 5; i++) {
 		for (auto& link : links_) {
 			const auto source = link.source;
 			const auto target = link.target;

@@ -27,7 +27,7 @@ namespace engine {
 		template <typename T = engine::force,typename... Args>
 		T* add_force(const std::string& name, Args&&... args) {
 			forces_[name] = std::make_shared<T>(std::forward<Args>(args)...);
-			return static_cast<force_link*>(reinterpret_cast<T*>(forces_[name].get()));
+			return static_cast<T*>(reinterpret_cast<T*>(forces_[name].get()));
 		}
 
 		[[nodiscard]] const std::vector<std::shared_ptr<engine::node>>& get_nodes() const {

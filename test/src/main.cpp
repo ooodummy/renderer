@@ -213,6 +213,7 @@ void draw_test_window(renderer::buffer* buf) {
 	menu->draw();
 }
 
+#include "force_engine/forces/collide.hpp"
 #include "force_engine/quadtree.hpp"
 #include "force_engine/simulation.hpp"
 
@@ -220,6 +221,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	static glm::vec2 simulation_offset = { window->get_size().x / 2.0f, window->get_size().y / 2.0f };
 	static auto simulation = std::make_unique<engine::simulation>();
 	static engine::force_link* simulation_links = nullptr;
+	static engine::force_collide* simulation_colliders = nullptr;
 	static bool test = false;
 
 	if (!test) {
@@ -250,6 +252,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 
 		//simulation->add_force<engine::force_center>("center", simulation->get_nodes());
 		simulation_links = simulation->add_force<engine::force_link>("link", links);
+		simulation_colliders = simulation->add_force<engine::force_collide>("collide", simulation->get_nodes());
 
 		simulation->initialize_forces();
 	}
@@ -259,13 +262,6 @@ void draw_force_simulation(renderer::buffer* buf) {
 		timer.reset();
 
 		simulation->step();
-	}
-
-	engine::quadtree tree;
-	tree.set_bounds({0.0f - simulation_offset.x, 0.0f - simulation_offset.y, window->get_size().x, window->get_size().y});
-
-	for (auto& node : simulation->get_nodes()) {
-		tree.add(node.get());
 	}
 
 	auto draw_quad = [&buf](const engine::quadtree& tree, auto self_ref) -> void { // NOLINT(misc-no-recursion)
@@ -278,7 +274,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 		}
 	};
 
-	draw_quad(tree, draw_quad);
+	draw_quad(simulation_colliders->tree, draw_quad);
 
 	std::vector<engine::node*> hovered_nodes;
 	engine::node* closest = nullptr;
@@ -314,8 +310,8 @@ void draw_force_simulation(renderer::buffer* buf) {
 	for (auto& node : simulation->get_nodes()) {
 		const auto draw_position = node->position + simulation_offset;
 
-		buf->draw_circle_filled(draw_position, 5.0f, COLOR_BLACK, 12);
-		//buf->draw_circle_filled(draw_position, 3.0f, COLOR_WHITE, 12);
+		buf->draw_circle_filled(draw_position, node->radius, COLOR_BLACK, 12);
+		buf->draw_circle_filled(draw_position, node->radius - 3.0f, COLOR_WHITE, 12);
 	}
 
 	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);

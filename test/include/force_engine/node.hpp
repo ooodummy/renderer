@@ -14,6 +14,8 @@ namespace engine {
 		glm::vec2 velocity = {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN()};
 
 		std::optional<glm::vec2> fixed_position;
+
+		float radius = 5.0f;
 	};
 }
 
