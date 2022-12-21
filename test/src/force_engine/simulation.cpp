@@ -19,7 +19,9 @@ void engine::simulation::tick(size_t iterations) {
 	for (size_t i = 0; i < iterations; ++i) {
 		alpha_ += (alpha_target_ - alpha_) * alpha_decay_;
 
-		// TODO: Update forces alpha
+		for (auto& force : forces_) {
+			force.second->tick(alpha_);
+		}
 
 		for (auto & node : nodes_) {
 			if (!node->fixed_position) {
@@ -74,4 +76,8 @@ void engine::simulation::initialize_nodes() {
 	}
 }
 
-void engine::simulation::initialize_forces() {}
+void engine::simulation::initialize_forces() {
+	for (auto& force : forces_) {
+		force.second->initialize();
+	}
+}

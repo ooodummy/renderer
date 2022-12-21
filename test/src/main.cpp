@@ -216,35 +216,71 @@ void draw_test_window(renderer::buffer* buf) {
 #include "force_engine/simulation.hpp"
 
 void draw_force_simulation(renderer::buffer* buf) {
-	buf->draw_rect_filled({0.0f, 0.0f, window->get_size()}, COLOR_WHITE);
-
-	static glm::vec2 simulation_offset = {200.0f, 200.0f};
+	static glm::vec2 simulation_offset = { window->get_size().x / 2.0f, window->get_size().y / 2.0f };
 	static auto simulation = std::make_unique<engine::simulation>();
 	static bool test = false;
 
 	if (!test) {
 		test = true;
 
-		for (size_t i = 0; i < 50; i++) {
-			simulation->nodes_.emplace_back(std::make_unique<engine::node>());
-		}
+		const auto a = std::make_shared<engine::node>();
+		const auto b = std::make_shared<engine::node>();
+		const auto c = std::make_shared<engine::node>();
+		const auto e = std::make_shared<engine::node>();
+		const auto f = std::make_shared<engine::node>();
+		const auto g = std::make_shared<engine::node>();
+		const auto h = std::make_shared<engine::node>();
+
+		simulation->nodes_.emplace_back(a);
+		simulation->nodes_.emplace_back(b);
+		simulation->nodes_.emplace_back(c);
+		simulation->nodes_.emplace_back(e);
+		simulation->nodes_.emplace_back(f);
+		simulation->nodes_.emplace_back(g);
+		simulation->nodes_.emplace_back(h);
+
+		/*for (size_t i = 0; i < 50; i++) {
+			simulation->nodes_.emplace_back(std::make_shared<engine::node>());
+		}*/
 
 		simulation->initialize_nodes();
+
+		std::vector<engine::link> links = {
+			{a.get(), b.get()},
+			{b.get(), c.get()},
+			{c.get(), a.get()},
+			{e.get(), c.get()},
+			{f.get(), e.get()},
+			{g.get(), h.get()}
+		};
+
+		//simulation->add_force<engine::force_center>("center", simulation->get_nodes());
+		simulation->add_force<engine::force_link>("link", links);
+
+		simulation->initialize_forces();
 	}
 
 	static renderer::timer timer;
-	if (timer.get_elapsed_duration() > std::chrono::milliseconds(10)) {
+	if (timer.get_elapsed_duration() > std::chrono::milliseconds(25)) {
 		timer.reset();
 
 		simulation->step();
 	}
 
 	std::vector<engine::node*> hovered_nodes;
+	engine::node* closest = nullptr;
+	float closest_distance = std::numeric_limits<float>::infinity();
 
 	for (auto& node : simulation->nodes_) {
 		const auto draw_position = node->position + simulation_offset;
 
-		if (glm::distance(carbon::mouse_pos, draw_position) < 30.0f) {
+		const  auto distance = glm::distance(carbon::mouse_pos, draw_position);
+		if (distance < 30.0f) {
+			if (distance < closest_distance) {
+				closest_distance = distance;
+				closest = node.get();
+			}
+
 			hovered_nodes.push_back(node.get());
 		}
 	}
@@ -255,6 +291,19 @@ void draw_force_simulation(renderer::buffer* buf) {
 		buf->draw_line(carbon::mouse_pos, draw_position, COLOR_RED);
 	}
 
+	for (auto& force : simulation->forces_) {
+		if (force.first != "link")
+			continue;
+
+		const auto list = reinterpret_cast<engine::force_link*>(force.second.get());
+		for (auto& link : list->links_) {
+			const auto a = link.source->position + simulation_offset;
+			const auto b = link.target->position + simulation_offset;
+
+			buf->draw_line(a, b, COLOR_BLACK);
+		}
+	}
+
 	for (auto& node : simulation->nodes_) {
 		const auto draw_position = node->position + simulation_offset;
 
@@ -263,13 +312,31 @@ void draw_force_simulation(renderer::buffer* buf) {
 	}
 
 	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);
+
+	static engine::node* held = nullptr;
+	if (GetAsyncKeyState(VK_LBUTTON)) {
+		if (held) {
+			closest = held;
+			held->position = carbon::mouse_pos - simulation_offset;
+		}
+		else if (closest) {
+			held = closest;
+		}
+
+		if (closest) {
+			closest->position = carbon::mouse_pos - simulation_offset;
+		}
+	}
+	else {
+		held = nullptr;
+	}
 }
 
 void draw_thread() {
     const auto id = dx11->register_buffer();
 
     while (!close_requested) {
-		//updated_draw.wait();
+		updated_draw.wait();
 
 		const auto buf = dx11->get_working_buffer(id);
 		carbon::buf = buf;
@@ -290,7 +357,7 @@ void draw_thread() {
 		buf->add_shape(polyline);*/
 
         dx11->swap_buffers(id);
-        //updated_buf.notify();
+        updated_buf.notify();
     }
 }
 
@@ -359,8 +426,8 @@ int main() {
 
         dx11->draw();
 
-		//updated_draw.notify();
-        //updated_buf.wait();
+		updated_draw.notify();
+        updated_buf.wait();
     }
 
     draw.join();
