@@ -268,7 +268,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	//mouse_collider->fixed_position = carbon::mouse_pos - simulation_offset;
 
 	static renderer::timer timer;
-	if (timer.get_elapsed_duration() > std::chrono::milliseconds(25)) {
+	if (timer.get_elapsed_duration() >= std::chrono::milliseconds(5)) {
 		timer.reset();
 
 		simulation->step();
@@ -305,28 +305,6 @@ void draw_force_simulation(renderer::buffer* buf) {
 		}
 	}
 
-	for (auto& node : hovered_nodes) {
-		const auto draw_position = node->position + simulation_offset;
-
-		buf->draw_line(carbon::mouse_pos, draw_position, COLOR_RED);
-	}
-
-	for (auto& link : simulation_links->get_links()) {
-		const auto a = link.source->position + simulation_offset;
-		const auto b = link.target->position + simulation_offset;
-
-		buf->draw_line(a, b, COLOR_BLACK);
-	}
-
-	for (auto& node : simulation->get_nodes()) {
-		const auto draw_position = node->position + simulation_offset;
-
-		buf->draw_circle_filled(draw_position, node->radius, COLOR_BLACK, 32);
-		buf->draw_circle_filled(draw_position, node->radius - 3.0f, COLOR_WHITE, 32);
-	}
-
-	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);
-
 	static engine::node* held = nullptr;
 	if (GetAsyncKeyState(VK_LBUTTON)) {
 		if (held) {
@@ -344,6 +322,28 @@ void draw_force_simulation(renderer::buffer* buf) {
 	else {
 		held = nullptr;
 	}
+
+	for (auto& node : hovered_nodes) {
+		const auto draw_position = node->position + simulation_offset;
+
+		buf->draw_line(carbon::mouse_pos, draw_position, COLOR_RED);
+	}
+
+	for (auto& link : simulation_links->get_links()) {
+		const auto a = link.source->position + simulation_offset;
+		const auto b = link.target->position + simulation_offset;
+
+		buf->draw_line(a, b, COLOR_BLACK);
+	}
+
+	for (auto& node : simulation->get_nodes()) {
+		const auto draw_position = node->position + simulation_offset;
+
+		buf->draw_circle_filled(draw_position, node->radius - 5, COLOR_BLACK, 12);
+		buf->draw_circle_filled(draw_position, node->radius - 8.0f, COLOR_WHITE, 12);
+	}
+
+	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);
 }
 
 void draw_thread() {

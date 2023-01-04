@@ -15,7 +15,7 @@ namespace engine {
 
 		std::optional<glm::vec2> fixed_position;
 
-		float radius = 5.0f;
+		float radius = 10.0f;
 	};
 }
 

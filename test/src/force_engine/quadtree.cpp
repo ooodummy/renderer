@@ -14,6 +14,11 @@ engine::quadtree::quadtree(const std::vector<engine::node*>& nodes) {
 
 		bounds_.z -= bounds_.x;
 		bounds_.w -= bounds_.y;
+
+		if (bounds_.z > bounds_.w)
+			bounds_.w = bounds_.z;
+		else
+			bounds_.z = bounds_.w;
 	}
 
 	for (auto& node : nodes) {

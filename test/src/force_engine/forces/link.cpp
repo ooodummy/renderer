@@ -29,8 +29,8 @@ void engine::force_link::initialize() {
 		const auto target = static_cast<float>(link.target->index) + 1.0f;
 
 		link.bias = source / (source + target);
-		link.strength = 1.0f / std::min(source, target);
-		link.distance = 30.0f;
+		link.strength = 0.2f / std::min(source, target);
+		link.distance = 40.0f;
 	}
 }
 
