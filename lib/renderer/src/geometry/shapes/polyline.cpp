@@ -8,6 +8,7 @@
 static constexpr float miter_min_angle = 0.349066;// ~20 degrees
 static constexpr float round_min_angle = 0.174533;// ~10 degrees
 
+// https://arxiv.org/pdf/2007.00308.pdf
 renderer::line_segment::line_segment(glm::vec2 a, glm::vec2 b) : a(a), b(b) {}
 
 renderer::line_segment renderer::line_segment::operator+(const glm::vec2& o) const {

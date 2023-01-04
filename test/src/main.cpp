@@ -214,6 +214,7 @@ void draw_test_window(renderer::buffer* buf) {
 }
 
 #include "force_engine/forces/collide.hpp"
+#include "force_engine/forces/radial.hpp"
 #include "force_engine/quadtree.hpp"
 #include "force_engine/simulation.hpp"
 
@@ -222,6 +223,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	static auto simulation = std::make_unique<engine::simulation>();
 	static engine::force_link* simulation_links = nullptr;
 	static engine::force_collide* simulation_colliders = nullptr;
+	static engine::force_radial* simulation_radial = nullptr;
 	//static engine::node* mouse_collider = nullptr;
 	static bool test = false;
 
@@ -235,11 +237,10 @@ void draw_force_simulation(renderer::buffer* buf) {
 		const auto f = simulation->add_node();
 		const auto g = simulation->add_node();
 		const auto h = simulation->add_node();
-		//mouse_collider = simulation->add_node();
 
-		/*for (size_t i = 0; i < 50; i++) {
-			simulation->nodes_.emplace_back(std::make_shared<engine::node>());
-		}*/
+		for (size_t i = 0; i < 25; i++) {
+			simulation->add_node();
+		}
 
 		simulation->initialize_nodes();
 
@@ -254,18 +255,11 @@ void draw_force_simulation(renderer::buffer* buf) {
 
 		//simulation->add_force<engine::force_center>("center", simulation->get_nodes());
 		simulation_links = simulation->add_force<engine::force_link>("link", links);
-
-		//mouse_collider->radius = 100.0f;
-
-		//auto colliders = simulation->get_nodes();
-		//colliders.push_back(mouse_collider.get());
-
 		simulation_colliders = simulation->add_force<engine::force_collide>("collide", simulation->get_nodes());
+		simulation_radial = simulation->add_force<engine::force_radial>("radial", simulation->get_nodes(), 200.0f, glm::vec2{});
 
 		simulation->initialize_forces();
 	}
-
-	//mouse_collider->fixed_position = carbon::mouse_pos - simulation_offset;
 
 	static renderer::timer timer;
 	if (timer.get_elapsed_duration() >= std::chrono::milliseconds(5)) {
@@ -284,8 +278,8 @@ void draw_force_simulation(renderer::buffer* buf) {
 		}
 	};
 
-	engine::quadtree quadtree(simulation->get_nodes());
-	draw_quad(quadtree, draw_quad);
+	//engine::quadtree quadtree(simulation->get_nodes());
+	//draw_quad(quadtree, draw_quad);
 
 	std::vector<engine::node*> hovered_nodes;
 	engine::node* closest = nullptr;

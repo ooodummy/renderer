@@ -35,6 +35,7 @@ namespace engine {
 	private:
 		void make_quadrants();
 
+		// TODO: Maybe switch to just having a center and diameter instead of a full bounds vector
 		glm::vec4 bounds_{};
 		engine::node* node_ = nullptr;
 

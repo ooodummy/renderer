@@ -51,7 +51,7 @@ engine::node* engine::simulation::find(const glm::vec2& position, float radius) 
 }
 
 void engine::simulation::initialize_nodes() {
-	constexpr auto node_initial_radius = 10.0f;
+	constexpr auto node_initial_radius = 40.0f;
 	static const auto node_initial_angle = glm::pi<float>() * (3.0f - std::sqrt(5.0f));
 
 	for (size_t i = 0; i < nodes_.size(); ++i) {
