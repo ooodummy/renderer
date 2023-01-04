@@ -111,3 +111,7 @@ engine::node* engine::quadtree::get_node() {
 const std::array<std::shared_ptr<engine::quadtree>, 4>& engine::quadtree::get_children() const {
 	return children_;
 }
+
+bool engine::quadtree::is_parent() const {
+	return parent;
+}

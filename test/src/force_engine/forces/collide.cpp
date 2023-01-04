@@ -19,32 +19,34 @@ void engine::force_collide::tick(float alpha) {
 			tree.visit([&](engine::quadtree& quad) -> bool {
 				const auto quad_node = quad.get_node();
 
-				if (quad_node != nullptr) {
-					auto rj = quad_node->radius;
-					auto r = node->radius + rj;
+				if (quad_node == nullptr)
+					return true;
 
-					if (quad_node->index > node->index) {
-						glm::vec2 tp = ip - quad_node->position - quad_node->velocity;
-						auto dot = glm::dot(tp, tp);
-						if (dot < r * r) {
-							if (tp.x == 0.0f)
-								dot += tp.x * tp.x;
-							if (tp.y == 0.0f)
-								dot += tp.y * tp.y;
+				auto rj = quad_node->radius;
+				auto r = node->radius + rj;
 
-							auto length = std::sqrt(dot);
-							length = (r - length) / length * strength_;
+				if (quad_node->index > node->index) {
+					glm::vec2 tp = ip - quad_node->position - quad_node->velocity;
+					auto dot = glm::dot(tp, tp);
+					if (dot < r * r) {
+						if (tp.x == 0.0f)
+							dot += tp.x * tp.x;
+						if (tp.y == 0.0f)
+							dot += tp.y * tp.y;
 
-							tp *= length;
+						auto length = std::sqrt(dot);
+						length = (r - length) / length * strength_;
 
-							rj *= rj;
-							r = rj / (ri2 + rj);
+						tp *= length;
 
-							node->velocity += tp * r;
-							quad_node->velocity -= tp * (1.0f - r);
-						}
+						rj *= rj;
+						r = rj / (ri2 + rj);
+
+						node->velocity += tp * r;
+						quad_node->velocity -= tp * (1.0f - r);
 					}
 				}
+
 				return true;
 			});
 		}

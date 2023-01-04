@@ -28,6 +28,10 @@ namespace engine {
 		[[nodiscard]] engine::node* get_node();
 		[[nodiscard]] const std::array<std::shared_ptr<quadtree>, 4>& get_children() const;
 
+		[[nodiscard]] bool is_parent() const;
+
+		float many_body_strength = 0.0f;
+
 	private:
 		void make_quadrants();
 

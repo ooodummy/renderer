@@ -64,7 +64,7 @@ void engine::simulation::initialize_nodes() {
 
 		if (glm::all(glm::isnan(node->position))) {
 			const auto radius = node_initial_radius * std::sqrt(0.5f + i);
-			const auto angle = i * node_initial_angle;
+			const auto angle = static_cast<float>(i) * node_initial_angle;
 
 			node->position.x = radius * std::cos(angle);
 			node->position.y = radius * std::sin(angle);
