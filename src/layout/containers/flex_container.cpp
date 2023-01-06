@@ -222,8 +222,8 @@ void carbon::flex_container::position() {
 }
 
 void carbon::flex_container::compute() {
-	//if (!dirty_)
-	//	return;
+	if (!dirty_)
+		return;
 
 	measure_min_content();
 	measure_lengths();

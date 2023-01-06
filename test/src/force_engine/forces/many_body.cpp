@@ -11,9 +11,12 @@ void engine::force_many_body::tick(float alpha) {
 		engine::quadtree tree = engine::quadtree(nodes_);
 		auto strengths = new float[nodes_.size()];
 
-		tree.visit([&](engine::quadtree& quad) -> bool {
+		// Accumulate
+		tree.visit_after([&](engine::quadtree& quad) -> void {
 			//auto strength = strengths[node->index];
 			//strength = 0.0f;
+
+			auto node = quad.get_node();
 
 			if (quad.is_parent()) {
 				float weight = 0.0f;
@@ -28,15 +31,12 @@ void engine::force_many_body::tick(float alpha) {
 					weight += c;
 					total += c * center;
 				}
+
+				if (quad.n)
 			}
 			else {
 				auto node = quad.get_node();
-
-				if (node == nullptr)
-					return true;
 			}
-
-			return true;
 		});
 	}
 }

@@ -88,17 +88,33 @@ void engine::quadtree::make_quadrants() {
 }
 
 void engine::quadtree::visit(std::function<bool(engine::quadtree&)> callback) {
-	auto pre_order_traversal = [&callback](engine::quadtree* quad, auto self_ref) -> void { // NOLINT(misc-no-recursion)
+	auto traversal = [&callback](engine::quadtree* quad, auto self_ref) -> void { // NOLINT(misc-no-recursion)
 		for (auto& child : quad->get_children()) {
-			if (child) {
-				if (!callback(*child))
-					return;
-				self_ref(child.get(), self_ref);
-			}
+			if (!child)
+				continue;
+
+			if (callback(*child) || !child->is_parent())
+				continue;
+
+			self_ref(child.get(), self_ref);
 		}
 	};
 
-	pre_order_traversal(this, pre_order_traversal);
+	traversal(this, traversal);
+}
+
+void engine::quadtree::visit_after(std::function<void(engine::quadtree&)> callback) {
+	auto traversal = [&callback](engine::quadtree* quad, auto self_ref) -> void { // NOLINT(misc-no-recursion)
+		for (auto& child : quad->get_children()) {
+			if (!child)
+				continue;
+
+			self_ref(child.get(), self_ref);
+			callback(*child);
+		}
+	};
+
+	traversal(this, traversal);
 }
 
 glm::vec4 engine::quadtree::get_bounds() {

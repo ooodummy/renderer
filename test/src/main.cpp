@@ -278,8 +278,8 @@ void draw_force_simulation(renderer::buffer* buf) {
 		}
 	};
 
-	//engine::quadtree quadtree(simulation->get_nodes());
-	//draw_quad(quadtree, draw_quad);
+	engine::quadtree quadtree(simulation->get_nodes());
+	draw_quad(quadtree, draw_quad);
 
 	std::vector<engine::node*> hovered_nodes;
 	engine::node* closest = nullptr;

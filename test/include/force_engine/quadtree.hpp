@@ -21,6 +21,7 @@ namespace engine {
 		[[nodiscard]] uint8_t get_quadrant(glm::vec2 position) const;
 
 		void visit(std::function<bool(engine::quadtree&)> callback);
+		void visit_after(std::function<void(engine::quadtree&)> callback);
 
 		[[nodiscard]] glm::vec4 get_bounds();
 		void set_bounds(const glm::vec4& bounds);
@@ -31,6 +32,7 @@ namespace engine {
 		[[nodiscard]] bool is_parent() const;
 
 		float many_body_strength = 0.0f;
+		glm::vec2 weighted{};
 
 	private:
 		void make_quadrants();
