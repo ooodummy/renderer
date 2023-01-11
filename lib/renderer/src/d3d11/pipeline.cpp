@@ -91,9 +91,11 @@ void renderer::d3d11_pipeline::setup_debug_layer() const {
 	hr = debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&info_queue);
 	assert(SUCCEEDED(hr));
 
-	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, true);
-	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
 	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, true);
+	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_INFO, true);
+	info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_MESSAGE, true);
 	info_queue->Release();
 
 	debug->Release();

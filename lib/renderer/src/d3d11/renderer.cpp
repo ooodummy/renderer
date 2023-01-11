@@ -219,13 +219,10 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 			return false;
 	}
 
-	FT_Int32 load_flags = FT_LOAD_FORCE_AUTOHINT;
+	FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT;
 
 	if (FT_HAS_COLOR(font.face)) {
-		//load_flags |= FT_LOAD_COLOR;
-	}
-	else {
-		load_flags |= FT_LOAD_RENDER;
+		load_flags |= FT_LOAD_COLOR;
 	}
 
 	if (font.anti_aliased) {
@@ -238,6 +235,10 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
 		return false;
 
+	// Not needed
+	//if (FT_Render_Glyph(font.face->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
+	//	return false;
+
 	FT_Bitmap bitmap;
 	FT_Bitmap_Init(&bitmap);
 
@@ -245,10 +246,6 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	// bytes per line (aka the pitch) a multiple of alignment
 	if (FT_Bitmap_Convert(library_, &font.face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
 		return false;
-
-	// Not needed
-	//if (FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
-	//	return false;
 
 	auto& glyph = font.char_set[c];
 	FT_GlyphSlot slot = font.face->glyph;
@@ -259,12 +256,14 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	glyph.advance = slot->advance.x;
 	glyph.colored = font.face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
 
-	auto* data = new uint8_t[glyph.size.x * glyph.size.y];
+	auto* data = new uint8_t[bitmap.width * bitmap.rows];
 
-	auto src_pixels = slot->bitmap.buffer;
-	auto* dest_pixels = data;
+	if (glyph.colored)
+		memcpy(data, font.face->glyph->bitmap.buffer, font.face->glyph->bitmap.rows * font.face->glyph->bitmap.pitch);
+	else
+		memcpy(data, bitmap.buffer, bitmap.rows * bitmap.pitch);
 
-	switch (slot->bitmap.pixel_mode) {
+	/*switch (slot->bitmap.pixel_mode) {
 		case FT_PIXEL_MODE_BGRA:
 			{
 
@@ -300,18 +299,18 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 			break;
 		default:
 			return false;
-	}
+	}*/
 
 	D3D11_SUBRESOURCE_DATA texture_data;
 	texture_data.pSysMem = data;
-	texture_data.SysMemPitch = glyph.size.x;
+	texture_data.SysMemPitch = bitmap.pitch;
 	texture_data.SysMemSlicePitch = 0;
 
 	D3D11_TEXTURE2D_DESC texture_desc{};
-	texture_desc.Width = glyph.size.x;
-	texture_desc.Height = glyph.size.y;
+	texture_desc.Width = bitmap.width;
+	texture_desc.Height = bitmap.rows;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = DXGI_FORMAT_R8_UINT; // DXGI_FORMAT_R8G8B8A8_UNORM
+	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_R8_UINT; //DXGI_FORMAT_B8G8R8A8_UNORM
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -334,6 +333,9 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	hr = device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);
 	assert(SUCCEEDED(hr));
 	texture->Release();
+
+	if (FT_Bitmap_Done(library_, &bitmap) != FT_Err_Ok)
+		return false;
 
 	return true;
 }
