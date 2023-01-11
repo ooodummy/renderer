@@ -4,6 +4,7 @@
 #include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/util/win32_window.hpp"
 
+#include <freetype/ftbitmap.h>
 #include <d3d11.h>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -33,14 +34,17 @@ size_t renderer::d3d11_renderer::register_font(const font& font) {
 bool renderer::d3d11_renderer::init() {
 	init_pipeline();
 
-	// if (FT_Init_FreeType(&library_))
-	//	return false;
+	if (FT_Init_FreeType(&library_))
+		return false;
 
 	return true;
 }
 
 bool renderer::d3d11_renderer::release() {
 	release_pipeline();
+
+	if (FT_Done_FreeType(library_))
+		return false;
 
 	return true;
 }
@@ -192,50 +196,84 @@ void renderer::d3d11_renderer::render_buffers() {
 }
 
 // TODO: Font texture atlas
-bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
+bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
 
 	if (!font.face) {
-		// if (FT_New_Face(library_, font.path.c_str(), 0, &font.face) != FT_Err_Ok)
-		//	return false;
+		auto error = FT_New_Face(library_, font.path.c_str(), 0, &font.face);
+		if (error == FT_Err_Unknown_File_Format) {
+			MessageBoxA(nullptr, "Error", "The font file could be opened and read, but it appears that it's font format is unsupported.", MB_ICONERROR | MB_OK);
+			return false;
+		}
+		else if (error != FT_Err_Ok) {
+			MessageBoxA(nullptr, "Error", "The font file could not be opened or read, or that it is broken.", MB_ICONERROR | MB_OK);
+			return false;
+		}
 
 		const auto dpi = window_->get_dpi();
 
-		// if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
-		//	return false;
+		if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
+			return false;
 
-		// if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
-		//	return false;
+		if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
+			return false;
 	}
 
-	FT_Int32 load_flags = FT_LOAD_RENDER;
+	FT_Int32 load_flags = FT_LOAD_FORCE_AUTOHINT;
 
-	if (!font.anti_aliased) {
-		load_flags |= FT_LOAD_TARGET_MONO | FT_LOAD_MONOCHROME;
+	if (FT_HAS_COLOR(font.face)) {
+		//load_flags |= FT_LOAD_COLOR;
+	}
+	else {
+		load_flags |= FT_LOAD_RENDER;
 	}
 
-	// if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
+	if (font.anti_aliased) {
+		load_flags |= FT_LOAD_TARGET_NORMAL;
+	}
+	else {
+		load_flags |= FT_LOAD_TARGET_MONO;
+	}
+
+	if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
+		return false;
+
+	FT_Bitmap bitmap;
+	FT_Bitmap_Init(&bitmap);
+
+	// Convert a bitmap object with depth of 4bpp making the number of used
+	// bytes per line (aka the pitch) a multiple of alignment
+	if (FT_Bitmap_Convert(library_, &font.face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
+		return false;
+
+	// Not needed
+	//if (FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
 	//	return false;
 
 	auto& glyph = font.char_set[c];
+	FT_GlyphSlot slot = font.face->glyph;
 
-	glyph.size = { font.face->glyph->bitmap.width ? font.face->glyph->bitmap.width : 16,
-				   font.face->glyph->bitmap.rows ? font.face->glyph->bitmap.rows : 16 };
+	glyph.size = { slot->bitmap.width ? slot->bitmap.width : 16,
+				   slot->bitmap.rows ? slot->bitmap.rows : 16 };
+	glyph.bearing = { slot->bitmap_left, slot->bitmap_top };
+	glyph.advance = slot->advance.x;
+	glyph.colored = font.face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
 
-	glyph.bearing = { font.face->glyph->bitmap_left, font.face->glyph->bitmap_top };
+	auto* data = new uint8_t[glyph.size.x * glyph.size.y];
 
-	glyph.advance = font.face->glyph->advance.x;
+	auto src_pixels = slot->bitmap.buffer;
+	auto* dest_pixels = data;
 
-	uint8_t* data = new uint8_t[glyph.size.x * glyph.size.y];
+	switch (slot->bitmap.pixel_mode) {
+		case FT_PIXEL_MODE_BGRA:
+			{
 
-	auto src_pixels = font.face->glyph->bitmap.buffer;
-	uint8_t* dest_pixels = data;
-
-	switch (font.face->glyph->bitmap.pixel_mode) {
+			}
+			break;
 		case FT_PIXEL_MODE_MONO:
 			{
 				for (uint32_t y = 0; y < glyph.size.y; y++) {
-					const uint8_t* bits_ptr = font.face->glyph->bitmap.buffer;
+					const uint8_t* bits_ptr = slot->bitmap.buffer;
 
 					uint8_t bits = 0;
 					for (uint32_t x = 0; x < glyph.size.x; x++, bits <<= 1) {
@@ -245,7 +283,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 						dest_pixels[x] = (bits & 0x80) ? 255 : 0;
 					}
 
-					src_pixels += font.face->glyph->bitmap.pitch;
+					src_pixels += slot->bitmap.pitch;
 					dest_pixels += glyph.size.x;
 				}
 			}
@@ -255,7 +293,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 				for (uint32_t j = 0; j < glyph.size.y; ++j) {
 					memcpy(dest_pixels, src_pixels, glyph.size.x);
 
-					src_pixels += font.face->glyph->bitmap.pitch;
+					src_pixels += slot->bitmap.pitch;
 					dest_pixels += glyph.size.x;
 				}
 			}
@@ -273,7 +311,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	texture_desc.Width = glyph.size.x;
 	texture_desc.Height = glyph.size.y;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = DXGI_FORMAT_R8_UINT;
+	texture_desc.Format = DXGI_FORMAT_R8_UINT; // DXGI_FORMAT_R8G8B8A8_UNORM
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -289,7 +327,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
 	srv_desc.Format = texture_desc.Format;
-	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;// TODO: Might need to be MS
+	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srv_desc.Texture2D.MostDetailedMip = 0;
 	srv_desc.Texture2D.MipLevels = 1;
 
@@ -300,7 +338,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, char c) {
 	return true;
 }
 
-renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, char c) {
+renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
 	auto glyph = font.char_set.find(c);
 
@@ -341,8 +379,6 @@ glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_
 }
 
 glm::vec4 renderer::d3d11_renderer::get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) {
-	return {};
-
 	glm::vec4 bounds{};
 	bounds.y = pos.y;
 

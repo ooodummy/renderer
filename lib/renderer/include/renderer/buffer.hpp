@@ -119,17 +119,38 @@ namespace renderer {
 			delete[] vertices;
 		}
 
-		void draw_text(glm::vec2 pos,
-					   const std::string& text,
-					   size_t font_id = 0,
+		template <typename T>
+		void draw_text(glm::vec2 pos, const T& text, size_t font_id = 0,
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
-					   text_align v_align = text_align_bottom);
-		void draw_text(glm::vec2 pos,
-					   const std::string& text,
-					   color_rgba col = COLOR_WHITE,
-					   text_align h_align = text_align_left,
-					   text_align v_align = text_align_bottom);
+					   text_align v_align = text_align_bottom) {
+			draw_circle_filled(pos, 4.0f, COLOR_WHITE);
+
+			// TODO: Handle alignment
+			//const auto size = renderer_->get_text_size(text, font_id);
+
+			/*switch (h_align) {
+				case text_align_top:
+					break;
+				case text_align_center:
+					pos.y -=
+					break;
+				case text_align_bottom:
+					break;
+			}*/
+
+			//pos.y += size.y;
+
+			for (auto c : text) {
+				if (/*!isprint(c) ||*/ c == ' ')
+					continue;
+
+				auto glyph = renderer_->get_font_glyph(font_id, c);
+				draw_glyph(pos, glyph, col);
+
+				pos.x += static_cast<float>(glyph.advance) / 64.0f;
+			}
+		}
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();

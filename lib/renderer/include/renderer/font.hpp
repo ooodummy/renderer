@@ -29,6 +29,7 @@ namespace renderer {
 		glm::u32vec2 size;
 		glm::i32vec2 bearing;
 		int32_t advance;
+		bool colored;
 	};
 
 	struct font {
@@ -49,7 +50,7 @@ namespace renderer {
 		bool anti_aliased;
 
 		FT_Face face = nullptr;
-		std::unordered_map<char, glyph> char_set;
+		std::unordered_map<uint32_t, glyph> char_set;
 	};
 }// namespace renderer
 

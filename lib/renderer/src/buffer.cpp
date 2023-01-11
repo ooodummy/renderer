@@ -341,35 +341,19 @@ void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, colo
 	draw_textured_quad(
 	{ pos.x + static_cast<float>(glyph.bearing.x), pos.y - static_cast<float>(glyph.bearing.y), glyph.size }, glyph.rv,
 	col);
+
+	//draw_circle_filled(pos, 2.0f, col);
+	//draw_line(pos, {pos.x + glyph.advance / 64, pos.y});
+	//draw_rect({pos.x + glyph.bearing.x, pos.y - glyph.bearing.y, glyph.bearing.x + glyph.size.x, glyph.size.y});
 }
 
-void renderer::buffer::draw_text(
-glm::vec2 pos, const std::string& text, size_t font_id, color_rgba col, text_align h_align, text_align v_align) {
-	return;
-
-	// TODO: Handle alignment
-	const auto size = renderer_->get_text_size(text, font_id);
-
-	pos.y += size.y;
-
-	for (char c : text) {
-		if (!isprint(c) || c == ' ')
-			continue;
-
-		auto glyph = renderer_->get_font_glyph(font_id, c);
-		draw_glyph(pos, glyph, col);
-
-		pos.x += static_cast<float>(glyph.advance) / 64.0f;
-	}
-}
-
-void renderer::buffer::draw_text(glm::vec2 pos,
+/*void renderer::buffer::draw_text(glm::vec2 pos,
 								 const std::string& text,
 								 renderer::color_rgba col,
 								 renderer::text_align h_align,
 								 renderer::text_align v_align) {
 	draw_text(pos, text, active_font, col, h_align, v_align);
-}
+}*/
 
 renderer::buffer::scissor_command::scissor_command(glm::vec4 bounds, bool in, bool circle) :
 	bounds(bounds),

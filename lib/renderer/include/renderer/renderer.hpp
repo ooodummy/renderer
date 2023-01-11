@@ -24,7 +24,7 @@ namespace renderer {
 		void swap_buffers(size_t id);
 
 		virtual size_t register_font(const font& font) = 0;
-		virtual glyph get_font_glyph(size_t id, char c) = 0;
+		virtual glyph get_font_glyph(size_t id, uint32_t c) = 0;
 
 		virtual glm::vec2 get_text_size(const std::string& text, size_t id) = 0;
 		virtual glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) = 0;

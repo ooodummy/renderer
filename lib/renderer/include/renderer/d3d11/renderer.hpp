@@ -21,7 +21,7 @@ namespace renderer {
 		explicit d3d11_renderer(win32_window* window);
 
 		size_t register_font(const font& font) override;
-		glyph get_font_glyph(size_t id, char c) override;
+		glyph get_font_glyph(size_t id, uint32_t c) override;
 
 		texture2d create_texture(LPCTSTR file);
 
@@ -56,7 +56,7 @@ namespace renderer {
 		FT_Library library_;
 		std::vector<font> fonts_;
 
-		bool create_font_glyph(size_t id, char c);
+		bool create_font_glyph(size_t id, uint32_t c);
 	};
 }// namespace renderer
 

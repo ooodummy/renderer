@@ -32,7 +32,7 @@ void engine::force_many_body::tick(float alpha) {
 					total += c * center;
 				}
 
-				if (quad.n)
+				//if (quad.n)
 			}
 			else {
 				auto node = quad.get_node();
