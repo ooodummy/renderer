@@ -80,7 +80,8 @@ namespace renderer {
 									  color_rgba = COLOR_WHITE,
 									  size_t segments = 16);
 
-		void draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col = COLOR_WHITE);
+		void draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col = COLOR_WHITE,
+								bool is_mask = false);
 
 		void draw_circle(
 		const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);

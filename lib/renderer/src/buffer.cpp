@@ -306,10 +306,12 @@ void renderer::buffer::draw_rect_rounded_filled(const glm::vec4& rect,
 	delete[] vertices;
 }
 
-void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col) {
+void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col, bool is_mask) {
 	split_batch_ = true;
 
 	active_command.is_texture = true;
+	active_command.is_mask = is_mask;
+
 	//active_command.texture_size.x = static_cast<int>(rect.z);
 	//active_command.texture_size.y = static_cast<int>(rect.w);
 
@@ -322,6 +324,7 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, srv, col);
 
+	active_command.is_mask = false;
 	active_command.is_texture = false;
 
 	split_batch_ = true;
@@ -340,7 +343,7 @@ void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, co
 void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {
 	draw_textured_quad(
 	{ pos.x + static_cast<float>(glyph.bearing.x), pos.y - static_cast<float>(glyph.bearing.y), glyph.size }, glyph.rv,
-	col);
+	col, !glyph.colored);
 
 	//draw_circle_filled(pos, 2.0f, col);
 	//draw_line(pos, {pos.x + glyph.advance / 64, pos.y});

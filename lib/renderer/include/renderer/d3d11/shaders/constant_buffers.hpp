@@ -18,6 +18,7 @@ namespace renderer {
 		alignas(16) glm::vec4 key_color;
 		alignas(4) float blur_strength;
 		alignas(4) bool is_texture;
+		alignas(4) bool is_mask;
 	};
 }// namespace renderer
 
