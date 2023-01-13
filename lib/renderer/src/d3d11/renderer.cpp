@@ -236,8 +236,8 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 		return false;
 
 	// Not needed
-	//if (FT_Render_Glyph(font.face->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
-	//	return false;
+	if (FT_Render_Glyph(font.face->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
+		return false;
 
 	FT_Bitmap bitmap;
 	FT_Bitmap_Init(&bitmap);
@@ -310,7 +310,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	texture_desc.Width = bitmap.width;
 	texture_desc.Height = bitmap.rows;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_R8_UINT; //DXGI_FORMAT_B8G8R8A8_UNORM
+	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_R8_UINT;
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.Usage = D3D11_USAGE_DEFAULT;
