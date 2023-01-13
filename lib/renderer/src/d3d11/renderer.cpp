@@ -63,7 +63,11 @@ void renderer::d3d11_renderer::begin() {
 		D3D11_MAPPED_SUBRESOURCE mapped_resource;
 		HRESULT hr = context_->Map(global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 		assert(SUCCEEDED(hr));
-		memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
+
+		{
+			memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
+		}
+
 		context_->Unmap(global_buffer_, 0);
 
 		context_->PSSetConstantBuffers(1, 1, &global_buffer_);
@@ -195,6 +199,7 @@ void renderer::d3d11_renderer::render_buffers() {
 	context_->IASetInputLayout(input_layout_);
 }
 
+// https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
 // TODO: Font texture atlas
 bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
@@ -236,8 +241,8 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 		return false;
 
 	// Not needed
-	if (FT_Render_Glyph(font.face->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
-		return false;
+	//if (FT_Render_Glyph(font.face->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
+	//	return false;
 
 	FT_Bitmap bitmap;
 	FT_Bitmap_Init(&bitmap);
@@ -248,75 +253,36 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 		return false;
 
 	auto& glyph = font.char_set[c];
-	FT_GlyphSlot slot = font.face->glyph;
-
-	glyph.size = { slot->bitmap.width ? slot->bitmap.width : 16,
-				   slot->bitmap.rows ? slot->bitmap.rows : 16 };
-	glyph.bearing = { slot->bitmap_left, slot->bitmap_top };
-	glyph.advance = slot->advance.x;
 	glyph.colored = font.face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
 
-	auto* data = new uint8_t[bitmap.width * bitmap.rows];
+	auto& target_bitmap = glyph.colored ? font.face->glyph->bitmap : bitmap;
 
-	if (glyph.colored)
-		memcpy(data, font.face->glyph->bitmap.buffer, font.face->glyph->bitmap.rows * font.face->glyph->bitmap.pitch);
-	else
-		memcpy(data, bitmap.buffer, bitmap.rows * bitmap.pitch);
+	glyph.size = { target_bitmap.width ? target_bitmap.width : 16,
+				   target_bitmap.rows ? target_bitmap.rows : 16 };
+	glyph.bearing = { font.face->glyph->bitmap_left, font.face->glyph->bitmap_top };
+	glyph.advance = font.face->glyph->advance.x;
 
-	/*switch (slot->bitmap.pixel_mode) {
-		case FT_PIXEL_MODE_BGRA:
-			{
-
-			}
-			break;
-		case FT_PIXEL_MODE_MONO:
-			{
-				for (uint32_t y = 0; y < glyph.size.y; y++) {
-					const uint8_t* bits_ptr = slot->bitmap.buffer;
-
-					uint8_t bits = 0;
-					for (uint32_t x = 0; x < glyph.size.x; x++, bits <<= 1) {
-						if ((x & 7) == 0)
-							bits = *bits_ptr++;
-
-						dest_pixels[x] = (bits & 0x80) ? 255 : 0;
-					}
-
-					src_pixels += slot->bitmap.pitch;
-					dest_pixels += glyph.size.x;
-				}
-			}
-			break;
-		case FT_PIXEL_MODE_GRAY:
-			{
-				for (uint32_t j = 0; j < glyph.size.y; ++j) {
-					memcpy(dest_pixels, src_pixels, glyph.size.x);
-
-					src_pixels += slot->bitmap.pitch;
-					dest_pixels += glyph.size.x;
-				}
-			}
-			break;
-		default:
-			return false;
-	}*/
+	auto* data = new uint8_t[target_bitmap.rows * target_bitmap.pitch];
+	memcpy(data, target_bitmap.buffer, target_bitmap.rows * target_bitmap.pitch);
 
 	D3D11_SUBRESOURCE_DATA texture_data;
 	texture_data.pSysMem = data;
-	texture_data.SysMemPitch = bitmap.pitch;
+	texture_data.SysMemPitch = target_bitmap.pitch;
 	texture_data.SysMemSlicePitch = 0;
 
 	D3D11_TEXTURE2D_DESC texture_desc{};
-	texture_desc.Width = bitmap.width;
-	texture_desc.Height = bitmap.rows;
+	texture_desc.Width = target_bitmap.width;
+	texture_desc.Height = target_bitmap.rows;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_R8_UINT;
+	texture_desc.Format = glyph.colored ? DXGI_FORMAT_R8G8B8A8_UINT : DXGI_FORMAT_R8_UINT;
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
-	texture_desc.Usage = D3D11_USAGE_DEFAULT;
+	texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
 	texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	texture_desc.CPUAccessFlags = 0;
 	texture_desc.MiscFlags = 0;
+
+	//context_->ResolveSubresource(DstTexture, 0, MultisampledTexture, 0, MultisampledTexture.Format);
 
 	ID3D11Texture2D* texture;
 	auto hr = device_->CreateTexture2D(&texture_desc, &texture_data, &texture);

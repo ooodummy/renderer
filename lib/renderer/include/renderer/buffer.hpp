@@ -124,7 +124,7 @@ namespace renderer {
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
-			draw_circle_filled(pos, 4.0f, COLOR_WHITE);
+			//draw_circle_filled(pos, 4.0f, COLOR_WHITE);
 
 			// TODO: Handle alignment
 			//const auto size = renderer_->get_text_size(text, font_id);
