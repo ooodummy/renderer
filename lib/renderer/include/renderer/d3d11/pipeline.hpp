@@ -38,6 +38,8 @@ namespace renderer {
 		void create_states();
 		void create_constant_buffers();
 
+		UINT max_ms_quality_;
+
 	protected:
 		void resize_vertex_buffer(size_t vertex_count);
 		void resize_index_buffer(size_t index_count);

@@ -136,6 +136,11 @@ void renderer::d3d11_pipeline::create_swap_chain() {
 	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swap_chain_desc.Flags = 0;
 
+	//hr = device_->CheckMultisampleQualityLevels(swap_chain_desc.Format, swap_chain_desc.SampleDesc.Count,&max_ms_quality_);
+	//assert(SUCCEEDED(hr));
+	max_ms_quality_ = 0;
+	swap_chain_desc.SampleDesc.Quality = max_ms_quality_;
+
 	hr = dxgi_factory
 		 ->CreateSwapChainForHwnd(device_, window_->get_hwnd(), &swap_chain_desc, nullptr, nullptr, &swap_chain_);
 	assert(SUCCEEDED(hr));
@@ -152,7 +157,7 @@ void renderer::d3d11_pipeline::create_depth_stencil_view() {
 	depth_desc.ArraySize = 1;
 	depth_desc.Format = DXGI_FORMAT_D32_FLOAT;
 	depth_desc.SampleDesc.Count = 4;
-	depth_desc.SampleDesc.Quality = 0;
+	depth_desc.SampleDesc.Quality = max_ms_quality_;
 	depth_desc.Usage = D3D11_USAGE_DEFAULT;
 	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depth_desc.CPUAccessFlags = 0;
