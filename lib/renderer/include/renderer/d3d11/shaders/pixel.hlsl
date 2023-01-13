@@ -13,10 +13,9 @@ cbuffer command : register(b1) {
 	float4 key_color;
 	float blur_strength;
 	bool is_texture;
-	int2 texture_size;
 }
 
-Texture2D<uint> active_texture : TEXTURE : register(t0);
+Texture2D active_texture : TEXTURE : register(t0);
 SamplerState samplerState : SAMPLER : register(s0);
 
 float4 ps_main(VS_Output input) : SV_TARGET {
@@ -46,13 +45,7 @@ float4 ps_main(VS_Output input) : SV_TARGET {
 	}
 
 	if (is_texture) {
-		uint value = active_texture.Load(int3(input.uv * texture_size, 0));
-
-		if (value == 0) {
-			return float4(0.0f, 0.0f, 0.0f, 0.0f);
-		}
-
-		return float4(float(active_texture.Load(int3(input.uv * texture_size, 0))), 0.0f, 0.0f, 1.0f);
+		return active_texture.Sample(samplerState, input.uv);
 	}
 
 	return input.color;

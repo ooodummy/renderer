@@ -47,7 +47,7 @@ build_shader(include/renderer/d3d11/shaders/pixel.hlsl include/renderer/d3d11/sh
 build_shader(include/renderer/d3d11/shaders/vertex.hlsl include/renderer/d3d11/shaders/compiled/vertex.h)
 
 file(GLOB_RECURSE SOURCES src/*.*)
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
+add_library(${PROJECT_NAME} STATIC ${SOURCES} include/renderer/d3d11/shaders/pixel.hlsl)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm)

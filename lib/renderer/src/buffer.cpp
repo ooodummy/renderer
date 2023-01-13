@@ -310,8 +310,8 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 	split_batch_ = true;
 
 	active_command.is_texture = true;
-	active_command.texture_size.x = static_cast<int>(rect.z);
-	active_command.texture_size.y = static_cast<int>(rect.w);
+	//active_command.texture_size.x = static_cast<int>(rect.z);
+	//active_command.texture_size.y = static_cast<int>(rect.w);
 
 	vertex vertices[] = {
 		{rect.x,			  rect.y,		  col, 0.0f, 0.0f},

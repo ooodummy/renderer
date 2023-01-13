@@ -88,7 +88,7 @@ void renderer::d3d11_renderer::prepare_context() {
 	context_->OMSetRenderTargets(1, &frame_buffer_view_, depth_stencil_view_);
 	context_->OMSetDepthStencilState(depth_stencil_state_, NULL);
 
-	context_->PSSetSamplers(0, 1, &sampler_state_);
+	//context_->PSSetSamplers(0, 1, &sampler_state_);
 
 	context_->VSSetShader(vertex_shader_, nullptr, 0);
 	context_->PSSetShader(pixel_shader_, nullptr, 0);
@@ -112,6 +112,7 @@ void renderer::d3d11_renderer::populate() {
 
 			context_->PSSetConstantBuffers(1, 1, &command_buffer_);
 			context_->PSSetShaderResources(0, 1, &batch.srv);
+			context_->PSSetSamplers(0, 1, &sampler_state_);
 			context_->IASetPrimitiveTopology(batch.type);
 
 			context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
@@ -274,7 +275,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	texture_desc.Width = target_bitmap.width;
 	texture_desc.Height = target_bitmap.rows;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = glyph.colored ? DXGI_FORMAT_R8G8B8A8_UINT : DXGI_FORMAT_R8_UINT;
+	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_A8_UNORM;
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
