@@ -112,7 +112,7 @@ void carbon::base_flex_container::set_justify_content(const flex_justify_content
 }
 
 void carbon::base_flex_container::decorate() {
-	buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
+	/*buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
 	buf->draw_rect(margin_.get_edge(), { 24, 26, 27 });
 	buf->draw_rect_filled(content_, { 247, 148, 31 });
 
@@ -123,5 +123,5 @@ void carbon::base_flex_container::decorate() {
 	auto end = start;
 	end.main += margin.main.y;
 
-	buf->draw_line(glm::vec2(start), glm::vec2(end), COLOR_WHITE);
+	buf->draw_line(glm::vec2(start), glm::vec2(end), COLOR_WHITE);*/
 }

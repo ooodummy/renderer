@@ -23,7 +23,8 @@ namespace renderer {
 
 		void swap_buffers(size_t id);
 
-		virtual size_t register_font(const font& font) = 0;
+		virtual size_t register_font(std::string family, int size, int weight = 100, bool anti_aliased = true) = 0;
+		virtual font* get_font(size_t id) = 0;
 		virtual glyph get_font_glyph(size_t id, uint32_t c) = 0;
 
 		virtual glm::vec2 get_text_size(const std::string& text, size_t id) = 0;

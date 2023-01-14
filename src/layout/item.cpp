@@ -18,9 +18,9 @@ void carbon::flex_item::compute() {
 }
 
 void carbon::flex_item::decorate() {
-	buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
+	/*buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
 	buf->draw_rect(margin_.get_edge(), { 24, 26, 27 });
-	buf->draw_rect_filled(content_, { 247, 148, 31 });
+	buf->draw_rect_filled(content_, { 247, 148, 31 });*/
 
 	// buf->draw_rect(margin_.get_edge(), COLOR_GREEN);
 	// buf->draw_rect(border_.get_edge(), COLOR_GREEN);

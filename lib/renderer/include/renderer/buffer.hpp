@@ -11,6 +11,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <glm/gtx/rotate_vector.hpp>
+#include <freetype/freetype.h>
 #include <memory>
 #include <stack>
 
@@ -125,20 +126,23 @@ namespace renderer {
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
-			//draw_circle_filled(pos, 4.0f, COLOR_WHITE);
+			draw_circle_filled(pos, 2.0f, COLOR_YELLOW);
+
+			//auto font = renderer_->get_font(font_id);
+			//auto test = font->face->size->metrics.ascender;
 
 			// TODO: Handle alignment
 			//const auto size = renderer_->get_text_size(text, font_id);
 
-			/*switch (h_align) {
+			switch (h_align) {
 				case text_align_top:
 					break;
 				case text_align_center:
-					pos.y -=
+			//		pos.y += size.y / 2.0f;
 					break;
 				case text_align_bottom:
 					break;
-			}*/
+			}
 
 			//pos.y += size.y;
 
@@ -151,6 +155,14 @@ namespace renderer {
 
 				pos.x += static_cast<float>(glyph.advance) / 64.0f;
 			}
+		}
+
+		template <typename T>
+		void draw_text(glm::vec2 pos, const T& text,
+					   color_rgba col = COLOR_WHITE,
+					   text_align h_align = text_align_left,
+					   text_align v_align = text_align_bottom) {
+			draw_text(pos, text, active_font, col, h_align, v_align);
 		}
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);

@@ -57,6 +57,7 @@ namespace carbon {
 		const padded_box& get_padding() const;
 		void set_padding(const carbon::padded_box& padding);
 
+		glm::vec4 get_bounds() const;
 		const glm::vec4& get_content() const;
 		glm::vec2 get_total_padding() const;
 
@@ -70,7 +71,7 @@ namespace carbon {
 
 		padded_box margin_;
 		padded_box border_;
-		padded_box padding_{ 5.0f };
+		padded_box padding_;
 	};
 }// namespace carbon
 

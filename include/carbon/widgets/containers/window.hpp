@@ -29,6 +29,19 @@ namespace carbon {
 			content_->set_flex(1.0f);
 		}
 
+		void decorate() override {
+			const auto bounds = get_bounds();
+
+			// Frame
+			buf->draw_rect_filled(bounds, {28, 26, 28});
+			buf->draw_rect(bounds + glm::vec4{-1.0f, -1.0f, 2.0f, 2.0f}, {233, 109, 109});
+
+			// Title bar
+			const auto title_bar_bounds = title_bar_->get_bounds();
+			buf->draw_rect_filled(title_bar_bounds, {36, 34, 37});
+			buf->draw_text(glm::vec2{title_bar_bounds.x + 4.0f, title_bar_bounds.y + 4.0f}, "Carbon", {255, 255, 255});
+		}
+
 	private:
 		flex_container* title_bar_;
 		flex_container* sub_tab_bar_;

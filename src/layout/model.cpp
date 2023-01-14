@@ -102,6 +102,10 @@ void carbon::box_model::set_padding(const carbon::padded_box& padding) {
 	padding_ = padding;
 }
 
+glm::vec4 carbon::box_model::get_bounds() const {
+	return get_margin().get_edge();
+}
+
 const glm::vec4& carbon::box_model::get_content() const {
 	return content_;
 }

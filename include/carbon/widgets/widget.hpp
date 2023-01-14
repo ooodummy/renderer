@@ -5,6 +5,8 @@
 #include "../layout/containers/flex_container.hpp"
 #include "../layout/containers/grid_container.hpp"
 
+#include "renderer/core.hpp"
+
 // https://developer.android.com/guide/topics/appwidgets/overview#types
 
 namespace carbon {

@@ -5,6 +5,7 @@
 #include "renderer/util/win32_window.hpp"
 
 #include <freetype/ftbitmap.h>
+#include <freetype/ftstroke.h>
 #include <d3d11.h>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -24,9 +25,9 @@ void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color
 	clear_color_ = glm::vec4(color);
 }
 
-size_t renderer::d3d11_renderer::register_font(const font& font) {
+size_t renderer::d3d11_renderer::register_font(std::string family, int size, int weight, bool anti_aliased) {
 	const auto id = fonts_.size();
-	fonts_.emplace_back(font);
+	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased));
 
 	return id;
 }
@@ -143,13 +144,13 @@ void renderer::d3d11_renderer::reset() {
 	}
 
 	for (auto& font : fonts_) {
-		for (auto& [c, glyph] : font.char_set) {
+		for (auto& [c, glyph] : font->char_set) {
 			if (glyph.rv) {
 				glyph.rv->Release();
 			}
 		}
 
-		font.char_set = {};
+		font->char_set = {};
 	}
 }
 
@@ -205,8 +206,8 @@ void renderer::d3d11_renderer::render_buffers() {
 bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
 
-	if (!font.face) {
-		auto error = FT_New_Face(library_, font.path.c_str(), 0, &font.face);
+	if (!font->face) {
+		auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
 		if (error == FT_Err_Unknown_File_Format) {
 			MessageBoxA(nullptr, "Error", "The font file could be opened and read, but it appears that it's font format is unsupported.", MB_ICONERROR | MB_OK);
 			return false;
@@ -218,27 +219,27 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 
 		const auto dpi = window_->get_dpi();
 
-		if (FT_Set_Char_Size(font.face, font.size * 64, 0, dpi, 0) != FT_Err_Ok)
+		if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
 			return false;
 
-		if (FT_Select_Charmap(font.face, FT_ENCODING_UNICODE) != FT_Err_Ok)
+		if (FT_Select_Charmap(font->face, FT_ENCODING_UNICODE) != FT_Err_Ok)
 			return false;
 	}
 
 	FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT;
 
-	if (FT_HAS_COLOR(font.face)) {
+	if (FT_HAS_COLOR(font->face)) {
 		load_flags |= FT_LOAD_COLOR;
 	}
 
-	if (font.anti_aliased) {
+	if (font->anti_aliased) {
 		load_flags |= FT_LOAD_TARGET_NORMAL;
 	}
 	else {
 		load_flags |= FT_LOAD_TARGET_MONO;
 	}
 
-	if (FT_Load_Char(font.face, c, load_flags) != FT_Err_Ok)
+	if (FT_Load_Char(font->face, c, load_flags) != FT_Err_Ok)
 		return false;
 
 	// Not needed
@@ -250,18 +251,18 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 
 	// Convert a bitmap object with depth of 4bpp making the number of used
 	// bytes per line (aka the pitch) a multiple of alignment
-	if (FT_Bitmap_Convert(library_, &font.face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
+	if (FT_Bitmap_Convert(library_, &font->face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
 		return false;
 
-	auto& glyph = font.char_set[c];
-	glyph.colored = font.face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
+	auto& glyph = font->char_set[c];
+	glyph.colored = font->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
 
-	auto& target_bitmap = glyph.colored ? font.face->glyph->bitmap : bitmap;
+	auto& target_bitmap = glyph.colored ? font->face->glyph->bitmap : bitmap;
 
 	glyph.size = { target_bitmap.width ? target_bitmap.width : 16,
 				   target_bitmap.rows ? target_bitmap.rows : 16 };
-	glyph.bearing = { font.face->glyph->bitmap_left, font.face->glyph->bitmap_top };
-	glyph.advance = font.face->glyph->advance.x;
+	glyph.bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
+	glyph.advance = font->face->glyph->advance.x;
 
 	auto* data = new uint8_t[target_bitmap.rows * target_bitmap.pitch];
 	memcpy(data, target_bitmap.buffer, target_bitmap.rows * target_bitmap.pitch);
@@ -307,15 +308,19 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	return true;
 }
 
+renderer::font* renderer::d3d11_renderer::get_font(size_t id) {
+	return fonts_[id].get();
+}
+
 renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
-	auto glyph = font.char_set.find(c);
+	auto glyph = font->char_set.find(c);
 
-	if (glyph == font.char_set.end()) {
+	if (glyph == font->char_set.end()) {
 		auto res = create_font_glyph(id, c);
 		assert(res);
 
-		glyph = font.char_set.find(c);
+		glyph = font->char_set.find(c);
 	}
 
 	return glyph->second;
