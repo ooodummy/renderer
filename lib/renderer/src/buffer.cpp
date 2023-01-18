@@ -316,7 +316,7 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 	//active_command.texture_size.y = static_cast<int>(rect.w);
 
 	vertex vertices[] = {
-		{rect.x,			  rect.y,		  col, 0.0f, 0.0f},
+		{ rect.x,			  rect.y,		  col, 0.0f, 0.0f},
 		{ rect.x + rect.z, rect.y,		   col, 1.0f, 0.0f},
 		{ rect.x,		  rect.y + rect.w, col, 0.0f, 1.0f},
 		{ rect.x + rect.z, rect.y + rect.w, col, 1.0f, 1.0f}

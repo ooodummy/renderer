@@ -15,7 +15,7 @@ namespace carbon {
 		void set_label(const std::string& label);
 		const std::string& get_label() const;
 
-	private:
+	protected:
 		std::string label_;
 	};
 

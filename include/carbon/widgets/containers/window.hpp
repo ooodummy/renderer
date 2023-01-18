@@ -39,7 +39,10 @@ namespace carbon {
 			// Title bar
 			const auto title_bar_bounds = title_bar_->get_bounds();
 			buf->draw_rect_filled(title_bar_bounds, {36, 34, 37});
-			buf->draw_text(glm::vec2{title_bar_bounds.x + 4.0f, title_bar_bounds.y + 4.0f}, "Carbon", {255, 255, 255});
+			buf->draw_text<std::string>(glm::vec2{title_bar_bounds.x + 6.0f, title_bar_bounds.y + title_bar_bounds.w
+																								   / 2.0f},
+						   "Carbon", {255, 255, 255},
+						   renderer::text_align_center);
 		}
 
 	private:

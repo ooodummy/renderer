@@ -7,6 +7,7 @@
 #include "geometry/bezier.hpp"
 #include "geometry/shapes/polyline.hpp"
 #include "geometry/shapes/shape.hpp"
+#include "renderer/d3d11/renderer.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -35,7 +36,7 @@ namespace renderer {
 
 	class buffer {
 	public:
-		explicit buffer(base_renderer* renderer) : renderer_(renderer) {}
+		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {}
 		~buffer() = default;
 
 		void clear();
@@ -126,31 +127,36 @@ namespace renderer {
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
-			draw_circle_filled(pos, 2.0f, COLOR_YELLOW);
+			//draw_circle_filled(pos, 2.0f, COLOR_YELLOW);
 
-			//auto font = renderer_->get_font(font_id);
-			//auto test = font->face->size->metrics.ascender;
-
-			// TODO: Handle alignment
-			//const auto size = renderer_->get_text_size(text, font_id);
+			const auto size = dx11_->get_text_size(text, font_id);
+			const auto font = dx11_->get_font(font_id);
+			const auto height = (font->face->size->metrics.ascender - font->face->size->metrics.descender) >> 6;
 
 			switch (h_align) {
 				case text_align_top:
+					pos.y += height;
 					break;
 				case text_align_center:
-			//		pos.y += size.y / 2.0f;
+					pos.y += size.y / 2.0f;
 					break;
 				case text_align_bottom:
 					break;
 			}
 
-			//pos.y += size.y;
+			switch (v_align) {
+				case text_align_left:
+					break;
+				case text_align_center:
+					pos.x -= size.x / 2.0f;
+					break;
+				case text_align_right:
+					pos.x -= size.x;
+					break;
+			}
 
 			for (auto c : text) {
-				if (/*!isprint(c) ||*/ c == ' ')
-					continue;
-
-				auto glyph = renderer_->get_font_glyph(font_id, c);
+				auto glyph = dx11_->get_font_glyph(font_id, c);
 				draw_glyph(pos, glyph, col);
 
 				pos.x += static_cast<float>(glyph.advance) / 64.0f;
@@ -181,7 +187,7 @@ namespace renderer {
 		const std::vector<batch>& get_batches();
 
 	private:
-		base_renderer* renderer_;
+		d3d11_renderer* dx11_;
 
 		// Should we be using vector?
 		std::vector<vertex> vertices_;

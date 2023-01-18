@@ -11,6 +11,34 @@
 
 renderer::d3d11_renderer::d3d11_renderer(renderer::win32_window* window) : d3d11_pipeline(window) {}
 
+size_t renderer::d3d11_renderer::register_buffer(size_t priority) {
+	std::unique_lock lock_guard(buffer_list_mutex_);
+
+	const auto id = buffers_.size();
+	buffers_.emplace_back(buffer_node{ std::make_unique<buffer>(this), std::make_unique<buffer>(this) });
+
+	return id;
+}
+
+renderer::buffer* renderer::d3d11_renderer::get_working_buffer(const size_t id) {
+	std::shared_lock lock_guard(buffer_list_mutex_);
+
+	assert(id < buffers_.size());
+
+	return buffers_[id].working.get();
+}
+
+void renderer::d3d11_renderer::swap_buffers(size_t id) {
+	std::unique_lock lock_guard(buffer_list_mutex_);
+
+	assert(id < buffers_.size());
+
+	auto& buf = buffers_[id];
+
+	buf.active.swap(buf.working);
+	buf.working->clear();
+}
+
 void renderer::d3d11_renderer::draw() {
 	begin();
 	populate();
@@ -264,6 +292,9 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	glyph.bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
 	glyph.advance = font->face->glyph->advance.x;
 
+	if (c == ' ')
+		return true;
+
 	auto* data = new uint8_t[target_bitmap.rows * target_bitmap.pitch];
 	memcpy(data, target_bitmap.buffer, target_bitmap.rows * target_bitmap.pitch);
 
@@ -334,43 +365,4 @@ renderer::texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
 	texture.srv = D3DX*/
 
 	return texture;
-}
-
-glm::vec2 renderer::d3d11_renderer::get_text_size(const std::string& text, size_t id) {
-	glm::vec2 size{};
-
-	for (char c : text) {
-		if (!isprint(c) || c == ' ')
-			continue;
-
-		auto glyph = get_font_glyph(id, c);
-
-		size.x += static_cast<float>(glyph.advance) / 64.0f;
-		size.y = std::max(size.y, static_cast<float>(glyph.size.y));
-	}
-
-	return size;
-}
-
-glm::vec4 renderer::d3d11_renderer::get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) {
-	glm::vec4 bounds{};
-	bounds.y = pos.y;
-
-	bool set_bearing = false;
-
-	for (char c : text) {
-		if (!isprint(c) || c == ' ')
-			continue;
-
-		auto glyph = get_font_glyph(id, c);
-
-		if (!set_bearing) {
-			bounds.x = pos.x + glyph.bearing.x;
-		}
-
-		bounds.z += static_cast<float>(glyph.advance) / 64.0f;
-		bounds.w = std::max(bounds.w, static_cast<float>(glyph.size.y));
-	}
-
-	return bounds;
 }

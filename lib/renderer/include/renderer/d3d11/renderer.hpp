@@ -20,6 +20,11 @@ namespace renderer {
 	public:
 		explicit d3d11_renderer(win32_window* window);
 
+		size_t register_buffer(size_t priority = 0);
+		buffer* get_working_buffer(size_t id);
+
+		void swap_buffers(size_t id);
+
 		size_t register_font(std::string family, int size, int weight, bool anti_aliased) override;
 
 		font* get_font(size_t id) override;
@@ -27,8 +32,19 @@ namespace renderer {
 
 		texture2d create_texture(LPCTSTR file);
 
-		glm::vec2 get_text_size(const std::string& text, size_t id) override;
-		glm::vec4 get_text_bounds(glm::vec2 pos, const std::string& text, size_t id) override;
+		template <typename T>
+		glm::vec2 get_text_size(const T& text, size_t font_id = 0) {
+			glm::vec2 size{};
+
+			for (auto c : text) {
+				auto glyph = get_font_glyph(font_id, c);
+
+				size.x += static_cast<float>(glyph.advance) / 64.0f;
+				size.y = std::max(size.y, static_cast<float>(glyph.size.y));
+			}
+
+			return size;
+		}
 
 		bool init();
 		bool release();
