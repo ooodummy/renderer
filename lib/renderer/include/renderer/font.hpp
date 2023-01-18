@@ -46,6 +46,7 @@ namespace renderer {
 
 		int size;
 		int weight;
+		int height;
 
 		bool anti_aliased;
 

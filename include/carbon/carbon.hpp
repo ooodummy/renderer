@@ -7,7 +7,8 @@
 
 #include "widgets/controls/button.hpp"
 
-#include "widgets/label.hpp"
+#include "widgets/input/label.hpp"
+
 #include "widgets/widget.hpp"
 
 #include "globals.hpp"
@@ -20,6 +21,8 @@ namespace carbon {
 	extern panel window_panel;
 
 	void init();
+	void begin();
+	void end();
 }// namespace carbon
 
 #endif

@@ -1,15 +1,19 @@
-#ifndef _CARBON_INPUT_HPP_
-#define _CARBON_INPUT_HPP_
+#ifndef CARBON_INPUT_HPP
+#define CARBON_INPUT_HPP
 
 #define NOMINMAX
 #include <Windows.h>
-#include <glm/vec2.hpp>
+#include <glm/glm.hpp>
 
 namespace carbon {
-	extern bool mouse_pressed;
-	extern bool mouse_held;
+	void input_end();
 
-	extern glm::vec2 mouse_pos;
+	[[nodiscard]] glm::vec2 get_mouse_pos();
+	[[nodiscard]] bool is_mouse_over(const glm::vec4& bounds);
+
+	[[nodiscard]] bool is_key_down(uint32_t key);
+	[[nodiscard]] bool is_key_pressed(uint32_t key);
+	[[nodiscard]] bool is_key_released(uint32_t key);
 
 	LRESULT impl_win32_winproc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 }// namespace carbon

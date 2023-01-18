@@ -6,6 +6,9 @@
 namespace carbon {
 	class tab_bar : public widget_flex_container {
 	public:
+		void decorate() override {
+
+		}
 	};
 }// namespace carbon
 

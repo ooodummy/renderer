@@ -131,11 +131,10 @@ namespace renderer {
 
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
-			const auto height = (font->face->size->metrics.ascender - font->face->size->metrics.descender) >> 6;
 
 			switch (h_align) {
 				case text_align_top:
-					pos.y += height;
+					pos.y += font->height;
 					break;
 				case text_align_center:
 					pos.y += size.y / 2.0f;

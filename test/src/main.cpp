@@ -8,10 +8,6 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <fmt/core.h>
 
-std::unique_ptr<renderer::win32_window> window;
-std::unique_ptr<renderer::d3d11_renderer> dx11;
-size_t segoe;
-
 renderer::sync_manager updated_draw;
 renderer::sync_manager updated_buf;
 
@@ -24,7 +20,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			close_requested = true;
             return 0;
         case WM_SIZE:
-            window->set_size({LOWORD(lParam), HIWORD(lParam)});
+            carbon::application->set_size({LOWORD(lParam), HIWORD(lParam)});
             update_size = true;
             break;
         default:
@@ -61,9 +57,11 @@ void draw_test_primitives(renderer::buffer* buf) {
 	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
 	polyline.set_color(rainbow);
 
+	auto mouse = carbon::get_mouse_pos();
+
 	const glm::vec4 scissor_bounds = {
-		static_cast<float>(carbon::mouse_pos.x) - 50.0f,
-		static_cast<float>(carbon::mouse_pos.y) - 50.0f,
+		static_cast<float>(mouse.x) - 50.0f,
+		static_cast<float>(mouse.y) - 50.0f,
 		100.0f,
 		100.0f};
 
@@ -135,7 +133,7 @@ void draw_test_bezier(renderer::buffer* buf) {
 
 	static renderer::bezier_curve<3> bezier;
 	bezier[0] = {200.0f, 300.0f};
-	bezier[1] = carbon::mouse_pos;
+	bezier[1] = carbon::get_mouse_pos();
 	bezier[2] = {400.0f, 400.0f};
 	bezier[3] = {500.0f, 200.0f};
 
@@ -208,29 +206,48 @@ void draw_test_flex(renderer::buffer* buf) {
 		init = true;
 	}
 
-	flex_container->set_size(carbon::mouse_pos - flex_container->get_pos());
+	flex_container->set_size(carbon::get_mouse_pos() - flex_container->get_pos());
 	flex_container->compute();
 	flex_container->draw();
 }
 
 void draw_test_text(renderer::buffer* buf) {
-	buf->draw_text<std::u32string>({100.0f, 100.0f}, U"😎 \u26F0 👻 😈 🙊 🚀", segoe);
+	buf->draw_text<std::u32string>({100.0f, 100.0f}, U"😎 \u26F0 👻 😈 🙊 🚀", carbon::segoe_font);
 
 	const std::string text_string = "Hello World!";
-	const auto text_size = dx11->get_text_size(text_string, segoe);
+	const auto text_size = carbon::dx11->get_text_size(text_string, carbon::segoe_font);
 
-	buf->draw_text<std::string>({250.0f, 250.0f}, text_string, segoe, COLOR_WHITE);
+	buf->draw_text<std::string>({250.0f, 250.0f}, text_string, carbon::segoe_font, COLOR_WHITE);
 	buf->draw_rect({250.0f, 250.0f, text_size}, COLOR_RED);
 }
 
 void draw_test_ui(renderer::buffer* buf) {
 	static auto menu = std::make_unique<carbon::window>();
+	static bool init = false;
+	static carbon::label<std::string>* label = nullptr;
 
-	menu->set_pos({50.0f, 50.0f});
-	menu->set_size({580.0f, 500.0f});
+	if (!init) {
+		label = menu->content->add_child<carbon::label<std::string>>("Test321", carbon::segoe_font, COLOR_WHITE);
+		menu->content->add_child<carbon::label<std::string>>("Test123", carbon::segoe_font, COLOR_WHITE);
+		menu->set_pos({50.0f, 50.0f});
+		menu->set_size({580.0f, 500.0f});
+		init = true;
+	}
 
+	/*static int i = 0;
+	i++;
+	std::string test = std::to_string(i);
+	label->set_label(test);*/
+
+	menu->input();
 	menu->compute();
 	menu->draw();
+}
+
+void draw_input_data(renderer::buffer* buf) {
+	const auto mouse = carbon::get_mouse_pos();
+	buf->draw_text<std::string>({25.0f, 25.0f}, fmt::format("Mouse position: ({}, {})", mouse.x, mouse.y), carbon::segoe_font);
+	buf->draw_text<std::string>({25.0f, 50.0f}, fmt::format("Mouse state: {} {}", carbon::is_key_pressed(VK_LBUTTON), carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
 }
 
 #include "force_engine/forces/collide.hpp"
@@ -239,7 +256,7 @@ void draw_test_ui(renderer::buffer* buf) {
 #include "force_engine/simulation.hpp"
 
 void draw_force_simulation(renderer::buffer* buf) {
-	static glm::vec2 simulation_offset = { window->get_size().x / 2.0f, window->get_size().y / 2.0f };
+	static glm::vec2 simulation_offset = { carbon::application->get_size().x / 2.0f, carbon::application->get_size().y / 2.0f };
 	static auto simulation = std::make_unique<engine::simulation>();
 	static engine::force_link* simulation_links = nullptr;
 	static engine::force_collide* simulation_colliders = nullptr;
@@ -301,6 +318,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	engine::quadtree quadtree(simulation->get_nodes());
 	draw_quad(quadtree, draw_quad);
 
+	const auto mouse = carbon::get_mouse_pos();
 	std::vector<engine::node*> hovered_nodes;
 	engine::node* closest = nullptr;
 	float closest_distance = std::numeric_limits<float>::infinity();
@@ -308,7 +326,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	for (auto& node : simulation->get_nodes()) {
 		const auto draw_position = node->position + simulation_offset;
 
-		const  auto distance = glm::distance(carbon::mouse_pos, draw_position);
+		const  auto distance = glm::distance(mouse, draw_position);
 		if (distance < 30.0f) {
 			if (distance < closest_distance) {
 				closest_distance = distance;
@@ -323,14 +341,14 @@ void draw_force_simulation(renderer::buffer* buf) {
 	if (GetAsyncKeyState(VK_LBUTTON)) {
 		if (held) {
 			closest = held;
-			held->position = carbon::mouse_pos - simulation_offset;
+			held->position = mouse - simulation_offset;
 		}
 		else if (closest) {
 			held = closest;
 		}
 
 		if (closest) {
-			closest->position = carbon::mouse_pos - simulation_offset;
+			closest->position = mouse - simulation_offset;
 		}
 	}
 	else {
@@ -340,7 +358,7 @@ void draw_force_simulation(renderer::buffer* buf) {
 	for (auto& node : hovered_nodes) {
 		const auto draw_position = node->position + simulation_offset;
 
-		buf->draw_line(carbon::mouse_pos, draw_position, COLOR_RED);
+		buf->draw_line(mouse, draw_position, COLOR_RED);
 	}
 
 	for (auto& link : simulation_links->get_links()) {
@@ -357,17 +375,18 @@ void draw_force_simulation(renderer::buffer* buf) {
 		buf->draw_circle_filled(draw_position, node->radius - 8.0f, COLOR_WHITE, 12);
 	}
 
-	buf->draw_circle(carbon::mouse_pos, 30.0f, COLOR_RED);
+	buf->draw_circle(mouse, 30.0f, COLOR_RED);
 }
 
 void draw_thread() {
-    const auto id = dx11->register_buffer();
+    const auto id = carbon::dx11->register_buffer();
 
     while (!close_requested) {
 		updated_draw.wait();
 
-		const auto buf = dx11->get_working_buffer(id);
-		carbon::buf = buf;
+		carbon::buf = carbon::dx11->get_working_buffer(id);
+
+		carbon::begin();
 
 		//draw_test_primitives(buf);
 		//draw_test_bezier(buf);
@@ -375,31 +394,34 @@ void draw_thread() {
 		//draw_test_window(buf);
 		//draw_force_simulation(buf);
 		//draw_test_text(buf);
-		draw_test_ui(buf);
+		draw_test_ui(carbon::buf);
+		draw_input_data(carbon::buf);
 
-        dx11->swap_buffers(id);
+		carbon::end();
+
+		carbon::dx11->swap_buffers(id);
         updated_buf.notify();
     }
 }
 
 // TODO: Mutex for textures
 int main() {
-    window = std::make_unique<renderer::win32_window>();
-    window->set_title("D3D11 Renderer");
-    window->set_size({720, 720});
+    carbon::application = std::make_unique<renderer::win32_window>();
+	carbon::application->set_title("D3D11 Renderer");
+	carbon::application->set_size({720, 720});
 
     // Center window position
     {
         RECT client;
         if (GetClientRect(GetDesktopWindow(), &client)) {
-            const auto size = window->get_size();
-            window->set_pos({client.right / 2 - size.x / 2, client.bottom / 2 - size.y / 2});
+            const auto size = carbon::application->get_size();
+			carbon::application->set_pos({client.right / 2 - size.x / 2, client.bottom / 2 - size.y / 2});
         }
     }
 
-    window->set_proc(WndProc);
+	carbon::application->set_proc(WndProc);
 
-    if (!window->create()) {
+    if (!carbon::application->create()) {
         MessageBoxA(nullptr, "Failed to create window.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
@@ -409,23 +431,23 @@ int main() {
         DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
     }*/
 
-    dx11 = std::make_unique<renderer::d3d11_renderer>(window.get());
+    carbon::dx11 = std::make_unique<renderer::d3d11_renderer>(carbon::application.get());
 
-    if (!dx11->init()) {
+    if (!carbon::dx11->init()) {
         MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
 
-    dx11->set_vsync(false);
-	dx11->set_clear_color({88, 122, 202});
+	carbon::dx11->set_vsync(false);
+	carbon::dx11->set_clear_color({88, 122, 202});
 
-    segoe = dx11->register_font("Segoe UI Emoji", 10, FW_THIN, true);
+    carbon::segoe_font = carbon::dx11->register_font("Segoe UI Emoji", 10, FW_THIN, true);
 
 	carbon::init();
 
     std::thread draw(draw_thread);
 
-	window->set_visibility(true);
+	carbon::application->set_visibility(true);
 
 	MSG msg{};
     while (!close_requested && msg.message != WM_QUIT) {
@@ -434,19 +456,19 @@ int main() {
             DispatchMessage(&msg);
         }
 
-		if (msg.message == WM_NULL && !IsWindow(window->get_hwnd())) {
+		if (msg.message == WM_NULL && !IsWindow(carbon::application->get_hwnd())) {
 			close_requested = true;
 			break;
 		}
 
         if (update_size) {
-			dx11->resize();
-			dx11->reset();
+			carbon::dx11->resize();
+			carbon::dx11->reset();
 
             update_size = false;
         }
 
-        dx11->draw();
+		carbon::dx11->draw();
 
 		updated_draw.notify();
         updated_buf.wait();
@@ -454,8 +476,8 @@ int main() {
 
     draw.join();
 
-	dx11->release();
-    window->destroy();
+	carbon::dx11->release();
+	carbon::application->destroy();
 
     return 0;
 }

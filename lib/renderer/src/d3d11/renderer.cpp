@@ -57,6 +57,28 @@ size_t renderer::d3d11_renderer::register_font(std::string family, int size, int
 	const auto id = fonts_.size();
 	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased));
 
+	auto& font = fonts_.back();
+
+	auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
+	if (error == FT_Err_Unknown_File_Format) {
+		MessageBoxA(nullptr, "Error", "The font file could be opened and read, but it appears that it's font format is unsupported.", MB_ICONERROR | MB_OK);
+		assert(false);
+	}
+	else if (error != FT_Err_Ok) {
+		MessageBoxA(nullptr, "Error", "The font file could not be opened or read, or that it is broken.", MB_ICONERROR | MB_OK);
+		assert(false);
+	}
+
+	const auto dpi = window_->get_dpi();
+
+	if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
+		assert(false);
+
+	if (FT_Select_Charmap(font->face, FT_ENCODING_UNICODE) != FT_Err_Ok)
+		assert(false);
+
+	font->height = (font->face->size->metrics.ascender - font->face->size->metrics.descender) >> 6;
+
 	return id;
 }
 
@@ -233,26 +255,7 @@ void renderer::d3d11_renderer::render_buffers() {
 // TODO: Font texture atlas
 bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
-
-	if (!font->face) {
-		auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
-		if (error == FT_Err_Unknown_File_Format) {
-			MessageBoxA(nullptr, "Error", "The font file could be opened and read, but it appears that it's font format is unsupported.", MB_ICONERROR | MB_OK);
-			return false;
-		}
-		else if (error != FT_Err_Ok) {
-			MessageBoxA(nullptr, "Error", "The font file could not be opened or read, or that it is broken.", MB_ICONERROR | MB_OK);
-			return false;
-		}
-
-		const auto dpi = window_->get_dpi();
-
-		if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
-			return false;
-
-		if (FT_Select_Charmap(font->face, FT_ENCODING_UNICODE) != FT_Err_Ok)
-			return false;
-	}
+	assert(font->face);
 
 	FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT;
 
@@ -314,8 +317,6 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	texture_desc.CPUAccessFlags = 0;
 	texture_desc.MiscFlags = 0;
-
-	//context_->ResolveSubresource(DstTexture, 0, MultisampledTexture, 0, MultisampledTexture.Format);
 
 	ID3D11Texture2D* texture;
 	auto hr = device_->CreateTexture2D(&texture_desc, &texture_data, &texture);

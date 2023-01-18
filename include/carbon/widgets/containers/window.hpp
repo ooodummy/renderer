@@ -25,8 +25,9 @@ namespace carbon {
 			tab_bar_ = container_->add_child<flex_container>();
 			tab_bar_->set_min_width(112.0f);
 
-			content_ = container_->add_child<flex_container>();
-			content_->set_flex(1.0f);
+			content = container_->add_child<flex_container>();
+			content->set_flow(flex_direction::column);
+			content->set_flex(1.0f);
 		}
 
 		void decorate() override {
@@ -45,12 +46,29 @@ namespace carbon {
 						   renderer::text_align_center);
 		}
 
+		bool dragging_ = false;
+		glm::vec2 last_mouse_pos_;
+		void handle_input() override {
+			if (!dragging_ && is_mouse_over(title_bar_->get_bounds()) && is_key_pressed(VK_LBUTTON)) {
+				last_mouse_pos_ = get_mouse_pos() - get_pos();
+				dragging_ = true;
+			}
+			else if (dragging_ && !is_key_down(VK_LBUTTON)) {
+				dragging_ = false;
+			}
+
+			if (dragging_) {
+				set_pos(get_mouse_pos() - last_mouse_pos_);
+			}
+		}
+
+		flex_container* content;
+
 	private:
 		flex_container* title_bar_;
 		flex_container* sub_tab_bar_;
 		flex_container* container_;
 		flex_container* tab_bar_;
-		flex_container* content_;
 	};
 }// namespace carbon
 
