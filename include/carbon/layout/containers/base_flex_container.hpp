@@ -1,25 +1,42 @@
-#ifndef _CARBON_LAYOUT_CONTAINERS_BASE_FLEX_CONTAINER_HPP_
-#define _CARBON_LAYOUT_CONTAINERS_BASE_FLEX_CONTAINER_HPP_
+#ifndef _CARBON_LAYOUT_CONTAINERS_BASE_CONTAINER_HPP_
+#define _CARBON_LAYOUT_CONTAINERS_BASE_CONTAINER_HPP_
 
-#include "base_container.hpp"
+#include "../item.hpp"
+
+#include <memory>
+#include <vector>
 
 namespace carbon {
-	class base_flex_container : public base_container {
+	class base_flex_container : public flex_item {
 	public:
 		friend class flex_container;
+
+		void draw() override;
+
+		template<typename T, typename... Args>
+		T* add_child(Args&&... args) {
+			children_.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
+			auto item = children_.back().get();
+			item->parent = this;
+			return reinterpret_cast<T*>(item);
+
+			//return reinterpret_cast<T*>(add_child(std::unique_ptr<T>(new T(std::forward<Args>(args)...))));
+		}
+
+		carbon::flex_item* add_child(std::unique_ptr<flex_item> item);
+		std::vector<std::unique_ptr<flex_item>>& get_children();
 
 		const flex_flow& get_flow() const;
 
 		void set_flow(flex_direction axis);
 		void set_flow(flex_wrap wrap);
 		void set_flow(flex_direction axis, flex_wrap wrap);
+
 		void set_justify_content(flex_justify_content justify_content);
 
 	protected:
 		void measure_contents() override;
 		void decorate() override;
-
-		flex_flow flow_;
 
 		axes_vec2 content_min_axes_;
 
@@ -32,6 +49,10 @@ namespace carbon {
 		float get_cross(glm::vec2 src) const;
 
 		void set_main(glm::vec2& dst, float src) const;
+
+		flex_flow flow_;
+
+		std::vector<std::unique_ptr<flex_item>> children_;
 	};
 }// namespace carbon
 

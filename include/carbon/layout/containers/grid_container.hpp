@@ -1,7 +1,7 @@
 #ifndef _CARBON_LAYOUT_CONTAINERS_GRID_HPP_
 #define _CARBON_LAYOUT_CONTAINERS_GRID_HPP_
 
-#include "base_container.hpp"
+#include "base_flex_container.hpp"
 
 namespace carbon {
 	enum grid_resize {
@@ -17,7 +17,7 @@ namespace carbon {
 	};
 
 	// TODO: Recode
-	class grid_container : public base_container {
+	/*class grid_container : public base_container {
 	public:
 		void compute() override;
 
@@ -30,7 +30,7 @@ namespace carbon {
 		grid_resize resize = grid_resize_none;
 
 		[[nodiscard]] glm::i16vec2 get_grid_start() const;
-	};
+	};*/
 }// namespace carbon
 
 #endif

@@ -1,6 +1,6 @@
 #include "carbon/layout/containers/grid_container.hpp"
 
-void carbon::grid_container::compute() {
+/*void carbon::grid_container::compute() {
 	compute_box_model();
 
 	const auto main_size_padded = size.x - padding_.get_padding().x * 2.0f;
@@ -23,7 +23,7 @@ void carbon::grid_container::compute() {
 		child->size_ = {
 			cell_size.x - margin.get_padding_width(),
 			cell_size.y - margin.get_padding_height()
-		};*/
+		};*//*
 
 		child->compute();
 
@@ -53,4 +53,4 @@ void carbon::grid_container::compute() {
 glm::i16vec2 carbon::grid_container::get_grid_start() const {
 	return { row_direction == direction_normal ? 0 : size.x - 1,
 			 column_direction == direction_normal ? 0 : size.y - 1 };
-}
+}*/

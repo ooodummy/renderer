@@ -4,6 +4,7 @@
 #include "widgets/containers/panel.hpp"
 #include "widgets/containers/tab_bar.hpp"
 #include "widgets/containers/window.hpp"
+#include "widgets/containers/groupbox.hpp"
 
 #include "widgets/controls/button.hpp"
 

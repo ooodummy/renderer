@@ -148,12 +148,17 @@ void renderer::d3d11_renderer::prepare_context() {
 void renderer::d3d11_renderer::populate() {
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
+	total_batches = 0;
+
 	size_t offset = 0;
 
 	// TODO: Buffer priority
 	// God bless http://www.rastertek.com/dx11tut11.html
 	for (const auto& [active, working] : buffers_) {
 		auto& batches = active->get_batches();
+
+		total_batches += batches.size();
+
 		for (auto& batch : batches) {
 			D3D11_MAPPED_SUBRESOURCE mapped_resource;
 			HRESULT hr = context_->Map(command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);

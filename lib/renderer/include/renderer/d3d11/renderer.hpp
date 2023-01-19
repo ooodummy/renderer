@@ -40,6 +40,8 @@ namespace renderer {
 				auto glyph = get_font_glyph(font_id, c);
 
 				size.x += static_cast<float>(glyph.advance) / 64.0f;
+				if (c == ' ')
+					continue;
 				size.y = std::max(size.y, static_cast<float>(glyph.size.y));
 			}
 
@@ -58,6 +60,8 @@ namespace renderer {
 
 		void set_vsync(bool vsync);
 		void set_clear_color(const color_rgba& color);
+
+		size_t total_batches = 0;
 
 	private:
 		void clear();

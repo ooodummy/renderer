@@ -225,6 +225,8 @@ void carbon::flex_container::compute() {
 	if (!dirty_)
 		return;
 
+	carbon::benchmark.flex_compute_calls++;
+
 	measure_min_content();
 	measure_lengths();
 	resolve_flexible_lengths();

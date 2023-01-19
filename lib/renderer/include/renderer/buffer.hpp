@@ -154,6 +154,11 @@ namespace renderer {
 					break;
 			}
 
+			pos.x = std::round(pos.x);
+			pos.y = std::round(pos.y);
+
+			//return;
+
 			for (auto c : text) {
 				auto glyph = dx11_->get_font_glyph(font_id, c);
 				draw_glyph(pos, glyph, col);

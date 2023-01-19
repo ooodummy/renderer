@@ -31,7 +31,7 @@ namespace carbon {
 		};
 	};
 
-	class widget_grid_container : public base_widget, public grid_container {
+	/*class widget_grid_container : public base_widget, public grid_container {
 	public:
 		void input() override {
 			handle_input();
@@ -39,7 +39,7 @@ namespace carbon {
 				child->input();
 			}
 		};
-	};
+	};*/
 
 	// Base widget class for windows, pages, groupboxes, pop outs, etc.
 	class widget_flex_container : public base_widget, public flex_container {

@@ -71,7 +71,7 @@ namespace carbon {
 
 		padded_box margin_;
 		padded_box border_;
-		padded_box padding_ ;
+		padded_box padding_;//{5.0f};
 	};
 }// namespace carbon
 

@@ -8,4 +8,6 @@ namespace carbon {
 	renderer::buffer* buf;
 
 	style_sheet theme;
+
+	benchmark_data benchmark;
 }// namespace carbon

@@ -26,7 +26,8 @@ namespace carbon {
 			tab_bar_->set_min_width(112.0f);
 
 			content = container_->add_child<flex_container>();
-			content->set_flow(flex_direction::column);
+			content->set_flow(flex_direction::row);
+			content->set_padding(5.0f);
 			content->set_flex(1.0f);
 		}
 
@@ -34,16 +35,22 @@ namespace carbon {
 			const auto bounds = get_bounds();
 
 			// Frame
-			buf->draw_rect_filled(bounds, {28, 26, 28});
-			buf->draw_rect(bounds + glm::vec4{-1.0f, -1.0f, 2.0f, 2.0f}, {233, 109, 109});
+			buf->draw_rect_filled(bounds, theme.body);
+			buf->draw_rect(bounds + glm::vec4{-1.0f, -1.0f, 2.0f, 2.0f}, theme.primary);
 
 			// Title bar
 			const auto title_bar_bounds = title_bar_->get_bounds();
+
 			buf->draw_rect_filled(title_bar_bounds, {36, 34, 37});
-			buf->draw_text<std::string>(glm::vec2{title_bar_bounds.x + 6.0f, title_bar_bounds.y + title_bar_bounds.w
+			buf->draw_text<std::u32string>(glm::vec2{title_bar_bounds.x + 6.0f, title_bar_bounds.y + title_bar_bounds.w
 																								   / 2.0f},
-						   "Carbon", {255, 255, 255},
+										   U"\U0001F95D KiwiCheats.net | Escape From Tarkov", COLOR_WHITE,
 						   renderer::text_align_center);
+
+			buf->draw_rect_filled(tab_bar_->get_bounds(), theme.border);
+			buf->draw_rect_filled(sub_tab_bar_->get_bounds(), theme.border);
+
+			//buf->draw_rect(content->get_bounds(), COLOR_YELLOW);
 		}
 
 		bool dragging_ = false;

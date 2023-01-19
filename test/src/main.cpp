@@ -226,10 +226,19 @@ void draw_test_ui(renderer::buffer* buf) {
 	static bool init = false;
 	static carbon::label<std::string>* label = nullptr;
 
-	if (!init) {
-		label = menu->content->add_child<carbon::label<std::string>>("Test321", carbon::segoe_font, COLOR_WHITE);
-		menu->content->add_child<carbon::label<std::string>>("Test123", carbon::segoe_font, COLOR_WHITE);
-		menu->set_pos({50.0f, 50.0f});
+	if (!init && carbon::is_key_down('F')) {
+		auto groupbox = std::make_unique<carbon::groupbox<std::string>>("Aimbot");
+		label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font,
+																	  COLOR_WHITE);
+		groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font, COLOR_WHITE);
+		menu->content->add_child(std::move(groupbox));
+
+		groupbox = std::make_unique<carbon::groupbox<std::string>>("Accuracy");
+		label = groupbox->body->add_child<carbon::label<std::string>>("Remove sway", carbon::segoe_font, COLOR_WHITE);
+		groupbox->body->add_child<carbon::label<std::string>>("Remove recoil", carbon::segoe_font, COLOR_WHITE);
+		menu->content->add_child(std::move(groupbox));
+
+		menu->set_pos({300.0f, 300.0f});
 		menu->set_size({580.0f, 500.0f});
 		init = true;
 	}
@@ -239,15 +248,35 @@ void draw_test_ui(renderer::buffer* buf) {
 	std::string test = std::to_string(i);
 	label->set_label(test);*/
 
+	//menu->set_size(carbon::get_mouse_pos() - menu->get_pos());
+
 	menu->input();
 	menu->compute();
 	menu->draw();
 }
 
 void draw_input_data(renderer::buffer* buf) {
+	static auto overlay_container = std::make_unique<carbon::flex_container>();
+	static bool init = false;
+
+	static carbon::label<std::string>* label = nullptr;
+
+	if (!init) {
+		init = true;
+
+		// Create labels
+	}
+
+	// Update labels
+
 	const auto mouse = carbon::get_mouse_pos();
-	buf->draw_text<std::string>({25.0f, 25.0f}, fmt::format("Mouse position: ({}, {})", mouse.x, mouse.y), carbon::segoe_font);
+	buf->draw_text<std::string>({25.0f, 25.0f}, fmt::format("Mouse position: ({}, {})", mouse.x, mouse.y),
+								  carbon::segoe_font);
 	buf->draw_text<std::string>({25.0f, 50.0f}, fmt::format("Mouse state: {} {}", carbon::is_key_pressed(VK_LBUTTON), carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
+	buf->draw_text<std::string>({25.0f, 75.0f}, fmt::format("Batches: {}", carbon::benchmark.draw_calls,
+															 carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
+	buf->draw_text<std::string>({25.0f, 100.0f}, fmt::format("Flex compute: {}", carbon::benchmark.flex_compute_calls,
+															  carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
 }
 
 #include "force_engine/forces/collide.hpp"
@@ -387,13 +416,13 @@ void draw_thread() {
 		carbon::buf = carbon::dx11->get_working_buffer(id);
 
 		carbon::begin();
+		carbon::benchmark.flex_compute_calls = 0;
 
-		//draw_test_primitives(buf);
-		//draw_test_bezier(buf);
-		//draw_test_flex(buf);
-		//draw_test_window(buf);
-		//draw_force_simulation(buf);
-		//draw_test_text(buf);
+		//draw_test_primitives(carbon::buf);
+		//draw_test_bezier(carbon::buf);
+		//draw_test_flex(carbon::buf);
+		//draw_force_simulation(carbon::buf);
+		//draw_test_text(carbon::buf);
 		draw_test_ui(carbon::buf);
 		draw_input_data(carbon::buf);
 
@@ -408,7 +437,7 @@ void draw_thread() {
 int main() {
     carbon::application = std::make_unique<renderer::win32_window>();
 	carbon::application->set_title("D3D11 Renderer");
-	carbon::application->set_size({720, 720});
+	carbon::application->set_size({1920, 1080});
 
     // Center window position
     {
@@ -439,7 +468,7 @@ int main() {
     }
 
 	carbon::dx11->set_vsync(false);
-	carbon::dx11->set_clear_color({88, 122, 202});
+	carbon::dx11->set_clear_color({88, 88, 88});//({88, 122, 202});
 
     carbon::segoe_font = carbon::dx11->register_font("Segoe UI Emoji", 10, FW_THIN, true);
 
@@ -469,6 +498,7 @@ int main() {
         }
 
 		carbon::dx11->draw();
+		carbon::benchmark.draw_calls = carbon::dx11->total_batches;
 
 		updated_draw.notify();
         updated_buf.wait();

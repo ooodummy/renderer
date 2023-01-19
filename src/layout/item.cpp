@@ -18,9 +18,9 @@ void carbon::flex_item::compute() {
 }
 
 void carbon::flex_item::decorate() {
-	/*buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
+	buf->draw_rect_filled(margin_.get_edge(), { 153, 93, 181 });
 	buf->draw_rect(margin_.get_edge(), { 24, 26, 27 });
-	buf->draw_rect_filled(content_, { 247, 148, 31 });*/
+	buf->draw_rect_filled(content_, { 247, 148, 31 });
 
 	// buf->draw_rect(margin_.get_edge(), COLOR_GREEN);
 	// buf->draw_rect(border_.get_edge(), COLOR_GREEN);
@@ -35,12 +35,12 @@ void carbon::flex_item::draw() {// NOLINT(misc-no-recursion)
 	decorate();
 }
 
-carbon::flex_item* carbon::flex_item::get_top_parent() const {
+carbon::base_flex_container* carbon::flex_item::get_top_parent() const {
 	if (!parent)
 		return nullptr;
 
-	for (auto item = parent;; item = item->parent) {
-		if (!item->parent)
+	for (auto item = parent;; item = reinterpret_cast<carbon::flex_item*>(item)->parent) {
+		if (!reinterpret_cast<carbon::flex_item*>(item)->parent)
 			return item;
 	}
 }
@@ -84,7 +84,7 @@ void carbon::flex_item::mark_dirty_and_propagate() {// NOLINT(misc-no-recursion)
 	dirty_ = true;
 
 	if (parent)
-		parent->mark_dirty_and_propagate();
+		reinterpret_cast<flex_item*>(parent)->mark_dirty_and_propagate();
 }
 
 const carbon::flex& carbon::flex_item::get_flex() const {

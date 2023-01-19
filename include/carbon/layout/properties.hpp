@@ -115,7 +115,8 @@ namespace carbon {
 		row,
 		row_reversed,
 		column,
-		column_reversed
+		column_reversed,
+		undefined
 	};
 
 	struct flex_flow {

@@ -18,8 +18,8 @@ namespace carbon {
 		virtual void draw();
 		virtual void input();
 
-		flex_item* get_top_parent() const;
-		flex_item* parent = nullptr;
+		base_flex_container* get_top_parent() const;
+		base_flex_container* parent = nullptr;
 
 		const flex& get_flex() const;
 
