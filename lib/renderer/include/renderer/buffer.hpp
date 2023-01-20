@@ -154,8 +154,8 @@ namespace renderer {
 					break;
 			}
 
-			pos.x = std::round(pos.x);
-			pos.y = std::round(pos.y);
+			//pos.x = std::round(pos.x);
+			//pos.y = std::round(pos.y);
 
 			//return;
 

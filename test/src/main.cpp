@@ -226,17 +226,20 @@ void draw_test_ui(renderer::buffer* buf) {
 	static bool init = false;
 	static carbon::label<std::string>* label = nullptr;
 
-	if (!init && carbon::is_key_down('F')) {
-		auto groupbox = std::make_unique<carbon::groupbox<std::string>>("Aimbot");
-		label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font,
-																	  COLOR_WHITE);
-		groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font, COLOR_WHITE);
-		menu->content->add_child(std::move(groupbox));
+	if (!init) {
+auto groupbox = menu->content->add_child<carbon::groupbox<std::string>>("Aimbot");
+label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font);
+groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font);
 
-		groupbox = std::make_unique<carbon::groupbox<std::string>>("Accuracy");
-		label = groupbox->body->add_child<carbon::label<std::string>>("Remove sway", carbon::segoe_font, COLOR_WHITE);
-		groupbox->body->add_child<carbon::label<std::string>>("Remove recoil", carbon::segoe_font, COLOR_WHITE);
-		menu->content->add_child(std::move(groupbox));
+/*auto groupbox = std::make_unique<carbon::groupbox<std::string>>("Aimbot");
+label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font);
+groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font);
+menu->content->add_child(std::move(groupbox));*/
+
+auto groupbox2 = std::make_unique<carbon::groupbox<std::string>>("Accuracy");
+groupbox2->body->add_child<carbon::label<std::string>>("Remove sway", carbon::segoe_font);
+groupbox2->body->add_child<carbon::label<std::string>>("Remove recoil", carbon::segoe_font);
+menu->content->add_child(std::move(groupbox2));
 
 		menu->set_pos({300.0f, 300.0f});
 		menu->set_size({580.0f, 500.0f});
