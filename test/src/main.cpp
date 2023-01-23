@@ -227,19 +227,19 @@ void draw_test_ui(renderer::buffer* buf) {
 	static carbon::label<std::string>* label = nullptr;
 
 	if (!init) {
-auto groupbox = menu->content->add_child<carbon::groupbox<std::string>>("Aimbot");
-label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font);
-groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font);
+		auto groupbox = menu->content->add_child<carbon::groupbox<std::string>>("Test");
+		label = groupbox->body->add_child<carbon::label<std::string>>("Label", carbon::segoe_font);
+		groupbox->body->add_child<carbon::label<std::string>>("Hi there", carbon::segoe_font);
 
-/*auto groupbox = std::make_unique<carbon::groupbox<std::string>>("Aimbot");
-label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font);
-groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font);
-menu->content->add_child(std::move(groupbox));*/
+		/*auto groupbox = std::make_unique<carbon::groupbox<std::string>>("Aimbot");
+		label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font);
+		groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font);
+		menu->content->add_child(std::move(groupbox));*/
 
-auto groupbox2 = std::make_unique<carbon::groupbox<std::string>>("Accuracy");
-groupbox2->body->add_child<carbon::label<std::string>>("Remove sway", carbon::segoe_font);
-groupbox2->body->add_child<carbon::label<std::string>>("Remove recoil", carbon::segoe_font);
-menu->content->add_child(std::move(groupbox2));
+		auto groupbox2 = std::make_unique<carbon::groupbox<std::string>>("Groupbox");
+		groupbox2->body->add_child<carbon::label<std::string>>("Whoa", carbon::segoe_font);
+		groupbox2->body->add_child<carbon::label<std::string>>("Framework", carbon::segoe_font);
+		menu->content->add_child(std::move(groupbox2));
 
 		menu->set_pos({300.0f, 300.0f});
 		menu->set_size({580.0f, 500.0f});
@@ -421,11 +421,11 @@ void draw_thread() {
 		carbon::begin();
 		carbon::benchmark.flex_compute_calls = 0;
 
-		//draw_test_primitives(carbon::buf);
-		//draw_test_bezier(carbon::buf);
-		//draw_test_flex(carbon::buf);
-		//draw_force_simulation(carbon::buf);
-		//draw_test_text(carbon::buf);
+		draw_test_primitives(carbon::buf);
+		draw_test_bezier(carbon::buf);
+		draw_test_flex(carbon::buf);
+		draw_force_simulation(carbon::buf);
+		draw_test_text(carbon::buf);
 		draw_test_ui(carbon::buf);
 		draw_input_data(carbon::buf);
 
