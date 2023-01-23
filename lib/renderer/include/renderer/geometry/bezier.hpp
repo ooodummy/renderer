@@ -4,11 +4,12 @@
 #include "../util/easing.hpp"
 
 #include <array>
-#include <glm/geometric.hpp>
 #include <vector>
 
+#include <glm/geometric.hpp>
+
 // TODO: Calculating the normal at a time point in a bezier curve seems to be the most expensive function in this
-// renderer
+//  codebase.
 
 // https://www.youtube.com/watch?v=aVwxzDHniEw
 namespace renderer {

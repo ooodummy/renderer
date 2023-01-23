@@ -1,9 +1,10 @@
 #ifndef RENDERER_D3D11_PIPELINE_HPP
 #define RENDERER_D3D11_PIPELINE_HPP
 
-#include <d3d11_1.h>
-#include <glm/mat4x4.hpp>
 #include <memory>
+
+#include <glm/mat4x4.hpp>
+#include <d3d11_1.h>
 
 namespace renderer {
 	template<typename T>
@@ -16,7 +17,7 @@ namespace renderer {
 
 	class win32_window;
 
-	// https://github.com/kevinmoran/BeginnerDirect3D11
+	// Used https://github.com/kevinmoran/BeginnerDirect3D11 as and example
 	class d3d11_pipeline {
 	public:
 		explicit d3d11_pipeline(win32_window* window);

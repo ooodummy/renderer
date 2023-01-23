@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include <glm/trigonometric.hpp>
+
 namespace renderer {
 	enum joint_type {
 		joint_miter,
@@ -43,8 +45,8 @@ namespace renderer {
 		line_segment center, edge1, edge2;
 	};
 
-	static constexpr float miter_min_angle = 0.349066;// ~20 degrees
-	static constexpr float round_min_angle = 0.174533;// ~10 degrees
+	static constexpr float miter_min_angle = glm::radians(20.0f);
+	static constexpr float round_min_angle = glm::radians(10.0f);
 
 	class polyline_shape : public shape {
 	public:

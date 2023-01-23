@@ -9,7 +9,7 @@
 #include <vector>
 
 // https://github.com/applesthepi/unnamedblocks/tree/master/ub_macchiato/include/macchiato/shapes
-// Create an object for every shape, so we can cache its vertices and then have options to translate it.
+// Create an object for every shape, so we can cache its vertices and then have options to translate it using a matrix.
 
 namespace renderer {
 	class shape {
@@ -24,7 +24,7 @@ namespace renderer {
 		bool needs_recalculate_ = true;
 
 		vertex* vertices_;
-		size_t vertex_count;
+		size_t vertex_count_;
 
 		D3D_PRIMITIVE_TOPOLOGY type_;
 		color_rgba col_;

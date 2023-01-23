@@ -179,10 +179,10 @@ void renderer::polyline_shape::recalculate_buffer() {
 		vertex -= fractional;
 	}*/
 
-	vertex_count = temp_vertices_.size();
+	vertex_count_ = temp_vertices_.size();
 	delete[] vertices_;
-	vertices_ = new vertex[vertex_count];
-	for (size_t i = 0; i < vertex_count; i++) {
+	vertices_ = new vertex[vertex_count_];
+	for (size_t i = 0; i < vertex_count_; i++) {
 		vertices_[i] = temp_vertices_[i];
 	}
 
@@ -332,7 +332,7 @@ void renderer::polyline_shape::set_color(color_rgba col) {
 
 	col_ = col;
 
-	for (size_t i = 0; i < vertex_count; i++) {
+	for (size_t i = 0; i < vertex_count_; i++) {
 		vertices_[i].col = col_;
 	}
 }

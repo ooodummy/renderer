@@ -22,6 +22,8 @@
 #define COLOR_PURPLE renderer::color_rgba(127, 0, 255)
 #define COLOR_MAGENTA renderer::color_rgba(255, 0, 255)
 
+// Basically every color format that I found that exist is added because I wanted to add it just because I can.
+
 namespace renderer {
 	class color_rgba;
 

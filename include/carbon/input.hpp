@@ -1,9 +1,10 @@
 #ifndef CARBON_INPUT_HPP
 #define CARBON_INPUT_HPP
 
-#define NOMINMAX
-#include <Windows.h>
 #include <glm/glm.hpp>
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 namespace carbon {
 	void input_end();

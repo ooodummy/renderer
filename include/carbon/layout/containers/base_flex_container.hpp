@@ -24,6 +24,7 @@ namespace carbon {
 		}
 
 		carbon::flex_item* add_child(std::unique_ptr<flex_item> item);
+
 		std::vector<std::unique_ptr<flex_item>>& get_children();
 
 		const flex_flow& get_flow() const;

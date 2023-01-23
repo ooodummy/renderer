@@ -4,6 +4,7 @@
 #include "window.hpp"
 
 // TODO: Avoid Windows.h and any platform independent things
+#define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
 

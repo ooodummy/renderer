@@ -92,7 +92,7 @@ void renderer::buffer::add_vertices(vertex (&vertices)[N],
 
 void renderer::buffer::add_shape(shape& shape) {
 	shape.check_recalculation();
-	add_vertices(shape.vertices_, shape.vertex_count, shape.type_, shape.srv_, shape.col_);
+	add_vertices(shape.vertices_, shape.vertex_count_, shape.type_, shape.srv_, shape.col_);
 }
 
 void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {

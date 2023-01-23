@@ -5,6 +5,10 @@
 #include "model.hpp"
 
 namespace carbon {
+	// TODO: Should be abstracted more to handle normal items to properly implement grids for simple layouts since
+	//  flexbox shouldn't always be used
+
+	// Represents a single item in the layout
 	class flex_item : public box_model {
 	public:
 		flex_item() = default;
@@ -54,7 +58,6 @@ namespace carbon {
 
 		flex flex_;
 
-		// Should we make min/max a vec2?
 		float min_width_ = 0.0f;
 		float max_width_ = FLT_MAX;
 

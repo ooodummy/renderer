@@ -1,8 +1,6 @@
 #ifndef CARBON_LAYOUT_AXES_HPP
 #define CARBON_LAYOUT_AXES_HPP
 
-// I do not like including all of this
-// maybe I should separate properties in categories like flow, flex
 #include "properties.hpp"
 
 #include <glm/vec2.hpp>

@@ -19,12 +19,12 @@ namespace carbon {
 
 	// TODO: Would doing this be appropriate?
 	enum flex_basis_size {
-		basis_width,
-		basis_percentage,
-		basis_auto,
-		basis_content,
-		basis_fit_content,// (available < max-content) ? max-content : ((available < min-content) ? min-content :
-						  // available)
+		basis_width,        // Use width as basis
+		basis_percentage,   // Use percentage of parent main axis size as basis
+		basis_auto,         // Use min size as basis
+		basis_content,      // Use content size as basis
+		basis_fit_content,  // (available < max-content) ? max-content : ((available < min-content) ? min-content :
+							// available)
 		basis_max_content,
 		basis_min_content
 	};
@@ -85,18 +85,18 @@ namespace carbon {
 	};
 
 	enum flex_wrap {
-		no_wrap,
-		wrap,// Wrap to new line when exceeds content main
+		no_wrap,        // Break flex items out of line if it cannot shrink to fit the space
+		wrap,           // Wrap to new line when exceeds content main
 		wrap_reverse
 	};
 
 	// Alignment on the cross axis
 	enum flex_align {
-		align_start,
-		align_end,
-		align_center,
-		align_stretch,// Fill cross axis
-		align_baseline
+		align_start,    // Align to start of cross axis
+		align_end,      // Align to end of cross axis
+		align_center,   // Align to center of cross axis
+		align_stretch,  // Fill cross axis
+		align_baseline  // Align to baseline of items inside
 	};
 
 	// Alignment on the main axis
@@ -116,7 +116,7 @@ namespace carbon {
 		row_reversed,
 		column,
 		column_reversed,
-		undefined
+		undefined // Only used internally
 	};
 
 	struct flex_flow {
