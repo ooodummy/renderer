@@ -1,5 +1,5 @@
-#ifndef _RENDERER_UTIL_UTIL_HPP_
-#define _RENDERER_UTIL_UTIL_HPP_
+#ifndef RENDERER_UTIL_UTIL_HPP
+#define RENDERER_UTIL_UTIL_HPP
 
 #include <condition_variable>
 

@@ -1,5 +1,5 @@
-#ifndef _RENDERER_D3D11_PIPELINE_HPP_
-#define _RENDERER_D3D11_PIPELINE_HPP_
+#ifndef RENDERER_D3D11_PIPELINE_HPP
+#define RENDERER_D3D11_PIPELINE_HPP
 
 #include <d3d11_1.h>
 #include <glm/mat4x4.hpp>

@@ -1,5 +1,5 @@
-#ifndef _RENDERER_UTIL_EASING_HPP_
-#define _RENDERER_UTIL_EASING_HPP_
+#ifndef RENDERER_UTIL_EASING_HPP
+#define RENDERER_UTIL_EASING_HPP
 
 #include <corecrt_math_defines.h>
 #include <glm/vec2.hpp>

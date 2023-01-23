@@ -1,5 +1,5 @@
-#ifndef _CARBON_LAYOUT_MODEL_HPP_
-#define _CARBON_LAYOUT_MODEL_HPP_
+#ifndef CARBON_LAYOUT_MODEL_HPP
+#define CARBON_LAYOUT_MODEL_HPP
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>

@@ -1,5 +1,5 @@
-#ifndef _CARBON_CARBON_HPP_
-#define _CARBON_CARBON_HPP_
+#ifndef CARBON_CARBON_HPP
+#define CARBON_CARBON_HPP
 
 #include "widgets/containers/panel.hpp"
 #include "widgets/containers/tab_bar.hpp"

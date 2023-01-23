@@ -1,5 +1,5 @@
-#ifndef _RENDERER_FONT_HPP_
-#define _RENDERER_FONT_HPP_
+#ifndef RENDERER_FONT_HPP
+#define RENDERER_FONT_HPP
 
 #include <d3d11.h>
 #include <freetype/freetype.h>

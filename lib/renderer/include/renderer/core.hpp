@@ -1,5 +1,5 @@
-#ifndef _RENDERER_CORE_HPP_
-#define _RENDERER_CORE_HPP_
+#ifndef RENDERER_CORE_HPP
+#define RENDERER_CORE_HPP
 
 #include "buffer.hpp"
 #include "color.hpp"

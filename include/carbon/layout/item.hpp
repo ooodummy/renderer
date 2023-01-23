@@ -1,5 +1,5 @@
-#ifndef _CARBON_LAYOUT_ITEM_HPP_
-#define _CARBON_LAYOUT_ITEM_HPP_
+#ifndef CARBON_LAYOUT_ITEM_HPP
+#define CARBON_LAYOUT_ITEM_HPP
 
 #include "axes.hpp"
 #include "model.hpp"

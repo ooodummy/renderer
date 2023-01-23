@@ -1,5 +1,5 @@
-#ifndef _RENDERER_UTIL_SMALL_VECTOR_HPP_
-#define _RENDERER_UTIL_SMALL_VECTOR_HPP_
+#ifndef RENDERER_UTIL_SMALL_VECTOR_HPP
+#define RENDERER_UTIL_SMALL_VECTOR_HPP
 
 namespace renderer {
 	// Probably bad code, but it works.

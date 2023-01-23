@@ -1,5 +1,5 @@
-#ifndef _RENDERER_D3D11_RENDERER_HPP_
-#define _RENDERER_D3D11_RENDERER_HPP_
+#ifndef RENDERER_D3D11_RENDERER_HPP
+#define RENDERER_D3D11_RENDERER_HPP
 
 #include "../color.hpp"
 #include "../font.hpp"

@@ -1,5 +1,5 @@
-#ifndef _CARBON_WIDGETS_WIDGET_HPP_
-#define _CARBON_WIDGETS_WIDGET_HPP_
+#ifndef CARBON_WIDGETS_WIDGET_HPP
+#define CARBON_WIDGETS_WIDGET_HPP
 
 #include "../globals.hpp"
 #include "../input.hpp"

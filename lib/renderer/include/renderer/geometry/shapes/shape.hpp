@@ -1,5 +1,5 @@
-#ifndef _RENDERER_GEOMETRY_SHAPES_SHAPE_HPP_
-#define _RENDERER_GEOMETRY_SHAPES_SHAPE_HPP_
+#ifndef RENDERER_GEOMETRY_SHAPES_SHAPE_HPP
+#define RENDERER_GEOMETRY_SHAPES_SHAPE_HPP
 
 #include "../../color.hpp"
 #include "../../vertex.hpp"

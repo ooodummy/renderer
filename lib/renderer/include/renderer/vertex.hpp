@@ -1,5 +1,5 @@
-#ifndef _RENDERER_TYPES_VERTEX_HPP_
-#define _RENDERER_TYPES_VERTEX_HPP_
+#ifndef RENDERER_TYPES_VERTEX_HPP
+#define RENDERER_TYPES_VERTEX_HPP
 
 #include "color.hpp"
 

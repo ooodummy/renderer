@@ -1,5 +1,5 @@
-#ifndef _CARBON_LAYOUT_AXES_HPP_
-#define _CARBON_LAYOUT_AXES_HPP_
+#ifndef CARBON_LAYOUT_AXES_HPP
+#define CARBON_LAYOUT_AXES_HPP
 
 // I do not like including all of this
 // maybe I should separate properties in categories like flow, flex

@@ -1,5 +1,5 @@
-#ifndef _RENDERER_BUFFER_HPP_
-#define _RENDERER_BUFFER_HPP_
+#ifndef RENDERER_BUFFER_HPP
+#define RENDERER_BUFFER_HPP
 
 #define NOMINMAX
 #include "d3d11/shaders/constant_buffers.hpp"
@@ -127,8 +127,6 @@ namespace renderer {
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
-			//draw_circle_filled(pos, 2.0f, COLOR_YELLOW);
-
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
 
@@ -153,11 +151,6 @@ namespace renderer {
 					pos.x -= size.x;
 					break;
 			}
-
-			//pos.x = std::round(pos.x);
-			//pos.y = std::round(pos.y);
-
-			//return;
 
 			for (auto c : text) {
 				auto glyph = dx11_->get_font_glyph(font_id, c);

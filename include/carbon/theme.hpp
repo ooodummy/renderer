@@ -1,5 +1,5 @@
-#ifndef _CARBON_THEME_HPP_
-#define _CARBON_THEME_HPP_
+#ifndef CARBON_THEME_HPP
+#define CARBON_THEME_HPP
 
 #include "renderer/color.hpp"
 

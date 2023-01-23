@@ -1,5 +1,5 @@
-#ifndef _RENDERER_COLOR_HPP_
-#define _RENDERER_COLOR_HPP_
+#ifndef RENDERER_COLOR_HPP
+#define RENDERER_COLOR_HPP
 
 #include "util/easing.hpp"
 
