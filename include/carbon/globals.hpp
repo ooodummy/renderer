@@ -2,6 +2,7 @@
 #define CARBON_GLOBAL_HPP
 
 #include "renderer/core.hpp"
+
 #include "theme.hpp"
 
 namespace carbon {

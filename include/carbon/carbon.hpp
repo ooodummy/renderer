@@ -10,12 +10,6 @@
 
 #include "widgets/input/label.hpp"
 
-#include "widgets/widget.hpp"
-
-#include "globals.hpp"
-#include "input.hpp"
-#include "theme.hpp"
-
 // https://pugixml.org/
 
 namespace carbon {

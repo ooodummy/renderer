@@ -1,8 +1,10 @@
 #ifndef RENDERER_UTIL_EASING_HPP
 #define RENDERER_UTIL_EASING_HPP
 
+#define NOMINMAX
 #include <corecrt_math_defines.h>
-#include <glm/vec2.hpp>
+
+#include <glm/glm.hpp>
 
 namespace renderer {
 	enum ease_type {

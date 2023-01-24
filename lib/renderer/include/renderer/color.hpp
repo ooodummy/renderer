@@ -1,9 +1,7 @@
 #ifndef RENDERER_COLOR_HPP
 #define RENDERER_COLOR_HPP
 
-#include "util/easing.hpp"
-
-#include <glm/vec4.hpp>
+#include "renderer/util/easing.hpp"
 
 #define COLOR_START renderer::color_hsva(0.0f, 1.0f, 1.0f)
 #define COLOR_END renderer::color_hsva(359.0f, 1.0f, 1.0f)

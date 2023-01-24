@@ -1,8 +1,7 @@
 #ifndef RENDERER_D3D11_SHADERS_CONSTANT_BUFFERS_HPP
 #define RENDERER_D3D11_SHADERS_CONSTANT_BUFFERS_HPP
 
-#include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
+#include <glm/glm.hpp>
 
 namespace renderer {
 	struct global_buffer {

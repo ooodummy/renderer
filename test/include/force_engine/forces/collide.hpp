@@ -1,9 +1,9 @@
 #ifndef FORCE_ENGINE_FORCES_COLLIDE_HPP
 #define FORCE_ENGINE_FORCES_COLLIDE_HPP
 
-#include <utility>
-
 #include "force.hpp"
+
+#include <utility>
 
 namespace engine {
 	class force_collide : public force {

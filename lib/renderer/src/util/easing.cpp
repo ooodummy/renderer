@@ -1,7 +1,5 @@
 #include "renderer/util/easing.hpp"
 
-#include <cmath>
-
 float renderer::ease(float a, float b, float t, float d, renderer::ease_type type) {
 	b -= a;
 

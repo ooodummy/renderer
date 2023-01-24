@@ -3,10 +3,7 @@
 
 #include "font.hpp"
 
-#include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
 #include <shared_mutex>
-#include <vector>
 
 namespace renderer {
 	class buffer;

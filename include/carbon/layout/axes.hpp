@@ -3,9 +3,6 @@
 
 #include "properties.hpp"
 
-#include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
-
 namespace carbon {
 	// Used to easily manage the current main and cross axis, and convert back into physical position/size
 	template<typename T, typename RetT>

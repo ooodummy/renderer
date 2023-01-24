@@ -1,7 +1,7 @@
 #ifndef CARBON_WIDGETS_CONTROLS_BUTTON_HPP
 #define CARBON_WIDGETS_CONTROLS_BUTTON_HPP
 
-#include "../widget.hpp"
+#include "carbon/widgets/widget.hpp"
 
 #include <functional>
 

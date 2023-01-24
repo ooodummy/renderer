@@ -1,12 +1,11 @@
 #ifndef CARBON_WIDGETS_WIDGET_HPP
 #define CARBON_WIDGETS_WIDGET_HPP
 
-#include "../globals.hpp"
-#include "../input.hpp"
-#include "../layout/containers/flex_container.hpp"
-#include "../layout/containers/grid_container.hpp"
+#include "carbon/layout/containers/flex_container.hpp"
+#include "carbon/layout/containers/grid_container.hpp"
 
-#include "renderer/core.hpp"
+#include "carbon/globals.hpp"
+#include "carbon/input.hpp"
 
 // https://developer.android.com/guide/topics/appwidgets/overview#types
 // https://developer.microsoft.com/en-us/fluentui#/controls/web

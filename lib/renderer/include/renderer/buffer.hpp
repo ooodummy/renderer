@@ -1,20 +1,15 @@
 #ifndef RENDERER_BUFFER_HPP
 #define RENDERER_BUFFER_HPP
 
+#include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/d3d11/renderer.hpp"
-#include "d3d11/shaders/constant_buffers.hpp"
 
-#include "geometry/shapes/polyline.hpp"
-#include "geometry/bezier.hpp"
+#include "renderer/geometry/shapes/polyline.hpp"
+#include "renderer/geometry/bezier.hpp"
 
-#include "font.hpp"
-
-#include <cmath>
-#include <memory>
 #include <stack>
 
 #include <glm/gtx/rotate_vector.hpp>
-#include <freetype/freetype.h>
 
 namespace renderer {
 	class batch {

@@ -1,7 +1,6 @@
 #ifndef CARBON_WIDGETS_CONTAINERS_GROUP_BOX_HPP
 #define CARBON_WIDGETS_CONTAINERS_GROUP_BOX_HPP
 
-#include "../widget.hpp"
 #include "carbon/widgets/input/label.hpp"
 
 namespace carbon {

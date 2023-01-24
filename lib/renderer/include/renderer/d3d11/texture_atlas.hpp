@@ -3,7 +3,6 @@
 
 #include "texture2d.hpp"
 
-#include <glm/vec4.hpp>
 #include <memory>
 #include <map>
 

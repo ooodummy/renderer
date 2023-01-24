@@ -1,7 +1,7 @@
 #ifndef RENDERER_IMAGE_NINE_SLICE_HPP
 #define RENDERER_IMAGE_NINE_SLICE_HPP
 
-#include "../d3d11/texture2d.hpp"
+#include "renderer/d3d11/texture2d.hpp"
 
 #include <cstdint>
 

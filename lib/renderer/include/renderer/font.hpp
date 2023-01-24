@@ -1,10 +1,12 @@
 #ifndef RENDERER_FONT_HPP
 #define RENDERER_FONT_HPP
 
+#include <unordered_map>
+
+#define NOMINMAX
 #include <d3d11.h>
 #include <freetype/freetype.h>
 #include <glm/vec2.hpp>
-#include <unordered_map>
 
 // https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
 

@@ -4,7 +4,6 @@
 #include "shape.hpp"
 
 #include <optional>
-#include <utility>
 #include <vector>
 
 #include <glm/trigonometric.hpp>

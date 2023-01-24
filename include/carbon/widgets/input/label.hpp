@@ -1,7 +1,7 @@
 #ifndef CARBON_WIDGETS_INPUT_LABEL_HPP
 #define CARBON_WIDGETS_INPUT_LABEL_HPP
 
-#include "../widget.hpp"
+#include "carbon/widgets/widget.hpp"
 
 namespace carbon {
 	template <typename T>

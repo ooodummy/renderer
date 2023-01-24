@@ -1,7 +1,7 @@
 #ifndef CARBON_LAYOUT_CONTAINERS_BASE_CONTAINER_HPP
 #define CARBON_LAYOUT_CONTAINERS_BASE_CONTAINER_HPP
 
-#include "../item.hpp"
+#include "carbon/layout/item.hpp"
 
 #include <memory>
 #include <vector>

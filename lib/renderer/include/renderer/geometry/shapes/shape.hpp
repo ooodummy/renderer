@@ -1,12 +1,9 @@
 #ifndef RENDERER_GEOMETRY_SHAPES_SHAPE_HPP
 #define RENDERER_GEOMETRY_SHAPES_SHAPE_HPP
 
-#include "../../color.hpp"
-#include "../../vertex.hpp"
+#include "renderer/vertex.hpp"
 
-#include <cstdint>
 #include <d3d11.h>
-#include <vector>
 
 // https://github.com/applesthepi/unnamedblocks/tree/master/ub_macchiato/include/macchiato/shapes
 // Create an object for every shape, so we can cache its vertices and then have options to translate it using a matrix.

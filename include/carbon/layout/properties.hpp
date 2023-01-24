@@ -1,7 +1,7 @@
 #ifndef CARBON_LAYOUT_PROPERTIES_HPP
 #define CARBON_LAYOUT_PROPERTIES_HPP
 
-#include <glm/vec2.hpp>
+#include <glm/glm.hpp>
 
 // https://www.w3.org/TR/css-flexbox-1
 // All the constructors for flex properties try to imitate the CSS flex shorthand due to the need to mark items as dirty
