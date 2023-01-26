@@ -5,7 +5,7 @@ void carbon::init() {
 }
 
 void carbon::begin() {
-
+	benchmark.flex_compute_calls = 0;
 }
 
 void carbon::end() {

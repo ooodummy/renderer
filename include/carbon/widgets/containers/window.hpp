@@ -44,7 +44,7 @@ namespace carbon {
 			buf->draw_rect_filled(title_bar_bounds, {36, 34, 37});
 			buf->draw_text<std::u32string>(glm::vec2{title_bar_bounds.x + 6.0f, title_bar_bounds.y + title_bar_bounds.w
 																								   / 2.0f},
-										   U"\U0001F95D Carbon UI Framework", COLOR_WHITE,
+										   U"\U0001F95D Window", COLOR_WHITE,
 						   renderer::text_align_center);
 
 			buf->draw_rect_filled(tab_bar_->get_bounds(), theme.border);
