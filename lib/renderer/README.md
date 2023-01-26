@@ -3,7 +3,7 @@ Simple 2D renderer using D3D11 and FreeType.
 
 ### Features
 - Primitive geometry  
-  <img src="https://i.imgur.com/rMzunEc.png" alt="drawing" width="300"/>
+  <img src="assets/primitives.png" width="300"/>
   - Point
   - Line
   - Rectangle (Outline, Filled, Rounded)
@@ -12,9 +12,9 @@ Simple 2D renderer using D3D11 and FreeType.
   - Polyline (with multiple cap and joint types to select from)
   - Textured quadrants
 - Bezier curves  
-  <img src="https://i.imgur.com/OAn4zN7.png" alt="drawing" width="300"/>
+  <img src="assets/bezier.png" width="300"/>
 - Text rendering  
-  <img src="https://i.imgur.com/xYY8YRa.png" alt="drawing" width="300"/>
+  <img src="assets/text.png" width="300"/>
   - Supports all string types such as string, u32string, wstring
   - Colored glyph support
 - Command buffer options
