@@ -12,7 +12,7 @@ Simple 2D renderer using D3D11 and FreeType.
   - Polyline (with multiple cap and joint types to select from)
   - Textured quadrants
 - Bezier curves  
-  <img src="assets/bezier.png" width="300"/>
+  <img src="assets/bezier.gif" width="300"/>
 - Text rendering  
   <img src="assets/text.png" width="300"/>
   - Supports all string types such as string, u32string, wstring
