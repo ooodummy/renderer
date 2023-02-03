@@ -1,4 +1,3 @@
-#include <carbon/carbon.hpp>
 #include <renderer/core.hpp>
 
 #include <dwmapi.h>
@@ -6,6 +5,9 @@
 
 #include <glm/gtx/rotate_vector.hpp>
 #include <fmt/core.h>
+
+std::unique_ptr<renderer::win32_window> application;
+std::unique_ptr<renderer::d3d11_renderer> dx11;
 
 renderer::sync_manager updated_draw;
 renderer::sync_manager updated_buf;
@@ -22,15 +24,12 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			close_requested = true;
             return 0;
         case WM_SIZE:
-            carbon::application->set_size({LOWORD(lParam), HIWORD(lParam)});
+            application->set_size({LOWORD(lParam), HIWORD(lParam)});
             update_size = true;
             break;
         default:
             break;
     }
-
-	if (carbon::impl_win32_winproc_handler(hWnd, msg, wParam, lParam))
-		return 1;
 
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
@@ -109,54 +108,6 @@ void draw_test_primitives(renderer::buffer* buf) {
 	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
 	polyline.set_color(rainbow);
 
-	auto mouse = carbon::get_mouse_pos();
-
-	/*const glm::vec4 scissor_bounds = {
-		static_cast<float>(mouse.x) - 50.0f,
-		static_cast<float>(mouse.y) - 50.0f,
-		100.0f,
-		100.0f};
-
-	buf->push_key(COLOR_RED);
-
-	{
-		glm::vec2 cube_offset = {50.0f, 50.0f};
-		const auto cube_size = 20.0f;
-		const auto cube_half = cube_size / 2.0f;
-		const auto cube_double = cube_size * 2.0f;
-		const auto cube_space = cube_size * 2.5f;
-
-		buf->draw_rect_filled({cube_offset, cube_size, cube_size}, COLOR_RED);
-
-		buf->push_scissor(scissor_bounds);
-		buf->draw_rect_filled({cube_offset + glm::vec2(cube_double, cube_half), cube_size, cube_size}, COLOR_BLUE);
-		buf->pop_scissor();
-
-		buf->draw_rect_filled({cube_offset + glm::vec2(cube_half, cube_double), cube_size, cube_size}, COLOR_GREEN);
-		buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
-	}
-
-	buf->pop_key();*/
-
-	// TODO: Fix circle polyline
-	//buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
-	//buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
-
-	//buf->push_scissor(scissor_bounds, true);
-
-	//buf->add_shape(polyline);
-
-	//buf->pop_scissor();
-
-	//const std::string test_string = "Hello World!";
-	//buf->draw_text({250.0f, 250.0f}, test_string, segoe);
-	//buf->draw_rect(dx11->get_text_bounds({250.0f, 250.0f}, test_string, segoe), COLOR_YELLOW);
-
-	//buf->draw_rect(scissor_bounds, COLOR_WHITE);
-
-	//buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
-	//buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
-
 	// Testing arc performance
 	buf->draw_line({200.0f, 200.0f}, {300.0f, 300.0f}, COLOR_WHITE, thickness);
 	buf->draw_rect({350.0f, 200.0f, 100.0f, 100.0f}, COLOR_RED, thickness);
@@ -169,376 +120,41 @@ void draw_test_primitives(renderer::buffer* buf) {
 				  true);
 	buf->draw_circle({550.0f, 400.0f}, 50.0f, COLOR_WHITE, thickness, 32);
 	buf->draw_circle_filled({700.0f, 400.0f}, 50.0f, COLOR_RED, 32);
-
-	//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW, 15.0f);
-	//buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
-	//buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
-	//buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
-
-	//D3DX11CreateShaderResourceViewFromFile(dx11->, L"braynzar.jpg",NULL, NULL, &CubesTexture, NULL );
-
-	/*static std::vector<glm::vec2> points = {
-		{100.0f, 500.0f},
-		{100.0f, 100.0f},
-		{500.0f, 100.0f}
-	};
-
-	static auto polyline = renderer::polyline_shape(points, {255, 255, 255, 150}, 50.0f, renderer::joint_miter);
-	buf->add_shape(polyline);*/
-}
-
-void draw_test_bezier(renderer::buffer* buf) {
-	static renderer::timer timer;
-	if (timer.get_elapsed_duration() > std::chrono::seconds(1))
-		timer.reset();
-
-	const auto t = renderer::ease(0.0f, 1.0f, std::chrono::duration<float>(timer.get_elapsed_duration()).count(),
-								  renderer::ease_type::in_sine);
-
-	static renderer::bezier_curve<3> bezier;
-	bezier[0] = {200.0f, 300.0f};
-	bezier[1] = carbon::get_mouse_pos();
-	bezier[2] = {400.0f, 400.0f};
-	bezier[3] = {500.0f, 200.0f};
-
-	buf->draw_bezier_curve(bezier, COLOR_RED, 5.0f, renderer::cap_butt, 32);
-
-	const auto point = bezier.position_at(t);
-	const auto tangent = bezier.tangent_at(t);
-	const auto angle = atan2f(tangent.y, tangent.x);
-
-	buf->draw_line(point, glm::rotate(glm::vec2(60.0f, 0.0f), angle) + point, COLOR_GREEN);
-	buf->draw_circle_filled(point, 5.0f, COLOR_BLACK);
-
-	glm::vec2 prev{};
-	for (size_t i = 0; i < bezier.size(); i++) {
-		const auto& control_point = bezier[i];
-
-		buf->draw_circle_filled(control_point, 5.0f, {255, 255, 255, 100});
-
-		if (prev != glm::vec2{})
-			buf->draw_line(prev, control_point, COLOR_WHITE);
-
-		prev = control_point;
-	}
-}
-
-void draw_test_flex(renderer::buffer* buf) {
-	static bool init = false;
-	static auto flex_container = std::make_unique<carbon::flex_container>();
-
-	if (!init) {
-		flex_container->set_pos({50.0f, 50.0f});
-		//flex_container->set_justify_content(carbon::justify_center);
-		/*const auto item1 = flex_container->add_child<carbon::flex_item>();
-		item1->set_basis(25.0f, carbon::unit_pixel);
-		const auto item2 = flex_container->add_child<carbon::flex_item>();
-		item2->set_basis(50.0f, carbon::unit_pixel);
-		const auto item3 = flex_container->add_child<carbon::flex_item>();
-		item3->set_basis(50.0f, carbon::unit_pixel);*/
-		//const auto item4 = flex_container->add_child<carbon::flex_item>();
-		//item4->set_basis(125.0f, carbon::unit_pixel);
-
-		const auto container1 = flex_container->add_child<carbon::flex_container>();
-		container1->set_flex(1.0f);
-		container1->set_flow(carbon::column);
-		container1->set_max_width(300.0f);
-		const auto item3 = flex_container->add_child<carbon::flex_item>();
-		item3->set_flex(1.0f);
-		const auto container11 = container1->add_child<carbon::flex_container>();
-		container11->set_flex(1.0);
-		container11->set_min_width(50.0f);
-		container11->set_max_width(100.0f);
-		const auto item111 = container11->add_child<carbon::flex_item>();
-		item111->set_flex(1.0f);
-		const auto item112 = container11->add_child<carbon::flex_item>();
-		item112->set_flex(1.0f);
-		const auto item113 = container11->add_child<carbon::flex_item>();
-		item113->set_flex(1.0f);
-		const auto container12 = container1->add_child<carbon::flex_container>();
-		container12->set_flex(1.0f);
-		container12->set_flow(carbon::column);
-		const auto item121 = container12->add_child<carbon::flex_item>();
-		item121->set_flex(1.0f);
-		const auto item122 = container12->add_child<carbon::flex_item>();
-		item122->set_flex(1.0f);
-		container12->set_max_width(100.0f);
-		auto container2 = container1->add_child<carbon::flex_container>();
-		container2->set_flex(1.0f);
-		container2->set_min_width(150.0f);
-
-		init = true;
-	}
-
-	flex_container->set_size(carbon::get_mouse_pos() - flex_container->get_pos());
-	flex_container->compute();
-	flex_container->draw();
-}
-
-void draw_test_text(renderer::buffer* buf) {
-	buf->draw_text<std::u32string>({100.0f, 100.0f}, U"😎 \u26F0 👻 😈 🙊 🚀", carbon::segoe_font);
-
-	const std::string text_string = "Hello World!";
-	const auto text_size = carbon::dx11->get_text_size(text_string, carbon::segoe_font);
-
-	buf->draw_text<std::string>({250.0f, 250.0f}, text_string, carbon::segoe_font, COLOR_WHITE);
-	buf->draw_rect({250.0f, 250.0f, text_size}, COLOR_RED);
-}
-
-void draw_test_ui(renderer::buffer* buf) {
-	static auto menu = std::make_unique<carbon::window>();
-	static bool init = false;
-	static carbon::label<std::string>* label = nullptr;
-
-	if (!init) {
-		auto groupbox = menu->content->add_child<carbon::groupbox<std::string>>("Test");
-		label = groupbox->body->add_child<carbon::label<std::string>>("Label", carbon::segoe_font);
-		groupbox->body->add_child<carbon::label<std::string>>("Hi there", carbon::segoe_font);
-
-		/*auto groupbox = std::make_unique<carbon::groupbox<std::string>>("Aimbot");
-		label = groupbox->body->add_child<carbon::label<std::string>>("Aimbot enabled", carbon::segoe_font);
-		groupbox->body->add_child<carbon::label<std::string>>("Visibility check", carbon::segoe_font);
-		menu->content->add_child(std::move(groupbox));*/
-
-		auto groupbox2 = std::make_unique<carbon::groupbox<std::string>>("Groupbox");
-		groupbox2->body->add_child<carbon::label<std::string>>("Whoa", carbon::segoe_font);
-		groupbox2->body->add_child<carbon::label<std::string>>("Framework", carbon::segoe_font);
-		menu->content->add_child(std::move(groupbox2));
-
-		menu->set_pos({300.0f, 300.0f});
-		menu->set_size({580.0f, 500.0f});
-		init = true;
-	}
-
-	/*static int i = 0;
-	i++;
-	std::string test = std::to_string(i);
-	label->set_label(test);*/
-
-	menu->set_size(carbon::get_mouse_pos() - menu->get_pos());
-
-	menu->input();
-	menu->compute();
-	menu->draw();
-}
-
-void draw_input_data(renderer::buffer* buf) {
-	static auto overlay_container = std::make_unique<carbon::flex_container>();
-	static bool init = false;
-
-	static carbon::label<std::string>* label = nullptr;
-
-	if (!init) {
-		init = true;
-
-		// Create labels
-	}
-
-	// Update labels
-
-	static renderer::timer fps_timer;
-	static int pds = 0;
-	static int fps = 0;
-
-	populate_count++;
-
-	if (fps_timer.get_elapsed_duration() >= std::chrono::seconds(1)) {
-		fps_timer.reset();
-
-		pds = populate_count;
-		populate_count = 0;
-
-		fps = draw_count;
-		draw_count = 0;
-	}
-
-	buf->push_font(carbon::segoe_font);
-
-	const auto mouse = carbon::get_mouse_pos();
-	buf->draw_text<std::string>({25.0f, 25.0f}, fmt::format("PDS: {}", pds));
-	buf->draw_text<std::string>({25.0f, 45.0f}, fmt::format("FPS: {}", fps));
-	buf->draw_text<std::string>({25.0f, 65.0f}, fmt::format("Mouse position: ({}, {})", mouse.x, mouse.y));
-	buf->draw_text<std::string>({25.0f, 85.0f}, fmt::format("Mouse state: {} {}", carbon::is_key_pressed(VK_LBUTTON),
-															 carbon::is_key_down(VK_LBUTTON)));
-	buf->draw_text<std::string>({25.0f, 105.0f}, fmt::format("Batches: {}", carbon::benchmark.draw_calls,
-															 carbon::is_key_down(VK_LBUTTON)));
-	buf->draw_text<std::string>({25.0f, 125.0f}, fmt::format("Flex compute: {}", carbon::benchmark.flex_compute_calls,
-															  carbon::is_key_down(VK_LBUTTON)));
-
-	buf->pop_font();
-}
-
-#include "force_engine/forces/collide.hpp"
-#include "force_engine/forces/radial.hpp"
-#include "force_engine/quadtree.hpp"
-#include "force_engine/simulation.hpp"
-
-void draw_force_simulation(renderer::buffer* buf) {
-	static glm::vec2 simulation_offset = { carbon::application->get_size().x / 2.0f, carbon::application->get_size().y / 2.0f };
-	static auto simulation = std::make_unique<engine::simulation>();
-	static engine::force_link* simulation_links = nullptr;
-	static engine::force_collide* simulation_colliders = nullptr;
-	static engine::force_radial* simulation_radial = nullptr;
-	//static engine::node* mouse_collider = nullptr;
-	static bool test = false;
-
-	if (!test) {
-		test = true;
-
-		const auto a = simulation->add_node();
-		const auto b = simulation->add_node();
-		const auto c = simulation->add_node();
-		const auto e = simulation->add_node();
-		const auto f = simulation->add_node();
-		const auto g = simulation->add_node();
-		const auto h = simulation->add_node();
-
-		for (size_t i = 0; i < 25; i++) {
-			simulation->add_node();
-		}
-
-		simulation->initialize_nodes();
-
-		std::vector<engine::link> links = {
-			{a, b},
-			{b, c},
-			{c, a},
-			{e, c},
-			{f, e},
-			{g, h}
-		};
-
-		//simulation->add_force<engine::force_center>("center", simulation->get_nodes());
-		simulation_links = simulation->add_force<engine::force_link>("link", links);
-		simulation_colliders = simulation->add_force<engine::force_collide>("collide", simulation->get_nodes());
-		simulation_radial = simulation->add_force<engine::force_radial>("radial", simulation->get_nodes(), 200.0f, glm::vec2{});
-
-		simulation->initialize_forces();
-	}
-
-	static renderer::timer timer;
-	if (timer.get_elapsed_duration() >= std::chrono::milliseconds(5)) {
-		timer.reset();
-
-		simulation->step();
-	}
-
-	auto draw_quad = [&buf](engine::quadtree& tree, auto self_ref) -> void { // NOLINT(misc-no-recursion)
-		for (auto& quad : tree.get_children()) {
-			if (quad) {
-				const auto bounds = quad->get_bounds();
-				buf->draw_rect({bounds.x + simulation_offset.x, bounds.y + simulation_offset.y, bounds.z, bounds.w}, { 255, 255, 255, 75 }, 1.0f);
-				self_ref(*quad, self_ref);
-			}
-		}
-	};
-
-	engine::quadtree quadtree(simulation->get_nodes());
-	draw_quad(quadtree, draw_quad);
-
-	const auto mouse = carbon::get_mouse_pos();
-	std::vector<engine::node*> hovered_nodes;
-	engine::node* closest = nullptr;
-	float closest_distance = std::numeric_limits<float>::infinity();
-
-	for (auto& node : simulation->get_nodes()) {
-		const auto draw_position = node->position + simulation_offset;
-
-		const  auto distance = glm::distance(mouse, draw_position);
-		if (distance < 30.0f) {
-			if (distance < closest_distance) {
-				closest_distance = distance;
-				closest = node;
-			}
-
-			hovered_nodes.push_back(node);
-		}
-	}
-
-	static engine::node* held = nullptr;
-	if (carbon::is_key_down(VK_LBUTTON)) {
-		if (held) {
-			closest = held;
-			held->position = mouse - simulation_offset;
-		}
-		else if (closest) {
-			held = closest;
-		}
-
-		if (closest) {
-			closest->position = mouse - simulation_offset;
-		}
-	}
-	else {
-		held = nullptr;
-	}
-
-	for (auto& node : hovered_nodes) {
-		const auto draw_position = node->position + simulation_offset;
-
-		buf->draw_line(mouse, draw_position, COLOR_RED);
-	}
-
-	for (auto& link : simulation_links->get_links()) {
-		const auto a = link.source->position + simulation_offset;
-		const auto b = link.target->position + simulation_offset;
-
-		buf->draw_line(a, b, COLOR_BLACK);
-	}
-
-	for (auto& node : simulation->get_nodes()) {
-		const auto draw_position = node->position + simulation_offset;
-
-		buf->draw_circle_filled(draw_position, node->radius - 5, COLOR_BLACK, 12);
-		buf->draw_circle_filled(draw_position, node->radius - 8.0f, COLOR_WHITE, 12);
-	}
-
-	buf->draw_circle(mouse, 30.0f, COLOR_RED);
 }
 
 void draw_thread() {
-    const auto id = carbon::dx11->register_buffer();
+    const auto id = dx11->register_buffer();
 
     while (!close_requested) {
 		updated_draw.wait();
 
-		carbon::buf = carbon::dx11->get_working_buffer(id);
+		auto buf = dx11->get_working_buffer(id);
 
-		carbon::begin();
+		draw_test_primitives(buf);
 
-		draw_test_primitives(carbon::buf);
-		//draw_test_bezier(carbon::buf);
-		//draw_test_flex(carbon::buf);
-		//draw_force_simulation(carbon::buf);
-		//draw_test_text(carbon::buf);
-		//draw_test_ui(carbon::buf);
-		draw_input_data(carbon::buf);
-
-		carbon::end();
-
-		carbon::dx11->swap_buffers(id);
+		dx11->swap_buffers(id);
         updated_buf.notify();
     }
 }
 
 // TODO: Mutex for textures
 int main() {
-    carbon::application = std::make_unique<renderer::win32_window>();
-	carbon::application->set_title("D3D11 Renderer");
-	carbon::application->set_size({1920, 1080});
+    application = std::make_unique<renderer::win32_window>();
+	application->set_title("D3D11 Renderer");
+	application->set_size({1920, 1080});
 
     // Center window position
     {
         RECT client;
         if (GetClientRect(GetDesktopWindow(), &client)) {
-            const auto size = carbon::application->get_size();
-			carbon::application->set_pos({client.right / 2 - size.x / 2, client.bottom / 2 - size.y / 2});
+            const auto size = application->get_size();
+			application->set_pos({client.right / 2 - size.x / 2, client.bottom / 2 - size.y / 2});
         }
     }
 
-	carbon::application->set_proc(WndProc);
+	application->set_proc(WndProc);
 
-    if (!carbon::application->create()) {
+    if (!application->create()) {
         MessageBoxA(nullptr, "Failed to create window.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
@@ -548,23 +164,19 @@ int main() {
         DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
     }*/
 
-    carbon::dx11 = std::make_unique<renderer::d3d11_renderer>(carbon::application.get());
+    dx11 = std::make_unique<renderer::d3d11_renderer>(application.get());
 
-    if (!carbon::dx11->init()) {
+    if (!dx11->init()) {
         MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);
         return 1;
     }
 
-	carbon::dx11->set_vsync(false);
-	carbon::dx11->set_clear_color({88, 88, 88});//({88, 122, 202});
-
-    carbon::segoe_font = carbon::dx11->register_font("Segoe UI Emoji", 10, FW_THIN, true);
-
-	carbon::init();
+	dx11->set_vsync(false);
+	dx11->set_clear_color({88, 88, 88});//({88, 122, 202});
 
     std::thread draw(draw_thread);
 
-	carbon::application->set_visibility(true);
+	application->set_visibility(true);
 
 	MSG msg{};
     while (!close_requested && msg.message != WM_QUIT) {
@@ -573,21 +185,20 @@ int main() {
             DispatchMessage(&msg);
         }
 
-		if (msg.message == WM_NULL && !IsWindow(carbon::application->get_hwnd())) {
+		if (msg.message == WM_NULL && !IsWindow(application->get_hwnd())) {
 			close_requested = true;
 			break;
 		}
 
 		// TODO: Fix issues with resize
         if (update_size) {
-			carbon::dx11->resize();
-			carbon::dx11->reset();
+			dx11->resize();
+			dx11->reset();
 
             update_size = false;
         }
 
-		carbon::dx11->draw();
-		carbon::benchmark.draw_calls = carbon::dx11->total_batches;
+		dx11->draw();
 		draw_count++;
 
 		updated_draw.notify();
@@ -596,8 +207,8 @@ int main() {
 
     draw.join();
 
-	carbon::dx11->release();
-	carbon::application->destroy();
+	dx11->release();
+	application->destroy();
 
     return 0;
 }
