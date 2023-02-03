@@ -241,7 +241,7 @@ void renderer::d3d11_pipeline::create_states() {
 	assert(SUCCEEDED(hr));
 
 	D3D11_SAMPLER_DESC sampler_desc{};
-	sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -253,7 +253,7 @@ void renderer::d3d11_pipeline::create_states() {
 	assert(SUCCEEDED(hr));
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
-	rasterizer_desc.FillMode = D3D11_FILL_SOLID;
+	rasterizer_desc.FillMode = D3D11_FILL_SOLID; // D3D11_FILL_WIREFRAME
 	rasterizer_desc.CullMode = D3D11_CULL_NONE;
 	rasterizer_desc.FrontCounterClockwise = FALSE;
 	rasterizer_desc.DepthBias = 0;

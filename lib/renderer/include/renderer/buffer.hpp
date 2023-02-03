@@ -119,7 +119,7 @@ namespace renderer {
 		}
 
 		template <typename T>
-		void draw_text(glm::vec2 pos, const T& text, size_t font_id = 0,
+		void draw_text(glm::vec2 pos, const T& text, size_t font_id,
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {

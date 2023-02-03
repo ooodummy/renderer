@@ -13,6 +13,9 @@ renderer::sync_manager updated_buf;
 bool update_size = false;
 bool close_requested = false;
 
+int populate_count = 0;
+int draw_count = 0;
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CLOSE:
@@ -34,6 +37,56 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 void draw_test_primitives(renderer::buffer* buf) {
 	static renderer::timer rainbow_timer;
+	static renderer::timer animation_timer;
+
+	static float thickness = 1.0f;
+	static bool thickness_dir = false;
+	static float rounding = 0.0f;
+	static bool rounding_dir = false;
+	static float arc_length = 0.0f;
+	static bool arc_dir = false;
+
+	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(25)) {
+		animation_timer.reset();
+
+		if (thickness_dir) {
+			thickness += 0.5f;
+			if (thickness > 30.0f)
+				thickness_dir = false;
+		}
+		else {
+			thickness -= 0.5f;
+			if (thickness < 1.0f)
+				thickness_dir = true;
+		}
+
+		if (rounding_dir) {
+			rounding += 0.02f;
+			if (rounding > 1.0f) {
+				rounding = 1.0f;
+				rounding_dir = false;
+			}
+		}
+		else {
+			rounding -= 0.02f;
+			if (rounding < 0.0f) {
+				rounding = 0.0f;
+				rounding_dir = true;
+			}
+		}
+
+		if (arc_dir) {
+			arc_length += 1.0f;
+			if (arc_length > 360.0f)
+				arc_dir = false;
+		}
+		else {
+			arc_length -= 1.0f;
+			if (arc_length < 1.0f)
+				arc_dir = true;
+		}
+	}
+
 	auto elapsed_ms = rainbow_timer.get_elapsed_duration().count();
 
 	if (elapsed_ms > 5000)
@@ -58,7 +111,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	auto mouse = carbon::get_mouse_pos();
 
-	const glm::vec4 scissor_bounds = {
+	/*const glm::vec4 scissor_bounds = {
 		static_cast<float>(mouse.x) - 50.0f,
 		static_cast<float>(mouse.y) - 50.0f,
 		100.0f,
@@ -83,32 +136,44 @@ void draw_test_primitives(renderer::buffer* buf) {
 		buf->draw_rect_filled({cube_offset + glm::vec2(cube_space, cube_space), cube_size, cube_size}, COLOR_YELLOW);
 	}
 
-	buf->pop_key();
+	buf->pop_key();*/
 
 	// TODO: Fix circle polyline
 	//buf->draw_circle({300.0f, 100.0f}, 100.0f, {255, 255, 255, 125}, 10.0f);
 	//buf->draw_circle_filled({300.0f, 100.0f}, 50.0f, {255, 255, 0, 155});
 
-	buf->push_scissor(scissor_bounds, true);
+	//buf->push_scissor(scissor_bounds, true);
 
-	buf->add_shape(polyline);
+	//buf->add_shape(polyline);
 
-	buf->pop_scissor();
+	//buf->pop_scissor();
 
 	//const std::string test_string = "Hello World!";
 	//buf->draw_text({250.0f, 250.0f}, test_string, segoe);
 	//buf->draw_rect(dx11->get_text_bounds({250.0f, 250.0f}, test_string, segoe), COLOR_YELLOW);
 
-	buf->draw_rect(scissor_bounds, COLOR_WHITE);
+	//buf->draw_rect(scissor_bounds, COLOR_WHITE);
 
 	//buf->draw_rect({1.0f, 1.0f, 3.0f, 3.0f}, COLOR_BLUE);
 	//buf->draw_rect_filled({1.0f, 1.0f, 2.0f, 2.0f}, COLOR_RED);
 
 	// Testing arc performance
-	buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW, 15.0f);
-	buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
-	buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
-	buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
+	buf->draw_line({200.0f, 200.0f}, {300.0f, 300.0f}, COLOR_WHITE, thickness);
+	buf->draw_rect({350.0f, 200.0f, 100.0f, 100.0f}, COLOR_RED, thickness);
+	buf->draw_rect_filled({500.0f, 200.0f, 100.0f, 100.0f}, COLOR_ORANGE);
+	buf->draw_rect_rounded({650.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_YELLOW, thickness);
+	buf->draw_rect_rounded_filled({800.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_GREEN);
+	buf->draw_arc({250.0f, 400.0f}, glm::radians(arc_length), glm::radians(arc_length), 50.0f, COLOR_BLUE, thickness,
+												   32, false);
+	buf->draw_arc({400.0f, 400.0f}, glm::radians(arc_length), glm::radians(arc_length), 50.0f, COLOR_PURPLE, 0.0f, 32,
+				  true);
+	buf->draw_circle({550.0f, 400.0f}, 50.0f, COLOR_WHITE, thickness, 32);
+	buf->draw_circle_filled({700.0f, 400.0f}, 50.0f, COLOR_RED, 32);
+
+	//buf->draw_rect_rounded({100.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_YELLOW, 15.0f);
+	//buf->draw_rect_rounded_filled({350.0f, 200.0f, 200.0f, 150.0f}, 0.3f, COLOR_GREEN);
+	//buf->draw_arc({700.0f, 275.0f}, 0.0f, M_PI, 100.0f, COLOR_BLUE, 0.0f, 32, true);
+	//buf->draw_circle_filled({950.0f, 300.0f}, 100.0f, COLOR_RED, 64);
 
 	//D3DX11CreateShaderResourceViewFromFile(dx11->, L"braynzar.jpg",NULL, NULL, &CubesTexture, NULL );
 
@@ -250,7 +315,7 @@ void draw_test_ui(renderer::buffer* buf) {
 	std::string test = std::to_string(i);
 	label->set_label(test);*/
 
-	//menu->set_size(carbon::get_mouse_pos() - menu->get_pos());
+	menu->set_size(carbon::get_mouse_pos() - menu->get_pos());
 
 	menu->input();
 	menu->compute();
@@ -271,14 +336,36 @@ void draw_input_data(renderer::buffer* buf) {
 
 	// Update labels
 
+	static renderer::timer fps_timer;
+	static int pds = 0;
+	static int fps = 0;
+
+	populate_count++;
+
+	if (fps_timer.get_elapsed_duration() >= std::chrono::seconds(1)) {
+		fps_timer.reset();
+
+		pds = populate_count;
+		populate_count = 0;
+
+		fps = draw_count;
+		draw_count = 0;
+	}
+
+	buf->push_font(carbon::segoe_font);
+
 	const auto mouse = carbon::get_mouse_pos();
-	buf->draw_text<std::string>({25.0f, 25.0f}, fmt::format("Mouse position: ({}, {})", mouse.x, mouse.y),
-								  carbon::segoe_font);
-	buf->draw_text<std::string>({25.0f, 50.0f}, fmt::format("Mouse state: {} {}", carbon::is_key_pressed(VK_LBUTTON), carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
-	buf->draw_text<std::string>({25.0f, 75.0f}, fmt::format("Batches: {}", carbon::benchmark.draw_calls,
-															 carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
-	buf->draw_text<std::string>({25.0f, 100.0f}, fmt::format("Flex compute: {}", carbon::benchmark.flex_compute_calls,
-															  carbon::is_key_down(VK_LBUTTON)), carbon::segoe_font);
+	buf->draw_text<std::string>({25.0f, 25.0f}, fmt::format("PDS: {}", pds));
+	buf->draw_text<std::string>({25.0f, 45.0f}, fmt::format("FPS: {}", fps));
+	buf->draw_text<std::string>({25.0f, 65.0f}, fmt::format("Mouse position: ({}, {})", mouse.x, mouse.y));
+	buf->draw_text<std::string>({25.0f, 85.0f}, fmt::format("Mouse state: {} {}", carbon::is_key_pressed(VK_LBUTTON),
+															 carbon::is_key_down(VK_LBUTTON)));
+	buf->draw_text<std::string>({25.0f, 105.0f}, fmt::format("Batches: {}", carbon::benchmark.draw_calls,
+															 carbon::is_key_down(VK_LBUTTON)));
+	buf->draw_text<std::string>({25.0f, 125.0f}, fmt::format("Flex compute: {}", carbon::benchmark.flex_compute_calls,
+															  carbon::is_key_down(VK_LBUTTON)));
+
+	buf->pop_font();
 }
 
 #include "force_engine/forces/collide.hpp"
@@ -419,13 +506,13 @@ void draw_thread() {
 
 		carbon::begin();
 
-		//draw_test_primitives(carbon::buf);
-		draw_test_bezier(carbon::buf);
+		draw_test_primitives(carbon::buf);
+		//draw_test_bezier(carbon::buf);
 		//draw_test_flex(carbon::buf);
 		//draw_force_simulation(carbon::buf);
 		//draw_test_text(carbon::buf);
 		//draw_test_ui(carbon::buf);
-		//draw_input_data(carbon::buf);
+		draw_input_data(carbon::buf);
 
 		carbon::end();
 
@@ -501,6 +588,7 @@ int main() {
 
 		carbon::dx11->draw();
 		carbon::benchmark.draw_calls = carbon::dx11->total_batches;
+		draw_count++;
 
 		updated_draw.notify();
         updated_buf.wait();
