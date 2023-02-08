@@ -16,9 +16,13 @@
 #define COLOR_LIME renderer::color_rgba(128, 255, 0)
 #define COLOR_GREEN renderer::color_rgba(0, 255, 0)
 #define COLOR_CYAN renderer::color_rgba(0, 255, 255)
+#define COLOR_AZURE renderer::color_rgba(0, 127, 255)
 #define COLOR_BLUE renderer::color_rgba(0, 0, 255)
 #define COLOR_PURPLE renderer::color_rgba(127, 0, 255)
 #define COLOR_MAGENTA renderer::color_rgba(255, 0, 255)
+
+#define COLOR_YELLOW_RADAR renderer::color_rgba(228, 243, 35)
+#define COLOR_GREY_RADAR renderer::color_rgba(90, 90, 90)
 
 // Basically every color format that I found that exist is added because I wanted to add it just because I can.
 

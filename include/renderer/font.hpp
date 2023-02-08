@@ -3,7 +3,9 @@
 
 #include <unordered_map>
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <d3d11.h>
 #include <freetype/freetype.h>
 #include <glm/vec2.hpp>

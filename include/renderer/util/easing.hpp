@@ -1,7 +1,10 @@
 #ifndef RENDERER_UTIL_EASING_HPP
 #define RENDERER_UTIL_EASING_HPP
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+
 #include <corecrt_math_defines.h>
 
 #include <glm/glm.hpp>
