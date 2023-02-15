@@ -1,4 +1,4 @@
-#include "renderer/geometry/shapes/shape.hpp"
+#include "renderer/shapes/shape.hpp"
 
 void renderer::shape::check_recalculation() {
 	if (needs_recalculate_)

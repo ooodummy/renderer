@@ -1,15 +1,10 @@
 #include <renderer/core.hpp>
 
-#include <dwmapi.h>
+#include <Dwmapi.h>
 #include <thread>
-
-#include <glm/gtx/rotate_vector.hpp>
-#include <fmt/core.h>
 
 std::unique_ptr<renderer::win32_window> application;
 std::unique_ptr<renderer::d3d11_renderer> dx11;
-
-size_t segoe_font;
 
 renderer::sync_manager updated_draw;
 renderer::sync_manager updated_buf;
@@ -18,6 +13,7 @@ bool update_size = false;
 bool close_requested = false;
 
 int draw_count = 0;
+size_t segoe_font;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch (msg) {
@@ -100,8 +96,13 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	buf->push_font(segoe_font);
 
-	buf->draw_text<std::string>({25.0f, 60.0f}, "Hello, world!", COLOR_WHITE);
+	std::string demo_string = "Hello, world!";
+	buf->draw_text<std::string>({25.0f, 60.0f}, demo_string, COLOR_WHITE);
 	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0", COLOR_WHITE);
+
+	// Test if the get text size result is accurate
+	auto size = dx11->get_text_size(demo_string, segoe_font);
+	buf->draw_rect({25.0f, 60.0f - size.y, size.x, size.y}, COLOR_RED);
 
 	buf->pop_font();
 }

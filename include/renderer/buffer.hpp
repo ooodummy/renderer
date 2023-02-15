@@ -3,11 +3,13 @@
 
 #include "renderer/d3d11/renderer.hpp"
 #include "renderer/d3d11/shaders/constant_buffers.hpp"
-#include "renderer/geometry/bezier.hpp"
-#include "renderer/geometry/shapes/polyline.hpp"
+
+#include "renderer/shapes/bezier.hpp"
+#include "renderer/shapes/polyline.hpp"
+
+#include <stack>
 
 #include <glm/gtx/rotate_vector.hpp>
-#include <stack>
 
 namespace renderer {
 	class batch {
@@ -18,8 +20,10 @@ namespace renderer {
 		size_t size;
 		D3D_PRIMITIVE_TOPOLOGY type;
 
-		// Fonts
+		// Textured quads
 		ID3D11ShaderResourceView* srv = nullptr;
+
+		// Override color for grayscale textures
 		color_rgba color;
 
 		// Used to set shader options
@@ -28,6 +32,7 @@ namespace renderer {
 
 	class base_renderer;
 
+	// Buffer system from https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {
 	public:
 		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {}

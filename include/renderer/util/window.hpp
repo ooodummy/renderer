@@ -1,8 +1,9 @@
 #ifndef RENDERER_UTIL_WINDOW_HPP
 #define RENDERER_UTIL_WINDOW_HPP
 
-#include <glm/vec2.hpp>
 #include <string>
+
+#include <glm/vec2.hpp>
 
 namespace renderer {
 	class base_window {

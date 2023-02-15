@@ -1,11 +1,14 @@
-#ifndef RENDERER_GEOMETRY_SHAPES_POLYLINE_HPP
-#define RENDERER_GEOMETRY_SHAPES_POLYLINE_HPP
+#ifndef RENDERER_SHAPES_POLYLINE_HPP
+#define RENDERER_SHAPES_POLYLINE_HPP
 
 #include "shape.hpp"
 
-#include <glm/trigonometric.hpp>
 #include <optional>
 #include <vector>
+
+#include <glm/trigonometric.hpp>
+
+// TODO: Fix polyline tessellation
 
 namespace renderer {
 	enum joint_type {

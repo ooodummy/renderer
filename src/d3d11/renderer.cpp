@@ -1,12 +1,12 @@
 #include "renderer/d3d11/renderer.hpp"
 
 #include "renderer/buffer.hpp"
-#include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/util/win32_window.hpp"
 
+#include <d3d11.h>
 #include <freetype/ftbitmap.h>
 #include <freetype/ftstroke.h>
-#include <d3d11.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 renderer::d3d11_renderer::d3d11_renderer(renderer::win32_window* window) : d3d11_pipeline(window) {}
@@ -105,11 +105,11 @@ void renderer::d3d11_renderer::begin() {
 
 	const auto size = window_->get_size();
 
-	if (size != size_) {
-		size_ = size;
+	if (size != prev_size_) {
+		prev_size_ = size;
 
 		global_buffer global{};
-		global.dimensions = { static_cast<float>(size_.x), static_cast<float>(size_.y) };
+		global.dimensions = { static_cast<float>(prev_size_.x), static_cast<float>(prev_size_.y) };
 
 		D3D11_MAPPED_SUBRESOURCE mapped_resource;
 		HRESULT hr = context_->Map(global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
@@ -148,16 +148,12 @@ void renderer::d3d11_renderer::prepare_context() {
 void renderer::d3d11_renderer::populate() {
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
-	total_batches = 0;
-
 	size_t offset = 0;
 
 	// TODO: Buffer priority
 	// God bless http://www.rastertek.com/dx11tut11.html
 	for (const auto& [active, working] : buffers_) {
 		auto& batches = active->get_batches();
-
-		total_batches += batches.size();
 
 		for (auto& batch : batches) {
 			D3D11_MAPPED_SUBRESOURCE mapped_resource;
@@ -364,8 +360,8 @@ renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) 
 }
 
 // https://www.rastertek.com/dx11s2tut05.html
-renderer::texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
-	texture2d texture{};
+renderer::d3d11_texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
+	d3d11_texture2d texture{};
 
 	/*texture.texture = nullptr;
 	texture.srv = D3DX*/

@@ -1,5 +1,5 @@
-#ifndef RENDERER_GEOMETRY_SHAPES_SHAPE_HPP
-#define RENDERER_GEOMETRY_SHAPES_SHAPE_HPP
+#ifndef RENDERER_SHAPES_SHAPE_HPP
+#define RENDERER_SHAPES_SHAPE_HPP
 
 #include "renderer/vertex.hpp"
 
@@ -9,6 +9,8 @@
 // Create an object for every shape, so we can cache its vertices and then have options to translate it using a matrix.
 
 namespace renderer {
+	// TODO: Compare best ways to actually cache shapes and setup a matrix for transformations without modifying the
+	//  vertices
 	class shape {
 		friend class buffer;
 
@@ -23,8 +25,9 @@ namespace renderer {
 		vertex* vertices_;
 		size_t vertex_count_;
 
-		D3D_PRIMITIVE_TOPOLOGY type_;
 		color_rgba col_;
+
+		D3D_PRIMITIVE_TOPOLOGY type_;
 		ID3D11ShaderResourceView* srv_;
 	};
 }// namespace renderer

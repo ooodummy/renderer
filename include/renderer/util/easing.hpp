@@ -38,7 +38,10 @@ namespace renderer {
 	};
 
 	float ease(float a, float b, float t, float d = 1.0f, ease_type type = linear);
+
+	// TODO: Can I template vector types easily for GLM?
 	glm::vec2 ease(glm::vec2 a, glm::vec2 b, float t, float d = 1.0f, ease_type type = linear);
+	glm::vec3 ease(glm::vec3 a, glm::vec3 b, float t, float d = 1.0f, ease_type type = linear);
 }// namespace renderer
 
 #endif

@@ -19,6 +19,7 @@ cbuffer command : register(b1) {
 Texture2D active_texture : TEXTURE : register(t0);
 SamplerState samplerState : SAMPLER : register(s0);
 
+// How can I stack color keys?
 float4 ps_main(VS_Output input) : SV_TARGET {
 	if (key_enable) {
 		if (input.color.x == key_color.x && input.color.y == key_color.y && input.color.z == key_color.z) {

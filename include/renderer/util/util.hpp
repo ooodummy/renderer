@@ -6,38 +6,21 @@
 namespace renderer {
 	class sync_manager {
 	public:
-		void wait() {
-			std::unique_lock<std::mutex> lock_guard(mutex);
-			condition.wait(lock_guard, [this] { return update; });
-			update = false;
-		}
+		void wait();
+		void notify();
 
-		void notify() {
-			std::unique_lock<std::mutex> lock_guard(mutex);
-			condition.notify_one();
-			update = true;
-		}
-
-	public:
-		std::mutex mutex;
-		std::condition_variable condition;
-		bool update;
+	private:
+		std::mutex mutex_;
+		std::condition_variable condition_;
+		bool update_;
 	};
 
 	class timer {
 	public:
-		timer() {
-			reset();
-		}
+		timer();
 
-		void reset() {
-			begin = std::chrono::high_resolution_clock::now();
-		}
-
-		std::chrono::milliseconds get_elapsed_duration() {
-			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() -
-																		 begin);
-		}
+		void reset();
+		std::chrono::milliseconds get_elapsed_duration();
 
 	private:
 		std::chrono::time_point<std::chrono::steady_clock> begin;

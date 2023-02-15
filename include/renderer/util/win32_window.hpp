@@ -3,7 +3,7 @@
 
 #include "window.hpp"
 
-// TODO: Avoid Windows.h and any platform independent things
+// TODO: Avoid Windows.h and any platform independent things later on
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
@@ -12,14 +12,11 @@ namespace renderer {
 	// https://docs.microsoft.com/en-us/windows/win32/learnwin32/creating-a-window
 	class win32_window : public base_window {
 	public:
-		win32_window();
-		~win32_window();
-
 		// Note: Automatically centers window position for creation
-		win32_window(const std::string& title, glm::i32vec2 size, WNDPROC wnd_proc);
+		explicit win32_window(const std::string& title, glm::i32vec2 size, WNDPROC wnd_proc);
 
 		// Used to handle a preexisting window
-		win32_window(HWND hwnd);
+		explicit win32_window(HWND hwnd);
 
 		// Never use create/destroy in constructor/destructor if we are just using this wrapper to wrap an existing window
 		bool create() override;

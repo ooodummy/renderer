@@ -84,3 +84,7 @@ float renderer::ease(float a, float b, float t, float d, renderer::ease_type typ
 glm::vec2 renderer::ease(glm::vec2 a, glm::vec2 b, float t, float d, renderer::ease_type type) {
 	return { ease(a.x, b.x, t, d, type), ease(a.y, b.y, t, d, type) };
 }
+
+glm::vec3 renderer::ease(glm::vec3 a, glm::vec3 b, float t, float d, renderer::ease_type type) {
+	return { ease(a.x, b.x, t, d, type), ease(a.y, b.y, t, d, type), ease(a.z, b.z, t, d, type) };
+}

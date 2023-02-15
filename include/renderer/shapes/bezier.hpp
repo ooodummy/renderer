@@ -1,9 +1,10 @@
-#ifndef RENDERER_GEOMETRY_BEZIER_HPP
-#define RENDERER_GEOMETRY_BEZIER_HPP
+#ifndef RENDERER_SHAPES_BEZIER_HPP
+#define RENDERER_SHAPES_BEZIER_HPP
 
 #include <array>
-#include <glm/glm.hpp>
 #include <vector>
+
+#include <glm/glm.hpp>
 
 // TODO: Calculating the normal at a time point in a bezier curve seems to be the most expensive function in this
 //  codebase.
@@ -168,6 +169,12 @@ namespace renderer {
 
 	template<size_t N>
 	const polynomial_coefficients<N> bezier_curve<N>::polynomial_coefficients = renderer::polynomial_coefficients<N>();
+
+	// TODO: Implement bezier shape caching
+	template<size_t N>
+	class bezier_shape : public shape {
+
+	};
 }// namespace renderer
 
 #endif

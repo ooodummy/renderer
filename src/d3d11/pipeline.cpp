@@ -6,9 +6,13 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-renderer::d3d11_pipeline::d3d11_pipeline(renderer::win32_window* window) : window_(window) {}
+renderer::d3d11_pipeline::d3d11_pipeline(renderer::win32_window* window) : window_(window) {
+	assert(window);
+}
 
 renderer::d3d11_pipeline::d3d11_pipeline(IDXGISwapChain* swap_chain) {
+	assert(swap_chain);
+
 	ID3D11Device* base_device;
 	auto hr = swap_chain->GetDevice(__uuidof(ID3D11Device), (void**) &base_device);
 	assert(SUCCEEDED(hr));

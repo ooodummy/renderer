@@ -1,4 +1,4 @@
-#include "renderer/geometry/shapes/polyline.hpp"
+#include "renderer/shapes/polyline.hpp"
 
 #include <cmath>
 #include <glm/glm.hpp>

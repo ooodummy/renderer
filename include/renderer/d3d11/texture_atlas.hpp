@@ -7,6 +7,7 @@
 #include <memory>
 
 namespace renderer {
+	// TODO: Texture atlas and UV mapping to batch textures
 	class texture_atlas {
 	private:
 		std::unique_ptr<texture2d> texture;

@@ -1,6 +1,8 @@
 #ifndef RENDERER_UTIL_SMALL_VECTOR_HPP
 #define RENDERER_UTIL_SMALL_VECTOR_HPP
 
+// TODO: Some sort of small/static vector implementation to avoid heap allocations
+
 namespace renderer {
 	// Probably bad code, but it works.
 	// Stopped working on this currently.

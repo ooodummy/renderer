@@ -3,7 +3,6 @@
 
 #include <d3d11_1.h>
 #include <glm/mat4x4.hpp>
-#include <memory>
 
 namespace renderer {
 	template<typename T>
@@ -17,9 +16,13 @@ namespace renderer {
 	class win32_window;
 
 	// Used https://github.com/kevinmoran/BeginnerDirect3D11 as and example
+	// TODO: Better D3D11 resource management https://github.com/walbourn/directx-vs-templates/blob/main/d3d11game_win32_dr/DeviceResources.cpp
 	class d3d11_pipeline {
 	public:
 		explicit d3d11_pipeline(win32_window* window);
+
+		// Used to initialize inside game present hook currently experiencing issues with trying to draw in present,
+		// causing nothing to be drawn.
 		explicit d3d11_pipeline(IDXGISwapChain* swap_chain);
 
 		bool init_pipeline();
@@ -49,11 +52,9 @@ namespace renderer {
 		win32_window* window_;
 
 		// Basic context
+		IDXGISwapChain1* swap_chain_;
 		ID3D11Device1* device_ = nullptr;
 		ID3D11DeviceContext1* context_;
-
-		IDXGISwapChain1* swap_chain_;
-
 		ID3D11RenderTargetView* frame_buffer_view_;
 		ID3D11DepthStencilView* depth_stencil_view_;
 

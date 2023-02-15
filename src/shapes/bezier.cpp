@@ -1,4 +1,4 @@
-#include "renderer/geometry/bezier.hpp"
+#include "renderer/shapes/bezier.hpp"
 
 size_t renderer::binomial(size_t n, size_t k) {
 	assert(k <= n);

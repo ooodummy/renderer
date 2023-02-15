@@ -1,8 +1,5 @@
 #include "renderer/util/win32_window.hpp"
 
-renderer::win32_window::win32_window() = default;
-renderer::win32_window::~win32_window() = default;
-
 renderer::win32_window::win32_window(const std::string& title, const glm::i32vec2 size, WNDPROC wnd_proc) : wnd_proc_(wnd_proc) {
 	title_ = title;
 	size_ = size;

@@ -4,7 +4,7 @@
 #include <d3d11.h>
 
 namespace renderer {
-	class texture2d {
+	class d3d11_texture2d {
 		ID3D11Texture2D* texture;
 		ID3D11ShaderResourceView* srv;
 	};
