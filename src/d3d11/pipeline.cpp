@@ -65,7 +65,7 @@ void renderer::d3d11_pipeline::release_pipeline() {
 	safe_release(device_);
 }
 
-void get_hardware_adapter(IDXGIAdapter1* ppAdapter) {
+/*void get_hardware_adapter(IDXGIAdapter1* ppAdapter) {
 	IDXGIFactory2* factory6;
 	HRESULT hr = m_dxgiFactory.As(&factory6);
 	if (SUCCEEDED(hr))
@@ -120,7 +120,7 @@ void get_hardware_adapter(IDXGIAdapter1* ppAdapter) {
 	}
 
 	*ppAdapter = adapter.Detach();
-}
+}*/
 
 bool renderer::d3d11_pipeline::create_device() {
 	ID3D11Device* base_device;
