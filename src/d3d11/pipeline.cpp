@@ -414,7 +414,7 @@ void renderer::d3d11_pipeline::release_buffers() {
 void renderer::d3d11_pipeline::resize() {
 	const auto size = window_->get_size();
 
-	if (size == glm::i16vec2{})
+	if (size == glm::i32vec2{})
 		return;
 
 	safe_release(frame_buffer_view_);

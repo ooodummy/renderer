@@ -2,9 +2,8 @@
 #define RENDERER_GEOMETRY_BEZIER_HPP
 
 #include <array>
-#include <vector>
-
 #include <glm/glm.hpp>
+#include <vector>
 
 // TODO: Calculating the normal at a time point in a bezier curve seems to be the most expensive function in this
 //  codebase.

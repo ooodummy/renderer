@@ -3,10 +3,9 @@
 
 #include "shape.hpp"
 
+#include <glm/trigonometric.hpp>
 #include <optional>
 #include <vector>
-
-#include <glm/trigonometric.hpp>
 
 namespace renderer {
 	enum joint_type {

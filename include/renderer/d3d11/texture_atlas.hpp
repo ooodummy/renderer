@@ -3,8 +3,8 @@
 
 #include "texture2d.hpp"
 
-#include <memory>
 #include <map>
+#include <memory>
 
 namespace renderer {
 	class texture_atlas {
@@ -13,7 +13,7 @@ namespace renderer {
 		std::map<size_t, glm::vec4> textures;
 
 	public:
-		//size_t add_texture(texture2d* texture);
+		// size_t add_texture(texture2d* texture);
 	};
 }// namespace renderer
 

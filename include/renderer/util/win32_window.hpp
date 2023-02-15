@@ -12,20 +12,43 @@ namespace renderer {
 	// https://docs.microsoft.com/en-us/windows/win32/learnwin32/creating-a-window
 	class win32_window : public base_window {
 	public:
+		win32_window();
+		~win32_window();
+
+		// Note: Automatically centers window position for creation
+		win32_window(const std::string& title, glm::i32vec2 size, WNDPROC wnd_proc);
+
+		// Used to handle a preexisting window
+		win32_window(HWND hwnd);
+
+		// Never use create/destroy in constructor/destructor if we are just using this wrapper to wrap an existing window
 		bool create() override;
 		bool destroy() override;
 
-		bool set_visibility(bool visible);
+		void set_title(const std::string& title) override;
+		[[nodiscard]] std::string get_title() const override;
 
-		void set_proc(WNDPROC WndProc);
+		void set_pos(glm::i32vec2 pos) override;
+		[[nodiscard]] glm::i32vec2 get_pos() const override;
+
+		void set_size(glm::i32vec2 size) override;
+		[[nodiscard]] glm::i32vec2 get_size() const override;
+
+		bool set_visibility(bool visible) override;
+		[[nodiscard]] uint32_t get_dpi() const override;
+
+		// Win32 specific
+		void set_wnd_proc(WNDPROC wnd_proc);
 		[[nodiscard]] HWND get_hwnd() const;
 
-		UINT get_dpi() const;
+	private:
+		// Updates the window size and position if HWND is valid
+		bool update_window_pos();
 
 	protected:
-		WNDPROC proc_;
-		WNDCLASS wc_;
-		HWND hwnd_;
+		WNDPROC wnd_proc_{};
+		WNDCLASS wc_{};
+		HWND hwnd_{};
 	};
 }// namespace renderer
 

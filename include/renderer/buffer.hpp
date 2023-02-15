@@ -1,15 +1,13 @@
 #ifndef RENDERER_BUFFER_HPP
 #define RENDERER_BUFFER_HPP
 
-#include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/d3d11/renderer.hpp"
-
-#include "renderer/geometry/shapes/polyline.hpp"
+#include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/geometry/bezier.hpp"
-
-#include <stack>
+#include "renderer/geometry/shapes/polyline.hpp"
 
 #include <glm/gtx/rotate_vector.hpp>
+#include <stack>
 
 namespace renderer {
 	class batch {
@@ -78,7 +76,9 @@ namespace renderer {
 									  color_rgba = COLOR_WHITE,
 									  size_t segments = 16);
 
-		void draw_textured_quad(const glm::vec4& rect, ID3D11ShaderResourceView* srv, color_rgba col = COLOR_WHITE,
+		void draw_textured_quad(const glm::vec4& rect,
+								ID3D11ShaderResourceView* srv,
+								color_rgba col = COLOR_WHITE,
 								bool is_mask = false);
 
 		void draw_circle(
@@ -118,8 +118,10 @@ namespace renderer {
 			delete[] vertices;
 		}
 
-		template <typename T>
-		void draw_text(glm::vec2 pos, const T& text, size_t font_id,
+		template<typename T>
+		void draw_text(glm::vec2 pos,
+					   const T& text,
+					   size_t font_id,
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
@@ -160,8 +162,9 @@ namespace renderer {
 			}
 		}
 
-		template <typename T>
-		void draw_text(glm::vec2 pos, const T& text,
+		template<typename T>
+		void draw_text(glm::vec2 pos,
+					   const T& text,
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {

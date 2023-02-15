@@ -1,13 +1,11 @@
 #ifndef RENDERER_D3D11_RENDERER_HPP
 #define RENDERER_D3D11_RENDERER_HPP
 
-#include "renderer/renderer.hpp"
-
+#include "renderer/color.hpp"
 #include "renderer/d3d11/pipeline.hpp"
 #include "renderer/d3d11/texture2d.hpp"
-
-#include "renderer/color.hpp"
 #include "renderer/font.hpp"
+#include "renderer/renderer.hpp"
 
 #include <shared_mutex>
 
@@ -30,7 +28,7 @@ namespace renderer {
 
 		texture2d create_texture(LPCTSTR file);
 
-		template <typename T>
+		template<typename T>
 		glm::vec2 get_text_size(const T& text, size_t font_id = 0) {
 			glm::vec2 size{};
 
@@ -69,7 +67,7 @@ namespace renderer {
 		void render_buffers();
 
 		glm::vec4 clear_color_;
-		glm::i16vec2 size_;
+		glm::i32vec2 size_;
 
 		bool vsync_ = false;
 

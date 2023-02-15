@@ -16,7 +16,7 @@ namespace renderer {
 			uv(u, v) {}
 
 		glm::vec3 pos;
-		glm::vec4 col; // Should we use a uint32_t?
+		glm::vec4 col;// Should we use a uint32_t?
 		glm::vec2 uv;
 	};
 }// namespace renderer

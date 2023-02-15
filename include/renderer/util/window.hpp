@@ -1,9 +1,8 @@
 #ifndef RENDERER_UTIL_WINDOW_HPP
 #define RENDERER_UTIL_WINDOW_HPP
 
-#include <string>
-
 #include <glm/vec2.hpp>
+#include <string>
 
 namespace renderer {
 	class base_window {
@@ -11,13 +10,17 @@ namespace renderer {
 		virtual bool create() = 0;
 		virtual bool destroy() = 0;
 
-		void set_title(const std::string& title);
+		virtual void set_title(const std::string& title) = 0;
+		[[nodiscard]] virtual std::string get_title() const = 0;
 
-		void set_pos(const glm::i16vec2& pos);
-		glm::i16vec2 get_pos();
+		virtual void set_pos(glm::i32vec2 pos) = 0;
+		[[nodiscard]] virtual glm::i32vec2 get_pos() const = 0;
 
-		void set_size(const glm::i16vec2& size);
-		glm::i16vec2 get_size();
+		virtual void set_size(glm::i32vec2 size) = 0;
+		[[nodiscard]] virtual glm::i32vec2 get_size() const = 0;
+
+		virtual bool set_visibility(bool visible) = 0;
+		[[nodiscard]] virtual uint32_t get_dpi() const = 0;
 
 	protected:
 		std::string title_;
