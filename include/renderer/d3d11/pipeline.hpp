@@ -21,6 +21,7 @@ namespace renderer {
 	class d3d11_pipeline {
 	public:
 		explicit d3d11_pipeline(win32_window* window);
+		explicit d3d11_pipeline(IDXGISwapChain* swap_chain);
 
 		bool init_pipeline();
 		void release_pipeline();

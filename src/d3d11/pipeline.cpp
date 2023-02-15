@@ -8,6 +8,26 @@
 
 renderer::d3d11_pipeline::d3d11_pipeline(renderer::win32_window* window) : window_(window) {}
 
+renderer::d3d11_pipeline::d3d11_pipeline(IDXGISwapChain* swap_chain) {
+	ID3D11Device* base_device;
+	auto hr = swap_chain->GetDevice(__uuidof(ID3D11Device), (void**) &base_device);
+	assert(SUCCEEDED(hr));
+
+	ID3D11DeviceContext* base_context;
+	base_device->GetImmediateContext(&base_context);
+
+	hr = base_device->QueryInterface(__uuidof(ID3D11Device1), (void**)&device_);
+	assert(SUCCEEDED(hr));
+	base_device->Release();
+
+	hr = base_context->QueryInterface(__uuidof(ID3D11Device1), (void**)&device_);
+	assert(SUCCEEDED(hr));
+	base_device->Release();
+
+	hr = swap_chain->QueryInterface(__uuidof(IDXGISwapChain1), (void**)&swap_chain_);
+	assert(SUCCEEDED(hr));
+}
+
 bool renderer::d3d11_pipeline::init_pipeline() {
 	if (!device_) {
 		if (!create_device())
@@ -43,6 +63,63 @@ void renderer::d3d11_pipeline::release_pipeline() {
 	safe_release(swap_chain_);
 	safe_release(context_);
 	safe_release(device_);
+}
+
+void get_hardware_adapter(IDXGIAdapter1* ppAdapter) {
+	IDXGIFactory2* factory6;
+	HRESULT hr = m_dxgiFactory.As(&factory6);
+	if (SUCCEEDED(hr))
+	{
+		for (UINT adapterIndex = 0;
+			 SUCCEEDED(factory6->EnumAdapterByGpuPreference(
+			 adapterIndex,
+			 DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+			 IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf())));
+			 adapterIndex++)
+		{
+			DXGI_ADAPTER_DESC1 desc;
+			ThrowIfFailed(adapter->GetDesc1(&desc));
+
+			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+			{
+				// Don't select the Basic Render Driver adapter.
+				continue;
+			}
+
+#ifdef _DEBUG
+			wchar_t buff[256] = {};
+			swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+			OutputDebugStringW(buff);
+#endif
+
+			break;
+		}
+	}
+
+	if (!adapter)
+	{
+		for (UINT adapterIndex = 0;
+			 SUCCEEDED(m_dxgiFactory->EnumAdapters1(
+			 adapterIndex,
+			 adapter.ReleaseAndGetAddressOf()));
+			 adapterIndex++) {
+			DXGI_ADAPTER_DESC1 desc;
+			ThrowIfFailed(adapter->GetDesc1(&desc));
+
+			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+				continue;
+
+#ifdef _DEBUG
+			wchar_t buff[256] = {};
+			swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+			OutputDebugStringW(buff);
+#endif
+
+			break;
+		}
+	}
+
+	*ppAdapter = adapter.Detach();
 }
 
 bool renderer::d3d11_pipeline::create_device() {
@@ -136,6 +213,7 @@ void renderer::d3d11_pipeline::create_swap_chain() {
 	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swap_chain_desc.Flags = 0;
 
+	// Multisample AA will be handled in the pixel/vertex shader instead of setting the swap chain quality
 	//hr = device_->CheckMultisampleQualityLevels(swap_chain_desc.Format, swap_chain_desc.SampleDesc.Count,&max_ms_quality_);
 	//assert(SUCCEEDED(hr));
 	max_ms_quality_ = 0;
