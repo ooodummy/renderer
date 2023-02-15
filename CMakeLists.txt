@@ -7,6 +7,8 @@ find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(freetype CONFIG REQUIRED)
 
+file(MAKE_DIRECTORY include/renderer/d3d11/shaders/compiled)
+
 add_custom_target(shaders)
 
 set_source_files_properties(
@@ -33,7 +35,7 @@ function(build_shader SHADER HEADER)
     get_source_file_property(SHADER_ENTRYPOINT ${SHADER} VS_SHADER_ENTRYPOINT)
     get_source_file_property(SHADER_VARIABLE_NAME ${SHADER} VS_SHADER_VARIABLE_NAME)
     add_custom_command(
-            TARGET shaders
+            TARGET shaders PRE_BUILD
             COMMAND fxc.exe /nologo /E${SHADER_ENTRYPOINT} /T${SHADER_TYPE}_${SHADER_MODEL} /Zi /Fo ${CMAKE_BINARY_DIR}/${SHADER_NAME}.cso /Fd ${CMAKE_BINARY_DIR}/${SHADER_NAME}.pdb /Fh ${HEADER} /Vn ${SHADER_VARIABLE_NAME} ${SHADER}
             MAIN_DEPENDENCY ${SHADER}
             BYPRODUCTS ${HEADER}
