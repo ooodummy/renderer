@@ -9,6 +9,8 @@
 std::unique_ptr<renderer::win32_window> application;
 std::unique_ptr<renderer::d3d11_renderer> dx11;
 
+size_t segoe_font;
+
 renderer::sync_manager updated_draw;
 renderer::sync_manager updated_buf;
 
@@ -120,6 +122,13 @@ void draw_test_primitives(renderer::buffer* buf) {
 				  true);
 	buf->draw_circle({550.0f, 400.0f}, 50.0f, COLOR_WHITE, thickness, 32);
 	buf->draw_circle_filled({700.0f, 400.0f}, 50.0f, COLOR_RED, 32);
+
+	buf->push_font(segoe_font);
+
+	buf->draw_text<std::string>({100.0f, 100.0f}, "Hello, world!", COLOR_WHITE);
+	buf->draw_text<std::u32string>({100.0f, 145.0f}, U"Unicode example: \u26F0", COLOR_WHITE);
+
+	buf->pop_font();
 }
 
 void draw_thread() {
@@ -173,6 +182,8 @@ int main() {
 
 	dx11->set_vsync(false);
 	dx11->set_clear_color({88, 88, 88});//({88, 122, 202});
+
+	segoe_font = dx11->register_font("Segoe UI Emoji", 32, FW_THIN, true);
 
     std::thread draw(draw_thread);
 

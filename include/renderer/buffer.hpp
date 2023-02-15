@@ -135,6 +135,8 @@ namespace renderer {
 					break;
 				case text_align_bottom:
 					break;
+				default:
+					break;
 			}
 
 			switch (v_align) {
@@ -145,6 +147,8 @@ namespace renderer {
 					break;
 				case text_align_right:
 					pos.x -= size.x;
+					break;
+				default:
 					break;
 			}
 
