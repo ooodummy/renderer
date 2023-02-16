@@ -95,7 +95,8 @@ namespace renderer {
 
 		[[nodiscard]] ID3D11InputLayout* get_input_layout() const { return input_layout_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_vertex_buffer() const { return vertex_buffer_.Get(); };
-		[[nodiscard]] size_t get_vertex_buffer_size() const { return vertex_buffer_size_; };
+		[[nodiscard]] ID3D11Buffer* get_index_buffer() const { return index_buffer_.Get(); };
+		[[nodiscard]] size_t get_buffer_size() const { return buffer_size_; };
 
 		[[nodiscard]] ID3D11Buffer* get_projection_buffer() const { return projection_buffer_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_global_buffer() const { return global_buffer_.Get(); };
@@ -127,7 +128,7 @@ namespace renderer {
 		void create_constant_buffers();
 
 	public:
-		void resize_vertex_buffer(size_t vertex_count);
+		void resize_buffers(size_t vertex_count);
 		void release_resources();
 
 	private:
@@ -158,7 +159,8 @@ namespace renderer {
 		// Buffers
 		ComPtr<ID3D11InputLayout> input_layout_;
 		ComPtr<ID3D11Buffer> vertex_buffer_;
-		size_t vertex_buffer_size_ = 0;
+		ComPtr<ID3D11Buffer> index_buffer_;
+		size_t buffer_size_ = 0;
 
 		// Constant buffers
 		glm::mat4x4 projection_matrix_;

@@ -105,13 +105,14 @@ void renderer::d3d11_renderer::render() {
 	auto context = device_resources_->get_device_context();
 
 	auto vertex_buffer = device_resources_->get_vertex_buffer();
+	auto index_buffer = device_resources_->get_index_buffer();
 	auto input_layout = device_resources_->get_input_layout();
 
 	UINT stride = sizeof(vertex);
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
 
-	//context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
+	context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
 	context->IASetInputLayout(input_layout);
 
@@ -181,6 +182,8 @@ void renderer::d3d11_renderer::clear() {
 	context->OMSetBlendState(blend_state, nullptr, 0xffffffff);
 	context->OMSetDepthStencilState(depth_state, NULL);
 	context->RSSetState(rasterizer_state);
+
+	// For some reason this is now needed after improving the device resource manager
 	context->PSSetSamplers(0, 1, &sampler_state);
 }
 
@@ -334,7 +337,7 @@ void renderer::d3d11_renderer::on_device_restored() {
 void renderer::d3d11_renderer::resize_buffers() {
 	auto context = device_resources_->get_device_context();
 	auto vertex_buffer = device_resources_->get_vertex_buffer();
-	auto vertex_buffer_size = device_resources_->get_vertex_buffer_size();
+	auto buffer_size = device_resources_->get_buffer_size();
 
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -345,12 +348,11 @@ void renderer::d3d11_renderer::resize_buffers() {
 	}
 
 	if (vertex_count > 0) {
-		if (!vertex_buffer || vertex_buffer_size <= vertex_count) {
-			device_resources_->resize_vertex_buffer(vertex_count + 250);
+		if (!vertex_buffer || buffer_size <= vertex_count) {
+			device_resources_->resize_buffers(vertex_count + 250);
 		}
 
 		if (vertex_buffer) {
-			// TODO: Fix Map overwrite
 			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
 			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
 			assert(SUCCEEDED(hr));

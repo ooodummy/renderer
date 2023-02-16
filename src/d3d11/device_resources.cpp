@@ -775,20 +775,31 @@ void renderer::d3d11_device_resources::create_constant_buffers() {
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
-void renderer::d3d11_device_resources::resize_vertex_buffer(size_t vertex_count) {
-	if (vertex_count > vertex_buffer_size_) {
-		vertex_buffer_size_ = vertex_count;
+void renderer::d3d11_device_resources::resize_buffers(size_t vertex_count) {
+	if (vertex_count > buffer_size_) {
+		buffer_size_ = vertex_count;
 	}
 
 	D3D11_BUFFER_DESC vertex_desc;
-	vertex_desc.ByteWidth = vertex_buffer_size_ * sizeof(vertex);
+	vertex_desc.ByteWidth = buffer_size_ * sizeof(vertex);
 	vertex_desc.Usage = D3D11_USAGE_DYNAMIC;
 	vertex_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	vertex_desc.MiscFlags = 0;
 	vertex_desc.StructureByteStride = 0;
 
-	HRESULT hr = device_->CreateBuffer(&vertex_desc, nullptr, vertex_buffer_.ReleaseAndGetAddressOf());
+	auto hr = device_->CreateBuffer(&vertex_desc, nullptr, vertex_buffer_.ReleaseAndGetAddressOf());
+	assert(SUCCEEDED(hr));
+
+	D3D11_BUFFER_DESC index_desc;
+	index_desc.ByteWidth = buffer_size_ * sizeof(uint32_t);
+	index_desc.Usage = D3D11_USAGE_DYNAMIC;
+	index_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	index_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	index_desc.MiscFlags = 0;
+	index_desc.StructureByteStride = 0;
+
+	hr = device_->CreateBuffer(&index_desc, nullptr, index_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 }
 
