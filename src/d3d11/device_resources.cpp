@@ -98,8 +98,6 @@ void renderer::d3d11_device_resources::create_device_resources() {
 	create_states();
 	create_shaders_and_layout();
 	create_constant_buffers();
-
-	resize_vertex_buffer(500);
 }
 
 void renderer::d3d11_device_resources::create_window_size_dependent_resources() {
@@ -145,8 +143,6 @@ void renderer::d3d11_device_resources::set_window(std::shared_ptr<win32_window> 
 }
 
 bool renderer::d3d11_device_resources::window_size_changed(glm::i16vec2 size) {
-	DPRINTF("[+] Window size changed ({}, {})\n", size.x, size.y);
-
 	if (!window_ || !window_->get_hwnd())
 		return false;
 
@@ -160,6 +156,8 @@ bool renderer::d3d11_device_resources::window_size_changed(glm::i16vec2 size) {
 
 		return false;
 	}
+
+	DPRINTF("[+] Window size changed ({}, {})\n", size.x, size.y);
 
 	output_size_ = rect;
 	create_window_size_dependent_resources();
@@ -778,9 +776,8 @@ void renderer::d3d11_device_resources::create_constant_buffers() {
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
 void renderer::d3d11_device_resources::resize_vertex_buffer(size_t vertex_count) {
-	// This could get unsafe
 	if (vertex_count > vertex_buffer_size_) {
-		vertex_buffer_size_ = vertex_count + 100;
+		vertex_buffer_size_ = vertex_count;
 	}
 
 	D3D11_BUFFER_DESC vertex_desc;

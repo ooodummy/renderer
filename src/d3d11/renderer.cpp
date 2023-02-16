@@ -345,8 +345,8 @@ void renderer::d3d11_renderer::resize_buffers() {
 	}
 
 	if (vertex_count > 0) {
-		if (!vertex_buffer || vertex_buffer_size < vertex_count) {
-			device_resources_->resize_vertex_buffer(vertex_count);
+		if (!vertex_buffer || vertex_buffer_size <= vertex_count) {
+			device_resources_->resize_vertex_buffer(vertex_count + 250);
 		}
 
 		if (vertex_buffer) {
