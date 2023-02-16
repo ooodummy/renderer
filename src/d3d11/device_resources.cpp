@@ -402,8 +402,8 @@ void renderer::d3d11_device_resources::get_hardware_adapter(IDXGIAdapter1** pp_a
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 				continue;
 
-			//DPRINTF(L"[+] D3D11 adapter ({}): VID:{0:#x}, PID:{0:#x} - {}\n", adapter_index, desc.VendorId,
-			//		   desc.DeviceId, desc.Description);
+			DPRINTF(L"[+] D3D11 adapter ({}): VID:{}, PID:{} - {}\n", adapter_index, desc.VendorId, desc.DeviceId,
+					desc.Description);
 			break;
 		}
 	}
@@ -422,8 +422,8 @@ void renderer::d3d11_device_resources::get_hardware_adapter(IDXGIAdapter1** pp_a
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 				continue;
 
-			//DPRINTF(L"[+] D3D11 adapter ({}): VID:{0:#x}, PID:{0:#x} - {}\n", adapter_index, desc.VendorId,
-			//		desc.DeviceId, desc.Description);
+			DPRINTF(L"[+] D3D11 adapter ({}): VID:{}, PID:{} - {}\n", adapter_index, desc.VendorId, desc.DeviceId,
+					desc.Description);
 			break;
 		}
 	}
@@ -522,7 +522,7 @@ void renderer::d3d11_device_resources::create_debug_interface() {
 		if (SUCCEEDED(debug.As(&info_queue))) {
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
-			//info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
+			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
 
 			D3D11_MESSAGE_ID hide[] = {
 				D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,

@@ -24,6 +24,14 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	static bool in_size_move = false;
 
 	switch (msg) {
+		case WM_PAINT:
+			if (in_size_move)
+				dx11->render();
+			else {
+				PAINTSTRUCT ps;
+				std::ignore = BeginPaint(hWnd, &ps);
+				EndPaint(hWnd, &ps);
+			}
 		case WM_DISPLAYCHANGE:
 			dx11->on_display_change();
 			break;
@@ -42,6 +50,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case WM_EXITSIZEMOVE:
 			in_size_move = false;
+			dx11->on_window_size_change(application->get_size());
 			break;
 		case WM_DESTROY:
 			PostQuitMessage(0);
