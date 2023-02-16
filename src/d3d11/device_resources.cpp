@@ -1,7 +1,12 @@
 #include "renderer/d3d11/device_resources.hpp"
+
+#include "renderer/d3d11/shaders/compiled/pixel.h"
+#include "renderer/d3d11/shaders/compiled/vertex.h"
+
 #include "renderer/d3d11/shaders/constant_buffers.hpp"
-#include "renderer/util/util.hpp"
+
 #include "renderer/util/win32_window.hpp"
+
 #include "renderer/vertex.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,6 +20,9 @@ renderer::d3d11_device_resources::d3d11_device_resources(DXGI_FORMAT back_buffer
 	depth_buffer_format_(depth_buffer_format),
 	back_buffer_count_(back_buffer_count),
 	min_feature_level_(min_feature_level),
+	feature_level_(D3D_FEATURE_LEVEL_9_1),
+	output_size_({0, 0, 1, 1}),
+	color_space_(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
 	options_(options) {}
 
 /*renderer::d3d11_device_resources::d3d11_device_resources(std::shared_ptr<renderer::win32_window> window) : window_
@@ -74,11 +82,14 @@ DXGI_FORMAT renderer::d3d11_device_resources::no_srgb(DXGI_FORMAT format) {
 	}
 }
 
-uint32_t renderer::d3d11_device_resources::compute_intersection_area(const glm::i32vec4& a, const glm::i32vec4& b) {
-	return std::max(0, std::min(a.z, b.z) - std::max(a.x, b.x)) * std::max(0, std::min(a.w, b.w) - std::max(a.y, b.y));
+int32_t renderer::d3d11_device_resources::compute_intersection_area(const RECT& a, const RECT& b) {
+	return std::max(0l, std::min(a.right, b.right) - std::max(a.left, b.left)) *
+		   std::max(0l, std::min(a.bottom, b.bottom) - std::max(a.top, b.top));
 }
 
 void renderer::d3d11_device_resources::create_device_resources() {
+	DPRINTF("[+] Creating device resources\n");
+
 	create_factory();
 	check_feature_support();
 	create_device();
@@ -89,18 +100,19 @@ void renderer::d3d11_device_resources::create_device_resources() {
 	create_constant_buffers();
 
 	resize_vertex_buffer(500);
-	resize_index_buffer(250);
 }
 
 void renderer::d3d11_device_resources::create_window_size_dependent_resources() {
+	DPRINTF("[+] Creating window size dependant resources\n");
+
 	assert(window_->get_hwnd());
 
-	context_->OMSetRenderTargets(0, nullptr, nullptr);
+	device_context_->OMSetRenderTargets(0, nullptr, nullptr);
 	depth_stencil_view_.Reset();
 	render_target_view_.Reset();
 	depth_stencil_.Reset();
 	render_target_.Reset();
-	context_->Flush();
+	device_context_->Flush();
 
 	back_buffer_size_.x = std::max<UINT>(static_cast<UINT>(output_size_.right - output_size_.left), 1u);
 	back_buffer_size_.y = std::max<UINT>(static_cast<UINT>(output_size_.bottom - output_size_.top), 1u);
@@ -133,6 +145,8 @@ void renderer::d3d11_device_resources::set_window(std::shared_ptr<win32_window> 
 }
 
 bool renderer::d3d11_device_resources::window_size_changed(glm::i16vec2 size) {
+	DPRINTF("[+] Window size changed ({}, {})\n", size.x, size.y);
+
 	if (!window_ || !window_->get_hwnd())
 		return false;
 
@@ -154,44 +168,12 @@ bool renderer::d3d11_device_resources::window_size_changed(glm::i16vec2 size) {
 }
 
 void renderer::d3d11_device_resources::handle_device_lost() {
+	DPRINTF("[!] Device lost\n");
+
 	if (device_notify_)
 		device_notify_->on_device_lost();
 
-	release_vertices();
-
-	command_buffer_.Reset();
-	global_buffer_.Reset();
-	projection_buffer_.Reset();
-	pixel_shader_.Reset();
-	vertex_shader_.Reset();
-
-	// States
-	rasterizer_state_.Reset();
-	sampler_state_.Reset();
-	depth_stencil_state_.Reset();
-	blend_state_.Reset();
-
-	// Swap chain
-	depth_stencil_view_.Reset();
-	render_target_view_.Reset();
-	depth_stencil_.Reset();
-	render_target_.Reset();
-	swap_chain_.Reset();
-
-	context_.Reset();
-
-#ifdef _DEBUG
-	{
-		ComPtr<ID3D11Debug> debug;
-		if (SUCCEEDED(device_.As(&debug))) {
-			debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
-		}
-	}
-#endif
-
-	// Device
-	device_.Reset();
-	dxgi_factory_.Reset();
+	release_resources();
 
 	create_device_resources();
 	create_window_size_dependent_resources();
@@ -212,10 +194,10 @@ void renderer::d3d11_device_resources::present() {
 	else
 		hr = swap_chain_->Present(1, 0);
 
-	context_->DiscardView(render_target_view_.Get());
+	device_context_->DiscardView(render_target_view_.Get());
 
 	if (depth_stencil_view_)
-		context_->DiscardView(depth_stencil_view_.Get());
+		device_context_->DiscardView(depth_stencil_view_.Get());
 
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
@@ -245,13 +227,6 @@ void renderer::d3d11_device_resources::update_color_space() {
 		if (!GetWindowRect(window_->get_hwnd(), &rect))
 			assert(true);
 
-		const glm::i32vec4 a = {
-			static_cast<int32_t>(rect.left),
-			static_cast<int32_t>(rect.top),
-			static_cast<int32_t>(rect.right),
-			static_cast<int32_t>(rect.bottom)
-		};
-
 		ComPtr<IDXGIOutput> best_output;
 		int32_t best_intersect_area = -1;
 
@@ -266,14 +241,7 @@ void renderer::d3d11_device_resources::update_color_space() {
 				auto hr = output->GetDesc(&desc);
 				assert(SUCCEEDED(hr));
 
-				const glm::i32vec4 b = {
-					static_cast<int32_t>(desc.DesktopCoordinates.left),
-					static_cast<int32_t>(desc.DesktopCoordinates.top),
-					static_cast<int32_t>(desc.DesktopCoordinates.right),
-					static_cast<int32_t>(desc.DesktopCoordinates.bottom)
-				};
-
-				const auto intersect_area = compute_intersection_area(a, b);
+				const auto intersect_area = compute_intersection_area(rect, desc.DesktopCoordinates);
 				if (intersect_area > best_intersect_area) {
 					best_output.Swap(output);
 					best_intersect_area = intersect_area;
@@ -288,8 +256,10 @@ void renderer::d3d11_device_resources::update_color_space() {
 				auto hr = output6->GetDesc1(&desc);
 				assert(SUCCEEDED(hr));
 
-				if (desc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020)
+				if (desc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020) {
+					DPRINTF("[+] Found HDR10 adapter ({})\n", fmt::ptr(best_output.Get()));
 					is_display_hdr_10 = true;
+				}
 			}
 		}
 	}
@@ -322,8 +292,12 @@ void renderer::d3d11_device_resources::update_color_space() {
 
 void renderer::d3d11_device_resources::create_factory() {
 #ifdef _DEBUG
+	bool debug_dxgi = false;
+
 	IDXGIInfoQueue* dxgi_info_queue;
 	if (SUCCEEDED(DXGIGetDebugInterface1(0, __uuidof(IDXGIInfoQueue), (void**)&dxgi_info_queue))) {
+		debug_dxgi = true;
+
 		auto hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, __uuidof(IDXGIFactory2), (void**)&dxgi_factory_);
 		assert(SUCCEEDED(hr));
 
@@ -339,13 +313,17 @@ void renderer::d3d11_device_resources::create_factory() {
 		filter.DenyList.NumIDs = static_cast<UINT>(std::size(hide));
 		filter.DenyList.pIDList = hide;
 		dxgi_info_queue->AddStorageFilterEntries(DXGI_DEBUG_DXGI, &filter);
-
-		return;
 	}
+
+	if (!debug_dxgi)
 #endif
 
-	auto hr = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgi_factory_);
-	assert(SUCCEEDED(hr));
+	{
+		auto hr = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgi_factory_);
+		assert(SUCCEEDED(hr));
+	}
+
+	DPRINTF("[+] Created DXGI factory ({})\n", fmt::ptr(dxgi_factory_.Get()));
 }
 
 void renderer::d3d11_device_resources::check_feature_support() {
@@ -359,7 +337,10 @@ void renderer::d3d11_device_resources::check_feature_support() {
 
 		if (FAILED(hr) || !allow_tearing) {
 			options_ &= ~device_options::allow_tearing;
-			DPRINTF("[!] Variable refresh rate displays not supported.\n");
+			DPRINTF("[!] Variable refresh rate displays not supported\n");
+		}
+		else {
+			DPRINTF("[+] Variable refresh rate is supported\n");
 		}
 	}
 
@@ -367,7 +348,10 @@ void renderer::d3d11_device_resources::check_feature_support() {
 		ComPtr<IDXGIFactory5> factory5;
 		if (FAILED(dxgi_factory_.As(&factory5))) {
 			options_ &= ~device_options::enable_hdr;
-			DPRINTF("[!] HDR swap chains not supported.\n");
+			DPRINTF("[!] HDR swap chains not supported\n");
+		}
+		else {
+			DPRINTF("[+] HDR swap chains are supported\n");
 		}
 	}
 
@@ -375,7 +359,10 @@ void renderer::d3d11_device_resources::check_feature_support() {
 		ComPtr<IDXGIFactory4> factory4;
 		if (FAILED(dxgi_factory_.As(&factory4))) {
 			options_ &= ~device_options::flip_present;
-			DPRINTF("[!] Flip swap effects not supported.\n");
+			DPRINTF("[!] Flip swap effects not supported\n");
+		}
+		else {
+			DPRINTF("[+] Flip swap effects are supported\n");
 		}
 	}
 }
@@ -402,7 +389,7 @@ void renderer::d3d11_device_resources::get_hardware_adapter(IDXGIAdapter1** pp_a
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 				continue;
 
-			DPRINTF(L"[+] D3D11 adapter ({}): VID:{}, PID:{} - {}\n", adapter_index, desc.VendorId, desc.DeviceId,
+			DPRINTF(L"[+] Adapter ({}): VID:{}, PID:{} - {}\n", adapter_index, desc.VendorId, desc.DeviceId,
 					desc.Description);
 			break;
 		}
@@ -422,7 +409,7 @@ void renderer::d3d11_device_resources::get_hardware_adapter(IDXGIAdapter1** pp_a
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 				continue;
 
-			DPRINTF(L"[+] D3D11 adapter ({}): VID:{}, PID:{} - {}\n", adapter_index, desc.VendorId, desc.DeviceId,
+			DPRINTF(L"[+] Adapter ({}): VID:{}, PID:{} - {}\n", adapter_index, desc.VendorId, desc.DeviceId,
 					desc.Description);
 			break;
 		}
@@ -463,7 +450,7 @@ void renderer::d3d11_device_resources::create_device() {
 	}
 
 	if (feature_level_count == 0) {
-		DPRINTF("[!] D3D11 minimum feature level is too high.\n");
+		DPRINTF("[!] Minimum feature level is too high\n");
 		return;
 	}
 
@@ -488,7 +475,7 @@ void renderer::d3d11_device_resources::create_device() {
 							   base_context.GetAddressOf());
 	}
 	else {
-		DPRINTF("[!] D3D11 hardware adapter not found.\n");
+		DPRINTF("[!] Hardware adapter not found\n");
 	}
 
 	if (FAILED(hr)) {
@@ -510,8 +497,15 @@ void renderer::d3d11_device_resources::create_device() {
 	hr = base_device.As(&device_);
 	assert(SUCCEEDED(hr));
 
-	hr = base_context.As(&context_);
+	hr = base_context.As(&device_context_);
 	assert(SUCCEEDED(hr));
+
+	hr = base_context.As(&annotation_);
+	assert(SUCCEEDED(hr));
+
+	DPRINTF("[+] Created device ({})\n", fmt::ptr(device_.Get()));
+	DPRINTF("[+] Created device context ({})\n", fmt::ptr(device_context_.Get()));
+	DPRINTF("[+] Created annotation ({})\n", fmt::ptr(annotation_.Get()));
 }
 
 void renderer::d3d11_device_resources::create_debug_interface() {
@@ -532,30 +526,34 @@ void renderer::d3d11_device_resources::create_debug_interface() {
 			filter.DenyList.NumIDs = static_cast<UINT>(std::size(hide));
 			filter.DenyList.pIDList = hide;
 			info_queue->AddStorageFilterEntries(&filter);
+
+			DPRINTF("[+] Created debug interface ({})\n", fmt::ptr(debug.Get()));
 		}
 	}
 #endif
 }
 
 void renderer::d3d11_device_resources::update_swap_chain() {
-	const DXGI_FORMAT bacK_buffer_format = (options_ & (device_options::flip_present |
+	const DXGI_FORMAT back_buffer_format = (options_ & (device_options::flip_present |
 														device_options::allow_tearing |
 														device_options::enable_hdr))
 										   ? no_srgb(back_buffer_format_)
 										   : back_buffer_format_;
 
 	if (swap_chain_) {
+		DPRINTF("[+] Resizing swap chain\n");
+
 		auto hr = swap_chain_->ResizeBuffers(back_buffer_count_,
 											 back_buffer_size_.x,
 											 back_buffer_size_.y,
-											 bacK_buffer_format,
+											 back_buffer_format,
 											 (options_ & device_options::allow_tearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u);
 		assert(SUCCEEDED(hr));
 
 		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
 			if (hr == DXGI_ERROR_DEVICE_REMOVED)
 				hr = device_->GetDeviceRemovedReason();
-			DPRINTF("[!] Device lost of ResizeBuffers, reason: {0:#x}\n", hr);
+			DPRINTF("[!] Device lost on ResizeBuffers, reason: {0:#x}\n", hr);
 			handle_device_lost();
 			return;
 		}
@@ -566,9 +564,9 @@ void renderer::d3d11_device_resources::update_swap_chain() {
 	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc{};
 	swap_chain_desc.Width = back_buffer_size_.x;
 	swap_chain_desc.Height = back_buffer_size_.y;
-	swap_chain_desc.Format = bacK_buffer_format;
+	swap_chain_desc.Format = back_buffer_format;
 	swap_chain_desc.Stereo = FALSE;
-	swap_chain_desc.SampleDesc.Count = 4;
+	swap_chain_desc.SampleDesc.Count = 1;
 	swap_chain_desc.SampleDesc.Quality = 0;
 	swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swap_chain_desc.BufferCount = back_buffer_count_;
@@ -591,6 +589,8 @@ void renderer::d3d11_device_resources::update_swap_chain() {
 													swap_chain_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
+	DPRINTF("[+] Created swap chain ({})\n", fmt::ptr(swap_chain_.Get()));
+
 	hr = dxgi_factory_->MakeWindowAssociation(window_->get_hwnd(), DXGI_MWA_NO_ALT_ENTER);
 	assert(SUCCEEDED(hr));
 }
@@ -599,7 +599,8 @@ void renderer::d3d11_device_resources::create_render_target_view() {
 	auto hr = swap_chain_->GetBuffer(0, IID_PPV_ARGS(render_target_.ReleaseAndGetAddressOf()));
 	assert(SUCCEEDED(hr));
 
-	CD3D11_RENDER_TARGET_VIEW_DESC  render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2DMS, back_buffer_format_);
+	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2D, back_buffer_format_);
+
 	hr = device_->CreateRenderTargetView(render_target_.Get(),
 										 &render_target_view_desc,
 										 render_target_view_.ReleaseAndGetAddressOf());
@@ -616,12 +617,11 @@ void renderer::d3d11_device_resources::create_depth_stencil_view() {
 											 1,
 											 1,
 											 D3D11_BIND_DEPTH_STENCIL);
-	depth_stencil_desc.SampleDesc.Count = 4;
 
 	HRESULT hr = device_->CreateTexture2D(&depth_stencil_desc, nullptr, depth_stencil_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
-	CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2DMS, depth_buffer_format_);
+	CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D, depth_buffer_format_);
 	hr = device_->CreateDepthStencilView(depth_stencil_.Get(), &depth_stencil_view_desc, depth_stencil_view_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 }
@@ -635,14 +635,16 @@ void renderer::d3d11_device_resources::update_projection() {
 									screen_viewport_.MaxDepth);
 
 	D3D11_MAPPED_SUBRESOURCE mapped_resource;
-	HRESULT hr = context_->Map(projection_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+	HRESULT hr = device_context_->Map(projection_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 	assert(SUCCEEDED(hr));
 
 	{
 		memcpy(mapped_resource.pData, &projection_matrix_, sizeof(glm::mat4x4));
 	}
 
-	context_->Unmap(projection_buffer_.Get(), 0);
+	device_context_->Unmap(projection_buffer_.Get(), 0);
+
+	DPRINTF("[+] Updated vertex shader projection matrix\n");
 }
 
 void renderer::d3d11_device_resources::update_dimensions() {
@@ -650,19 +652,17 @@ void renderer::d3d11_device_resources::update_dimensions() {
 	global.dimensions = { static_cast<float>(back_buffer_size_.x), static_cast<float>(back_buffer_size_.y) };
 
 	D3D11_MAPPED_SUBRESOURCE mapped_resource;
-	HRESULT hr = context_->Map(global_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+	HRESULT hr = device_context_->Map(global_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 	assert(SUCCEEDED(hr));
 
 	{
 		memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
 	}
 
-	context_->Unmap(global_buffer_.Get(), 0);
+	device_context_->Unmap(global_buffer_.Get(), 0);
+
+	DPRINTF("[+] Updated pixel shader global dimensions\n");
 }
-
-
-#include "renderer/d3d11/shaders/compiled/pixel.h"
-#include "renderer/d3d11/shaders/compiled/vertex.h"
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
 void renderer::d3d11_device_resources::create_shaders_and_layout() {
@@ -671,12 +671,14 @@ void renderer::d3d11_device_resources::create_shaders_and_layout() {
 											 nullptr,
 											 vertex_shader_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created vertex shader ({})\n", fmt::ptr(vertex_shader_.Get()));
 
 	hr = device_->CreatePixelShader(pixel_shader_data,
 									sizeof(pixel_shader_data),
 									nullptr,
 									pixel_shader_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created pixel shader ({})\n", fmt::ptr(pixel_shader_.Get()));
 
 	D3D11_INPUT_ELEMENT_DESC input_desc[] = {
 		{"POS",	 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, 0,							   D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -690,6 +692,7 @@ void renderer::d3d11_device_resources::create_shaders_and_layout() {
 									sizeof(vertex_shader_data),
 									input_layout_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created input layout ({})\n", fmt::ptr(input_layout_.Get()));
 }
 
 void renderer::d3d11_device_resources::create_states() {
@@ -707,6 +710,7 @@ void renderer::d3d11_device_resources::create_states() {
 
 	auto hr = device_->CreateBlendState(&blend_desc, blend_state_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created blend state ({})\n", fmt::ptr(blend_state_.Get()));
 
 	D3D11_DEPTH_STENCIL_DESC depth_stencil_state_desc{};
 	depth_stencil_state_desc.DepthEnable = true;
@@ -715,6 +719,7 @@ void renderer::d3d11_device_resources::create_states() {
 
 	hr = device_->CreateDepthStencilState(&depth_stencil_state_desc, depth_stencil_state_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created depth stencil state ({})\n", fmt::ptr(depth_stencil_state_.Get()));
 
 	D3D11_SAMPLER_DESC sampler_desc{};
 	sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -727,6 +732,7 @@ void renderer::d3d11_device_resources::create_states() {
 
 	hr = device_->CreateSamplerState(&sampler_desc, sampler_state_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created sampler state ({})\n", fmt::ptr(sampler_state_.Get()));
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
 	rasterizer_desc.FillMode = D3D11_FILL_SOLID; // D3D11_FILL_WIREFRAME
@@ -742,6 +748,7 @@ void renderer::d3d11_device_resources::create_states() {
 
 	hr = device_->CreateRasterizerState(&rasterizer_desc, rasterizer_state_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created rasterizer state ({})\n", fmt::ptr(rasterizer_state_.Get()));
 }
 
 void renderer::d3d11_device_resources::create_constant_buffers() {
@@ -754,27 +761,30 @@ void renderer::d3d11_device_resources::create_constant_buffers() {
 
 	HRESULT hr = device_->CreateBuffer(&buffer_desc, nullptr, projection_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created projection buffer ({})\n", fmt::ptr(projection_buffer_.Get()));
 
 	buffer_desc.ByteWidth = sizeof(renderer::global_buffer);
 
 	hr = device_->CreateBuffer(&buffer_desc, nullptr, global_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created global buffer ({})\n", fmt::ptr(global_buffer_.Get()));
 
 	buffer_desc.ByteWidth = sizeof(renderer::command_buffer);
 
 	hr = device_->CreateBuffer(&buffer_desc, nullptr, command_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
+	DPRINTF("[+] Created command buffer ({})\n", fmt::ptr(command_buffer_.Get()));
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
 void renderer::d3d11_device_resources::resize_vertex_buffer(size_t vertex_count) {
-	if (vertex_count <= 0) {
-		release_vertices();
-		return;
+	// This could get unsafe
+	if (vertex_count > vertex_buffer_size_) {
+		vertex_buffer_size_ = vertex_count + 100;
 	}
 
 	D3D11_BUFFER_DESC vertex_desc;
-	vertex_desc.ByteWidth = vertex_count * sizeof(vertex);
+	vertex_desc.ByteWidth = vertex_buffer_size_ * sizeof(vertex);
 	vertex_desc.Usage = D3D11_USAGE_DYNAMIC;
 	vertex_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -785,27 +795,42 @@ void renderer::d3d11_device_resources::resize_vertex_buffer(size_t vertex_count)
 	assert(SUCCEEDED(hr));
 }
 
-void renderer::d3d11_device_resources::resize_index_buffer(size_t index_count) {
-	if (index_count <= 0) {
-		release_vertices();
-		return;
-	}
-
-	D3D11_BUFFER_DESC index_desc;
-	index_desc.ByteWidth = sizeof(uint32_t) * index_count;
-	index_desc.Usage = D3D11_USAGE_DYNAMIC;
-	index_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	index_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	index_desc.MiscFlags = 0;
-	index_desc.StructureByteStride = 0;
-
-	HRESULT hr = device_->CreateBuffer(&index_desc, nullptr, index_buffer_.ReleaseAndGetAddressOf());
-	assert(SUCCEEDED(hr));
-}
-
-void renderer::d3d11_device_resources::release_vertices() {
+void renderer::d3d11_device_resources::release_resources() {
 	vertex_buffer_.Reset();
-	index_buffer_.Reset();
+
+	command_buffer_.Reset();
+	global_buffer_.Reset();
+	projection_buffer_.Reset();
+	pixel_shader_.Reset();
+	vertex_shader_.Reset();
+
+	// States
+	rasterizer_state_.Reset();
+	sampler_state_.Reset();
+	depth_stencil_state_.Reset();
+	blend_state_.Reset();
+
+	// Swap chain
+	depth_stencil_view_.Reset();
+	render_target_view_.Reset();
+	depth_stencil_.Reset();
+	render_target_.Reset();
+	swap_chain_.Reset();
+	device_context_.Reset();
+	annotation_.Reset();
+
+#ifdef _DEBUG
+	{
+		ComPtr<ID3D11Debug> debug;
+		if (SUCCEEDED(device_.As(&debug))) {
+			debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+		}
+	}
+#endif
+
+	// Device
+	device_.Reset();
+	dxgi_factory_.Reset();
 }
 
 std::shared_ptr<renderer::win32_window> renderer::d3d11_device_resources::get_window() {

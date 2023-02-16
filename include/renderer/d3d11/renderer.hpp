@@ -27,6 +27,8 @@ namespace renderer {
 		void clear();
 		void resize_buffers();
 
+		void draw_buffers();
+
 		void create_device_dependent_resources();
 		void create_window_size_dependent_resources();
 
@@ -69,12 +71,26 @@ namespace renderer {
 	private:
 		std::unique_ptr<d3d11_device_resources> device_resources_;
 
+		// Extra resources
+
+		// MSAA render target resources
+		bool msaa_enabled_;
+
+		int16_t target_sample_count_;
+		int16_t sample_count_;
+
+		ComPtr<ID3D11Texture2D> msaa_render_target_;
+		ComPtr<ID3D11RenderTargetView> msaa_render_target_view_;
+		ComPtr<ID3D11DepthStencilView> msaa_depth_stencil_view_;
+
 		// Options
 		glm::vec4 clear_color_;
 
 		// Fonts
 		FT_Library library_;
-		std::vector<std::unique_ptr<font>> fonts_;
+
+		std::shared_mutex font_list_mutex_;
+		std::vector<std::shared_ptr<font>> fonts_;
 
 		bool create_font_glyph(size_t id, uint32_t c);
 	};

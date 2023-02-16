@@ -23,14 +23,15 @@ bool renderer::win32_window::create() {
 	wc_.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc_.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
 
-	const auto style = CS_HREDRAW | CS_VREDRAW;
+	const auto ex_style = CS_HREDRAW | CS_VREDRAW;
+	const auto style = WS_OVERLAPPEDWINDOW;
 
 	::RegisterClassA(&wc_);
 
 	RECT rect = { pos_.x, pos_.y, pos_.x + size_.x, pos_.y + size_.y };
-	::AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, style);
+	::AdjustWindowRectEx(&rect, style, FALSE, ex_style);
 
-	hwnd_ = ::CreateWindowExA(style, wc_.lpszClassName, title_.data(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
+	hwnd_ = ::CreateWindowExA(ex_style, wc_.lpszClassName, title_.data(), style, rect.left, rect.top,
 							  rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, wc_.hInstance, nullptr);
 
 	return hwnd_ != nullptr;

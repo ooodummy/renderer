@@ -9,14 +9,20 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) {
+renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
+	msaa_enabled_(true),
+	target_sample_count_(8) {
 	device_resources_ = std::make_unique<d3d11_device_resources>();
 	device_resources_->set_window(window);
+	device_resources_->register_device_notify(this);
 }
 
 bool renderer::d3d11_renderer::initialize() {
 	device_resources_->create_device_resources();
+	create_device_dependent_resources();
+
 	device_resources_->create_window_size_dependent_resources();
+	create_window_size_dependent_resources();
 
 	if (FT_Init_FreeType(&library_))
 		return false;
@@ -65,8 +71,8 @@ void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color
 
 size_t renderer::d3d11_renderer::register_font(std::string family, int size, int weight, bool anti_aliased) {
 	const auto id = fonts_.size();
-	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased));
 
+	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased));
 	auto& font = fonts_.back();
 
 	auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
@@ -97,65 +103,55 @@ void renderer::d3d11_renderer::render() {
 	resize_buffers();
 
 	auto context = device_resources_->get_device_context();
+
 	auto vertex_buffer = device_resources_->get_vertex_buffer();
-	auto index_buffer = device_resources_->get_index_buffer();
 	auto input_layout = device_resources_->get_input_layout();
 
 	UINT stride = sizeof(vertex);
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
 
-	context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
+	//context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	context->IASetInputLayout(input_layout);
 
-	auto command_buffer = device_resources_->get_command_buffer();
+	draw_buffers();
 
-	{
-		std::unique_lock lock_guard(buffer_list_mutex_);
+	// Resolve MSAA render target
+	if (msaa_enabled_) {
+		auto render_target_view = device_resources_->get_render_target_view();
+		auto render_target = device_resources_->get_render_target();
+		auto back_buffer_format = device_resources_->get_back_buffer_format();
 
-		size_t offset = 0;
+		context->ResolveSubresource(render_target, 0, msaa_render_target_.Get(), 0, back_buffer_format);
 
-		// TODO: Buffer priority
-		// God bless http://www.rastertek.com/dx11tut11.html
-		for (const auto& [active, working] : buffers_) {
-			auto& batches = active->get_batches();
-
-			for (auto& batch : batches) {
-				D3D11_MAPPED_SUBRESOURCE mapped_resource;
-				HRESULT hr = context->Map(command_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-				assert(SUCCEEDED(hr));
-
-				{
-					memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
-				}
-
-				context->Unmap(command_buffer, 0);
-
-				context->PSSetConstantBuffers(1, 1, &command_buffer);
-				context->PSSetShaderResources(0, 1, &batch.srv);
-				context->IASetPrimitiveTopology(batch.type);
-
-				context->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
-
-				offset += batch.size;
-			}
-		}
+		context->OMSetRenderTargets(1, &render_target_view, nullptr);
 	}
 
 	device_resources_->present();
 }
 
 void renderer::d3d11_renderer::clear() {
+	// Note: This should be enough to prepare the device context properly each frame in a present hook
+
 	// Clear views
 	auto context = device_resources_->get_device_context();
-	auto render_target = device_resources_->get_render_target_view();
-	auto depth_stencil = device_resources_->get_depth_stencil_view();
 
-	context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
-	context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	context->OMSetRenderTargets(1, &render_target, depth_stencil);
+	if (msaa_enabled_) {
+		context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
+		context->ClearDepthStencilView(msaa_depth_stencil_view_.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+		context->OMSetRenderTargets(1, msaa_render_target_view_.GetAddressOf(), msaa_depth_stencil_view_.Get());
+	}
+	else {
+		auto render_target = device_resources_->get_render_target_view();
+		auto depth_stencil = device_resources_->get_depth_stencil_view();
+
+		context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
+		context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+		context->OMSetRenderTargets(1, &render_target, depth_stencil);
+	}
 
 	// Set shaders
 	auto vertex_shader = device_resources_->get_vertex_shader();
@@ -188,6 +184,41 @@ void renderer::d3d11_renderer::clear() {
 	context->PSSetSamplers(0, 1, &sampler_state);
 }
 
+void renderer::d3d11_renderer::draw_buffers() {
+	auto context = device_resources_->get_device_context();
+	auto command_buffer = device_resources_->get_command_buffer();
+
+	std::unique_lock lock_guard(buffer_list_mutex_);
+
+	size_t offset = 0;
+
+	// TODO: Buffer priority
+	// God bless http://www.rastertek.com/dx11tut11.html
+	for (const auto& [active, working] : buffers_) {
+		auto& batches = active->get_batches();
+
+		for (auto& batch : batches) {
+			D3D11_MAPPED_SUBRESOURCE mapped_resource;
+			HRESULT hr = context->Map(command_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+			assert(SUCCEEDED(hr));
+
+			{
+				memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
+			}
+
+			context->Unmap(command_buffer, 0);
+
+			context->PSSetConstantBuffers(1, 1, &command_buffer);
+			context->PSSetShaderResources(0, 1, &batch.srv);
+			context->IASetPrimitiveTopology(batch.type);
+
+			context->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
+
+			offset += batch.size;
+		}
+	}
+}
+
 void renderer::d3d11_renderer::on_window_moved() {
 	auto back_buffer_size = device_resources_->get_back_buffer_size();
 	device_resources_->window_size_changed(back_buffer_size);
@@ -205,14 +236,70 @@ void renderer::d3d11_renderer::on_window_size_change(glm::i16vec2 size) {
 }
 
 void renderer::d3d11_renderer::create_device_dependent_resources() {
+	auto device = device_resources_->get_device();
 
+	// Check for MSAA support
+	for (sample_count_ = target_sample_count_; sample_count_ > 1; sample_count_--) {
+		UINT levels = 0;
+		if (FAILED(device->CheckMultisampleQualityLevels(device_resources_->get_back_buffer_format(), sample_count_, &levels)))
+			continue;
+
+		if (levels > 0)
+			break;
+	}
+
+	if (sample_count_ < 2) {
+		DPRINTF("[!] MSAA is not supported by the active back buffer format\n");
+	}
 }
 
 void renderer::d3d11_renderer::create_window_size_dependent_resources() {
+	auto device = device_resources_->get_device();
+	auto back_buffer_format = device_resources_->get_back_buffer_format();
+	auto depth_buffer_format = device_resources_->get_depth_buffer_format();
+	auto back_buffer_size = device_resources_->get_back_buffer_size();
+
+	CD3D11_TEXTURE2D_DESC render_target_desc(back_buffer_format,
+											 back_buffer_size.x,
+											 back_buffer_size.y,
+											 1,
+											 1,
+											 D3D11_BIND_RENDER_TARGET,
+											 D3D11_USAGE_DEFAULT,
+											 0,
+											 sample_count_);
+	auto hr = device->CreateTexture2D(&render_target_desc, nullptr, msaa_render_target_.ReleaseAndGetAddressOf());
+	assert(SUCCEEDED(hr));
+
+	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2DMS, back_buffer_format);
+	hr = device->CreateRenderTargetView(msaa_render_target_.Get(), &render_target_view_desc, msaa_render_target_view_.ReleaseAndGetAddressOf());
+	assert(SUCCEEDED(hr));
+
+	CD3D11_TEXTURE2D_DESC depth_stencil_desc(depth_buffer_format,
+											 back_buffer_size.x,
+											 back_buffer_size.y,
+											 1,
+											 1,
+											 D3D11_BIND_DEPTH_STENCIL,
+											 D3D11_USAGE_DEFAULT,
+											 0,
+											 sample_count_);
+
+	ComPtr<ID3D11Texture2D> depth_stencil;
+	hr = device->CreateTexture2D(&depth_stencil_desc, nullptr, depth_stencil.GetAddressOf());
+	assert(SUCCEEDED(hr));
+
+	hr = device->CreateDepthStencilView(depth_stencil.Get(), nullptr, msaa_depth_stencil_view_.ReleaseAndGetAddressOf());
+	assert(SUCCEEDED(hr));
+
 
 }
 
 void renderer::d3d11_renderer::on_device_lost() {
+	msaa_depth_stencil_view_.Reset();
+	msaa_render_target_view_.Reset();
+	msaa_render_target_.Reset();
+
 	{
 		std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -221,23 +308,33 @@ void renderer::d3d11_renderer::on_device_lost() {
 		}
 	}
 
-	for (auto& font : fonts_) {
-		for (auto& [c, glyph] : font->char_set) {
-			glyph.texture.Reset();
-			glyph.shader_resource_view.Reset();
-		}
+	{
+		DPRINTF("[+] Releasing font glyph resources\n");
 
-		font->char_set = {};
+		std::unique_lock lock_guard(font_list_mutex_);
+
+		for (auto& font : fonts_) {
+			for (auto& [c, glyph] : font->char_set) {
+				if (glyph.srv)
+					glyph.srv->Release();
+			}
+
+			font->char_set = {};
+		}
 	}
+
 }
 
 void renderer::d3d11_renderer::on_device_restored() {
+	create_device_dependent_resources();
 
+	create_window_size_dependent_resources();
 }
 
 void renderer::d3d11_renderer::resize_buffers() {
 	auto context = device_resources_->get_device_context();
 	auto vertex_buffer = device_resources_->get_vertex_buffer();
+	auto vertex_buffer_size = device_resources_->get_vertex_buffer_size();
 
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -248,16 +345,12 @@ void renderer::d3d11_renderer::resize_buffers() {
 	}
 
 	if (vertex_count > 0) {
-		static size_t vertex_buffer_size = 0;
-
 		if (!vertex_buffer || vertex_buffer_size < vertex_count) {
-			vertex_buffer_size = vertex_count + 500;
-
-			device_resources_->release_vertices();
-			device_resources_->resize_vertex_buffer(vertex_buffer_size);
+			device_resources_->resize_vertex_buffer(vertex_count);
 		}
 
 		if (vertex_buffer) {
+			// TODO: Fix Map overwrite
 			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
 			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
 			assert(SUCCEEDED(hr));
@@ -333,18 +426,21 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 
 	auto device = device_resources_->get_device();
 
-	auto hr = device->CreateTexture2D(&texture_desc, &texture_data, glyph.texture.ReleaseAndGetAddressOf());
+	ComPtr<ID3D11Texture2D> texture = nullptr;
+	auto hr = device->CreateTexture2D(&texture_desc, &texture_data, texture.GetAddressOf());
 	assert(SUCCEEDED(hr));
 
 	delete[] data;
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
-	srv_desc.Format = texture_desc.Format;
-	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srv_desc.Texture2D.MostDetailedMip = 0;
-	srv_desc.Texture2D.MipLevels = 1;
+	D3D11_SHADER_RESOURCE_VIEW_DESC shader_resource_view_desc;
+	shader_resource_view_desc.Format = texture_desc.Format;
+	shader_resource_view_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shader_resource_view_desc.Texture2D.MostDetailedMip = 0;
+	shader_resource_view_desc.Texture2D.MipLevels = 1;
 
-	hr = device->CreateShaderResourceView(glyph.texture.Get(), &srv_desc, glyph.shader_resource_view.ReleaseAndGetAddressOf());
+	hr = device->CreateShaderResourceView(texture.Get(),
+										  &shader_resource_view_desc,
+										  &glyph.srv);
 	assert(SUCCEEDED(hr));
 
 	if (FT_Bitmap_Done(library_, &bitmap) != FT_Err_Ok)
@@ -358,6 +454,8 @@ renderer::font* renderer::d3d11_renderer::get_font(size_t id) {
 }
 
 renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
+	std::unique_lock lock_guard(font_list_mutex_);
+
 	auto& font = fonts_[id];
 	auto glyph = font->char_set.find(c);
 

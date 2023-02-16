@@ -14,6 +14,8 @@
 #include <dxgidebug.h>
 #endif
 
+#include "renderer/util/util.hpp"
+
 using Microsoft::WRL::ComPtr;
 
 namespace renderer {
@@ -42,7 +44,7 @@ namespace renderer {
 							   DXGI_FORMAT depth_buffer_format = DXGI_FORMAT_D32_FLOAT,
 							   UINT back_buffer_count = 2,
 							   D3D_FEATURE_LEVEL min_feature_level = D3D_FEATURE_LEVEL_11_0,
-							   UINT options = 0);
+							   UINT options = flip_present | allow_tearing);
 
 		//explicit d3d11_device_resources(std::shared_ptr<win32_window> window);
 
@@ -59,10 +61,25 @@ namespace renderer {
 		void present();
 		void update_color_space();
 
+		// Performance events
+		void begin_event(_In_z_ const wchar_t* name) {
+			annotation_->BeginEvent(name);
+		}
+
+		void end_event() {
+			annotation_->EndEvent();
+		}
+
+		void set_marker(_In_z_ const wchar_t* name) {
+			annotation_->SetMarker(name);
+		}
+
 		[[nodiscard]] std::shared_ptr<win32_window> get_window();
 
 		[[nodiscard]] ID3D11Device1* get_device() const { return device_.Get(); };
-		[[nodiscard]] ID3D11DeviceContext1* get_device_context() { return context_.Get(); };
+		[[nodiscard]] ID3D11DeviceContext1* get_device_context() { return device_context_.Get(); };
+
+		[[nodiscard]] ID3D11Texture2D* get_render_target() { return render_target_.Get(); };
 
 		[[nodiscard]] ID3D11RenderTargetView* get_render_target_view() { return render_target_view_.Get(); };
 		[[nodiscard]] ID3D11DepthStencilView* get_depth_stencil_view() { return depth_stencil_view_.Get(); };
@@ -78,11 +95,14 @@ namespace renderer {
 
 		[[nodiscard]] ID3D11InputLayout* get_input_layout() const { return input_layout_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_vertex_buffer() const { return vertex_buffer_.Get(); };
-		[[nodiscard]] ID3D11Buffer* get_index_buffer() const { return index_buffer_.Get(); };
+		[[nodiscard]] size_t get_vertex_buffer_size() const { return vertex_buffer_size_; };
 
 		[[nodiscard]] ID3D11Buffer* get_projection_buffer() const { return projection_buffer_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_global_buffer() const { return global_buffer_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_command_buffer() const { return command_buffer_.Get(); };
+
+		[[nodiscard]] DXGI_FORMAT get_back_buffer_format() const { return back_buffer_format_; };
+		[[nodiscard]] DXGI_FORMAT get_depth_buffer_format() const { return depth_buffer_format_; };
 
 		[[nodiscard]] glm::i16vec2 get_back_buffer_size() const { return back_buffer_size_; };
 
@@ -90,7 +110,7 @@ namespace renderer {
 		// Check for SDK layer support
 		static bool sdk_layers_available();
 		static DXGI_FORMAT no_srgb(DXGI_FORMAT format);
-		static uint32_t compute_intersection_area(const glm::i32vec4& a, const glm::i32vec4& b);
+		static int32_t compute_intersection_area(const RECT& a, const RECT& b);
 
 		void create_factory();
 		void check_feature_support();
@@ -108,15 +128,15 @@ namespace renderer {
 
 	public:
 		void resize_vertex_buffer(size_t vertex_count);
-		void resize_index_buffer(size_t index_count);
-		void release_vertices();
+		void release_resources();
 
 	private:
 		// Basic context
 		ComPtr<IDXGIFactory2> dxgi_factory_;
 		ComPtr<ID3D11Device1> device_ = nullptr;
-		ComPtr<ID3D11DeviceContext1> context_;
+		ComPtr<ID3D11DeviceContext1> device_context_;
 		ComPtr<IDXGISwapChain1> swap_chain_;
+		ComPtr<ID3DUserDefinedAnnotation> annotation_;
 
 		// Render objects
 		ComPtr<ID3D11Texture2D> render_target_;
@@ -138,7 +158,7 @@ namespace renderer {
 		// Buffers
 		ComPtr<ID3D11InputLayout> input_layout_;
 		ComPtr<ID3D11Buffer> vertex_buffer_;
-		ComPtr<ID3D11Buffer> index_buffer_;
+		size_t vertex_buffer_size_ = 0;
 
 		// Constant buffers
 		glm::mat4x4 projection_matrix_;

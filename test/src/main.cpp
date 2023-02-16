@@ -69,18 +69,18 @@ void draw_test_primitives(renderer::buffer* buf) {
 	static float factor = 0.0f;
 	static bool reverse = false;
 
-	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(25)) {
+	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(10)) {
 		animation_timer.reset();
 
 		if (reverse) {
-			factor -= 0.02f;
+			factor -= 0.005f;
 			if (factor <= 0.0f) {
 				reverse = false;
 				factor = 0.0f;
 			}
 		}
 		else {
-			factor += 0.02f;
+			factor += 0.005f;
 			if (factor >= 1.0f) {
 				reverse = true;
 				factor = 1.0f;
@@ -108,7 +108,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
 	polyline.set_color(rainbow);
 
-	const auto thickness = factor * 30.0f;
+	const auto thickness = factor * 30.0f + 1.0f;
 	const auto rounding = factor;
 	const auto arc = factor * M_PI * 2.0f;
 
