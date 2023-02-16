@@ -2,6 +2,14 @@
 #define RENDERER_UTIL_UTIL_HPP
 
 #include <condition_variable>
+#include <fmt/core.h>
+#include <fmt/xchar.h>
+
+#ifdef _DEBUG
+#define DPRINTF(text, ...) fmt::print(text, __VA_ARGS__)
+#else
+#define DPRINTF(text, ...)
+#endif
 
 namespace renderer {
 	class sync_manager {

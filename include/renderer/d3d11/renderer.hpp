@@ -1,11 +1,10 @@
 #ifndef RENDERER_D3D11_RENDERER_HPP
 #define RENDERER_D3D11_RENDERER_HPP
 
-#include "renderer/renderer.hpp"
 #include "renderer/color.hpp"
-
-#include "renderer/d3d11/pipeline.hpp"
+#include "renderer/d3d11/device_resources.hpp"
 #include "renderer/d3d11/texture2d.hpp"
+#include "renderer/renderer.hpp"
 
 #include <algorithm>
 
@@ -13,11 +12,31 @@ namespace renderer {
 	// TODO: Most of the abstraction has been removed since I just want a functional D3D11 renderer currently and I
 	//  don't need a Vulkan/OpenGL renderer right now but would like to later add that work and keep this up as a
 	//  passion project.
-	class d3d11_renderer : public base_renderer, public d3d11_pipeline {
+	class d3d11_renderer : public base_renderer, public i_device_notify {
 	public:
-		explicit d3d11_renderer(win32_window* window);
+		explicit d3d11_renderer(std::shared_ptr<win32_window> window);
 
-		// TODO: Sub buffers
+		bool initialize();
+		bool release();
+
+		void on_window_moved();
+		void on_display_change();
+		void on_window_size_change(glm::i16vec2 size);
+
+	private:
+		void clear();
+		void resize_buffers();
+
+		void create_device_dependent_resources();
+		void create_window_size_dependent_resources();
+
+		void on_device_lost() override;
+		void on_device_restored() override;
+
+	public:
+		void render();
+
+		// TODO: Sub buffer system
 		size_t register_buffer(size_t priority = 0);
 		buffer* get_working_buffer(size_t id);
 
@@ -45,31 +64,13 @@ namespace renderer {
 			return size;
 		}
 
-		bool init();
-		bool release();
-
-		void draw() override;
-		void reset() override;
-
-		void begin();
-		void populate();
-		void end();
-
-		void set_vsync(bool vsync);
 		void set_clear_color(const color_rgba& color);
 
 	private:
-		void clear();
-		void prepare_context();
-
-		void update_buffers();
-		void render_buffers();
+		std::unique_ptr<d3d11_device_resources> device_resources_;
 
 		// Options
 		glm::vec4 clear_color_;
-		bool vsync_ = false;
-
-		glm::i32vec2 prev_size_;
 
 		// Fonts
 		FT_Library library_;

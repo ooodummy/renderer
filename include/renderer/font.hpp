@@ -1,6 +1,9 @@
 #ifndef RENDERER_FONT_HPP
 #define RENDERER_FONT_HPP
 
+#include <wrl/client.h>
+using Microsoft::WRL::ComPtr;
+
 #include <unordered_map>
 
 #ifndef NOMINMAX
@@ -28,7 +31,8 @@ namespace renderer {
 	std::string get_font_path(const std::string& family);
 
 	struct glyph {
-		ID3D11ShaderResourceView* rv;
+		ComPtr<ID3D11Texture2D> texture;
+		ComPtr<ID3D11ShaderResourceView> shader_resource_view;
 
 		glm::u32vec2 size;
 		glm::i32vec2 bearing;

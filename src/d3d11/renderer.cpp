@@ -9,7 +9,27 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-renderer::d3d11_renderer::d3d11_renderer(renderer::win32_window* window) : d3d11_pipeline(window) {}
+renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) {
+	device_resources_ = std::make_unique<d3d11_device_resources>();
+	device_resources_->set_window(window);
+}
+
+bool renderer::d3d11_renderer::initialize() {
+	device_resources_->create_device_resources();
+	device_resources_->create_window_size_dependent_resources();
+
+	if (FT_Init_FreeType(&library_))
+		return false;
+
+	return true;
+}
+
+bool renderer::d3d11_renderer::release() {
+	if (FT_Done_FreeType(library_))
+		return false;
+
+	return true;
+}
 
 size_t renderer::d3d11_renderer::register_buffer(size_t priority) {
 	std::unique_lock lock_guard(buffer_list_mutex_);
@@ -39,16 +59,6 @@ void renderer::d3d11_renderer::swap_buffers(size_t id) {
 	buf.working->clear();
 }
 
-void renderer::d3d11_renderer::draw() {
-	begin();
-	populate();
-	end();
-}
-
-void renderer::d3d11_renderer::set_vsync(bool vsync) {
-	vsync_ = vsync;
-}
-
 void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color) {
 	clear_color_ = glm::vec4(color);
 }
@@ -69,7 +79,7 @@ size_t renderer::d3d11_renderer::register_font(std::string family, int size, int
 		assert(false);
 	}
 
-	const auto dpi = window_->get_dpi();
+	const auto dpi = device_resources_->get_window()->get_dpi();
 
 	if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
 		assert(false);
@@ -82,110 +92,127 @@ size_t renderer::d3d11_renderer::register_font(std::string family, int size, int
 	return id;
 }
 
-bool renderer::d3d11_renderer::init() {
-	init_pipeline();
-
-	if (FT_Init_FreeType(&library_))
-		return false;
-
-	return true;
-}
-
-bool renderer::d3d11_renderer::release() {
-	release_pipeline();
-
-	if (FT_Done_FreeType(library_))
-		return false;
-
-	return true;
-}
-
-void renderer::d3d11_renderer::begin() {
+void renderer::d3d11_renderer::render() {
 	clear();
+	resize_buffers();
 
-	const auto size = window_->get_size();
+	auto context = device_resources_->get_device_context();
+	auto vertex_buffer = device_resources_->get_vertex_buffer();
+	auto index_buffer = device_resources_->get_index_buffer();
+	auto input_layout = device_resources_->get_input_layout();
 
-	if (size != prev_size_) {
-		prev_size_ = size;
+	UINT stride = sizeof(vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
 
-		global_buffer global{};
-		global.dimensions = { static_cast<float>(prev_size_.x), static_cast<float>(prev_size_.y) };
+	context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
-		D3D11_MAPPED_SUBRESOURCE mapped_resource;
-		HRESULT hr = context_->Map(global_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-		assert(SUCCEEDED(hr));
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	context->IASetInputLayout(input_layout);
 
-		{
-			memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
+	auto command_buffer = device_resources_->get_command_buffer();
+
+	{
+		std::unique_lock lock_guard(buffer_list_mutex_);
+
+		size_t offset = 0;
+
+		// TODO: Buffer priority
+		// God bless http://www.rastertek.com/dx11tut11.html
+		for (const auto& [active, working] : buffers_) {
+			auto& batches = active->get_batches();
+
+			for (auto& batch : batches) {
+				D3D11_MAPPED_SUBRESOURCE mapped_resource;
+				HRESULT hr = context->Map(command_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+				assert(SUCCEEDED(hr));
+
+				{
+					memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
+				}
+
+				context->Unmap(command_buffer, 0);
+
+				context->PSSetConstantBuffers(1, 1, &command_buffer);
+				context->PSSetShaderResources(0, 1, &batch.srv);
+				context->IASetPrimitiveTopology(batch.type);
+
+				context->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
+
+				offset += batch.size;
+			}
 		}
-
-		context_->Unmap(global_buffer_, 0);
-
-		context_->PSSetConstantBuffers(1, 1, &global_buffer_);
 	}
 
-	prepare_context();
-
-	update_buffers();
-	render_buffers();
+	device_resources_->present();
 }
 
 void renderer::d3d11_renderer::clear() {
-	context_->ClearRenderTargetView(frame_buffer_view_, (FLOAT*)&clear_color_);
+	// Clear views
+	auto context = device_resources_->get_device_context();
+	auto render_target = device_resources_->get_render_target_view();
+	auto depth_stencil = device_resources_->get_depth_stencil_view();
+
+	context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
+	context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context->OMSetRenderTargets(1, &render_target, depth_stencil);
+
+	// Set shaders
+	auto vertex_shader = device_resources_->get_vertex_shader();
+	auto pixel_shader = device_resources_->get_pixel_shader();
+
+	context->VSSetShader(vertex_shader, nullptr, 0);
+	context->PSSetShader(pixel_shader, nullptr, 0);
+
+	// Set constant buffers
+	auto projection_buffer = device_resources_->get_projection_buffer();
+	auto global_buffer = device_resources_->get_global_buffer();
+
+	context->VSSetConstantBuffers(0, 1, &projection_buffer);
+	context->PSSetConstantBuffers(1, 1, &global_buffer);
+
+	// Set viewport
+	auto viewport = device_resources_->get_screen_viewport();
+
+	context->RSSetViewports(1, &viewport);
+
+	// Set states
+	auto blend_state = device_resources_->get_blend_state();
+	auto depth_state = device_resources_->get_depth_stencil_state();
+	auto rasterizer_state = device_resources_->get_rasterizer_state();
+	auto sampler_state = device_resources_->get_sampler_state();
+
+	context->OMSetBlendState(blend_state, nullptr, 0xffffffff);
+	context->OMSetDepthStencilState(depth_state, NULL);
+	context->RSSetState(rasterizer_state);
+	context->PSSetSamplers(0, 1, &sampler_state);
 }
 
-void renderer::d3d11_renderer::prepare_context() {
-	context_->OMSetBlendState(blend_state_, nullptr, 0xffffffff);
-	context_->OMSetRenderTargets(1, &frame_buffer_view_, depth_stencil_view_);
-	context_->OMSetDepthStencilState(depth_stencil_state_, NULL);
-
-	//context_->PSSetSamplers(0, 1, &sampler_state_);
-
-	context_->VSSetShader(vertex_shader_, nullptr, 0);
-	context_->PSSetShader(pixel_shader_, nullptr, 0);
+void renderer::d3d11_renderer::on_window_moved() {
+	auto back_buffer_size = device_resources_->get_back_buffer_size();
+	device_resources_->window_size_changed(back_buffer_size);
 }
 
-void renderer::d3d11_renderer::populate() {
-	std::unique_lock lock_guard(buffer_list_mutex_);
-
-	size_t offset = 0;
-
-	// TODO: Buffer priority
-	// God bless http://www.rastertek.com/dx11tut11.html
-	for (const auto& [active, working] : buffers_) {
-		auto& batches = active->get_batches();
-
-		for (auto& batch : batches) {
-			D3D11_MAPPED_SUBRESOURCE mapped_resource;
-			HRESULT hr = context_->Map(command_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-			assert(SUCCEEDED(hr));
-			memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
-			context_->Unmap(command_buffer_, 0);
-
-			context_->PSSetConstantBuffers(1, 1, &command_buffer_);
-			context_->PSSetShaderResources(0, 1, &batch.srv);
-			context_->PSSetSamplers(0, 1, &sampler_state_);
-			context_->IASetPrimitiveTopology(batch.type);
-
-			context_->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
-
-			offset += batch.size;
-		}
-	}
+void renderer::d3d11_renderer::on_display_change() {
+	device_resources_->update_color_space();
 }
 
-void renderer::d3d11_renderer::end() {
-	const auto hr = swap_chain_->Present(vsync_, 0);
+void renderer::d3d11_renderer::on_window_size_change(glm::i16vec2 size) {
+	if (!device_resources_->window_size_changed(size))
+		return;
 
-	// https://docs.microsoft.com/en-us/windows/uwp/gaming/handling-device-lost-scenarios
-	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
-		reset();
-	}
+	create_window_size_dependent_resources();
 }
 
-void renderer::d3d11_renderer::reset() {
-	release_buffers();
+void renderer::d3d11_renderer::create_device_dependent_resources() {
 
+}
+
+void renderer::d3d11_renderer::create_window_size_dependent_resources() {
+
+}
+
+void renderer::d3d11_renderer::on_device_lost() {
 	{
 		std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -196,16 +223,22 @@ void renderer::d3d11_renderer::reset() {
 
 	for (auto& font : fonts_) {
 		for (auto& [c, glyph] : font->char_set) {
-			if (glyph.rv) {
-				glyph.rv->Release();
-			}
+			glyph.texture.Reset();
+			glyph.shader_resource_view.Reset();
 		}
 
 		font->char_set = {};
 	}
 }
 
-void renderer::d3d11_renderer::update_buffers() {
+void renderer::d3d11_renderer::on_device_restored() {
+
+}
+
+void renderer::d3d11_renderer::resize_buffers() {
+	auto context = device_resources_->get_device_context();
+	auto vertex_buffer = device_resources_->get_vertex_buffer();
+
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	size_t vertex_count = 0;
@@ -217,16 +250,16 @@ void renderer::d3d11_renderer::update_buffers() {
 	if (vertex_count > 0) {
 		static size_t vertex_buffer_size = 0;
 
-		if (!vertex_buffer_ || vertex_buffer_size < vertex_count) {
+		if (!vertex_buffer || vertex_buffer_size < vertex_count) {
 			vertex_buffer_size = vertex_count + 500;
 
-			release_buffers();
-			resize_vertex_buffer(vertex_buffer_size);
+			device_resources_->release_vertices();
+			device_resources_->resize_vertex_buffer(vertex_buffer_size);
 		}
 
-		if (vertex_buffer_) {
+		if (vertex_buffer) {
 			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-			HRESULT hr = context_->Map(vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
 			assert(SUCCEEDED(hr));
 
 			for (const auto& [active, working] : buffers_) {
@@ -236,20 +269,9 @@ void renderer::d3d11_renderer::update_buffers() {
 				mapped_subresource.pData = static_cast<char*>(mapped_subresource.pData) + vertices.size();
 			}
 
-			context_->Unmap(vertex_buffer_, 0);
+			context->Unmap(vertex_buffer, 0);
 		}
 	}
-}
-
-void renderer::d3d11_renderer::render_buffers() {
-	UINT stride = sizeof(vertex);
-	UINT offset = 0;
-	context_->IASetVertexBuffers(0, 1, &vertex_buffer_, &stride, &offset);
-
-	context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-
-	context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	context_->IASetInputLayout(input_layout_);
 }
 
 // https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
@@ -260,23 +282,13 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 
 	FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT;
 
-	if (FT_HAS_COLOR(font->face)) {
+	if (FT_HAS_COLOR(font->face))
 		load_flags |= FT_LOAD_COLOR;
-	}
 
-	if (font->anti_aliased) {
-		load_flags |= FT_LOAD_TARGET_NORMAL;
-	}
-	else {
-		load_flags |= FT_LOAD_TARGET_MONO;
-	}
+	load_flags |= font->anti_aliased ? FT_LOAD_TARGET_NORMAL : FT_LOAD_TARGET_MONO;
 
 	if (FT_Load_Char(font->face, c, load_flags) != FT_Err_Ok)
 		return false;
-
-	// Not needed
-	//if (FT_Render_Glyph(font.face->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok)
-	//	return false;
 
 	FT_Bitmap bitmap;
 	FT_Bitmap_Init(&bitmap);
@@ -319,8 +331,9 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	texture_desc.CPUAccessFlags = 0;
 	texture_desc.MiscFlags = 0;
 
-	ID3D11Texture2D* texture;
-	auto hr = device_->CreateTexture2D(&texture_desc, &texture_data, &texture);
+	auto device = device_resources_->get_device();
+
+	auto hr = device->CreateTexture2D(&texture_desc, &texture_data, glyph.texture.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
 	delete[] data;
@@ -331,9 +344,8 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	srv_desc.Texture2D.MostDetailedMip = 0;
 	srv_desc.Texture2D.MipLevels = 1;
 
-	hr = device_->CreateShaderResourceView(texture, &srv_desc, &glyph.rv);
+	hr = device->CreateShaderResourceView(glyph.texture.Get(), &srv_desc, glyph.shader_resource_view.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
-	texture->Release();
 
 	if (FT_Bitmap_Done(library_, &bitmap) != FT_Err_Ok)
 		return false;

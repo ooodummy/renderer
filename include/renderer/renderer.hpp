@@ -19,8 +19,7 @@ namespace renderer {
 		virtual font* get_font(size_t id) = 0;
 		virtual glyph get_font_glyph(size_t id, uint32_t c) = 0;
 
-		virtual void draw() = 0;
-		virtual void reset() = 0;
+		virtual void render() = 0;
 
 	protected:
 		std::shared_mutex buffer_list_mutex_;

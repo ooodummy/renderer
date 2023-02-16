@@ -54,12 +54,12 @@ std::string renderer::win32_window::get_title() const {
 	return std::string();
 }
 
-void renderer::win32_window::set_pos(const glm::i32vec2 pos) {
+void renderer::win32_window::set_pos(const glm::i16vec2 pos) {
 	pos_ = pos;
 	//update_window_pos();
 }
 
-glm::i32vec2 renderer::win32_window::get_pos() const {
+glm::i16vec2 renderer::win32_window::get_pos() const {
 	if (!hwnd_)
 		return pos_;
 
@@ -67,27 +67,29 @@ glm::i32vec2 renderer::win32_window::get_pos() const {
 	::GetWindowRect(hwnd_, &rect);
 
 	return {
-		static_cast<int32_t>(rect.left),
-		static_cast<int32_t>(rect.top)
+		static_cast<int16_t>(rect.left),
+		static_cast<int16_t>(rect.top)
 	};
 }
 
-void renderer::win32_window::set_size(const glm::i32vec2 size) {
+void renderer::win32_window::set_size(const glm::i16vec2 size) {
 	size_ = size;
 	//update_window_pos();
 }
 
-glm::i32vec2 renderer::win32_window::get_size() const {
+glm::i16vec2 renderer::win32_window::get_size() const {
 	if (!hwnd_)
 		return size_;
 
 	RECT rect;
-	::GetWindowRect(hwnd_, &rect);
+	::GetClientRect(hwnd_, &rect);
 
-	return {
-		static_cast<int32_t>(rect.right - rect.left),
-		static_cast<int32_t>(rect.bottom - rect.top)
+	const glm::i16vec2 size = {
+		static_cast<int16_t>(rect.right - rect.left),
+		static_cast<int16_t>(rect.bottom - rect.top)
 	};
+
+	return size;
 }
 
 bool renderer::win32_window::set_visibility(bool visible) {

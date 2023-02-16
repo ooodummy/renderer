@@ -342,7 +342,7 @@ void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, co
 
 void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {
 	draw_textured_quad(
-	{ pos.x + static_cast<float>(glyph.bearing.x), pos.y - static_cast<float>(glyph.bearing.y), glyph.size }, glyph.rv,
+	{ pos.x + static_cast<float>(glyph.bearing.x), pos.y - static_cast<float>(glyph.bearing.y), glyph.size }, glyph.shader_resource_view.Get(),
 	col, !glyph.colored);
 
 	//draw_circle_filled(pos, 2.0f, col);

@@ -3,26 +3,48 @@
 #include <Dwmapi.h>
 #include <thread>
 
-std::unique_ptr<renderer::win32_window> application;
+extern "C"
+{
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
+std::shared_ptr<renderer::win32_window> application;
 std::unique_ptr<renderer::d3d11_renderer> dx11;
 
 renderer::sync_manager updated_draw;
 renderer::sync_manager updated_buf;
 
-bool update_size = false;
 bool close_requested = false;
 
 int draw_count = 0;
 size_t segoe_font;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	static bool in_size_move = false;
+
 	switch (msg) {
+		case WM_DISPLAYCHANGE:
+			dx11->on_display_change();
+			break;
 		case WM_CLOSE:
 			close_requested = true;
 			return 0;
 		case WM_SIZE:
-			application->set_size({LOWORD(lParam), HIWORD(lParam)});
-			update_size = true;
+			if (!in_size_move)
+				dx11->on_window_size_change({LOWORD(lParam), HIWORD(lParam)});
+			break;
+		case WM_MOVE:
+			dx11->on_window_moved();
+			break;
+		case WM_ENTERSIZEMOVE:
+			in_size_move = true;
+			break;
+		case WM_EXITSIZEMOVE:
+			in_size_move = false;
+			break;
+		case WM_DESTROY:
+			PostQuitMessage(0);
 			break;
 		default:
 			break;
@@ -79,14 +101,14 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	const auto thickness = factor * 30.0f;
 	const auto rounding = factor;
-	const auto arc = factor * M_PI * 2;
+	const auto arc = factor * M_PI * 2.0f;
 
 	// Testing arc performance
 	buf->draw_line({200.0f, 200.0f}, {300.0f, 300.0f}, COLOR_WHITE, thickness);
 	buf->draw_rect({350.0f, 200.0f, 100.0f, 100.0f}, COLOR_RED, thickness);
 	buf->draw_rect_filled({500.0f, 200.0f, 100.0f, 100.0f}, COLOR_ORANGE);
 	buf->draw_rect_rounded({650.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_YELLOW, thickness);
-	buf->draw_rect_rounded_filled({800.0f, 200.0f, 100.0f, 100.0f}, factor, COLOR_GREEN);
+	buf->draw_rect_rounded_filled({800.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_GREEN);
 	buf->draw_arc({250.0f, 400.0f}, arc, arc, 50.0f, COLOR_BLUE, thickness,
 				  32, false);
 	buf->draw_arc({400.0f, 400.0f}, arc, arc, 50.0f, COLOR_PURPLE, 0.0f, 32,
@@ -124,7 +146,25 @@ void draw_thread() {
 
 // TODO: Mutex for texture creation and atlas
 int main() {
-	application = std::make_unique<renderer::win32_window>("D3D11 Renderer", glm::i32vec2{960, 500}, WndProc);
+#if _DEBUG
+	if (GetConsoleWindow() == nullptr) {
+		if (!AllocConsole()) {
+			MessageBoxA(nullptr, fmt::format("Unable to allocate console.\nError: {}", GetLastError()).c_str(),
+						"Error",
+						MB_ICONERROR);
+			return 1;
+		}
+
+		ShowWindow(GetConsoleWindow(), SW_SHOW);
+
+		FILE* dummy;
+		freopen_s(&dummy, "CONIN$", "r", stdin);
+		freopen_s(&dummy, "CONOUT$", "w", stderr);
+		freopen_s(&dummy, "CONOUT$", "w", stdout);
+	}
+#endif
+
+	application = std::make_shared<renderer::win32_window>("D3D11 Renderer", glm::i32vec2{960, 500}, WndProc);
 
 	if (!application->create()) {
 		MessageBoxA(nullptr, "Failed to create application window.", "Error", MB_ICONERROR | MB_OK);
@@ -137,14 +177,13 @@ int main() {
 		DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
 	}*/
 
-	dx11 = std::make_unique<renderer::d3d11_renderer>(application.get());
+	dx11 = std::make_unique<renderer::d3d11_renderer>(application);
 
-	if (!dx11->init()) {
+	if (!dx11->initialize()) {
 		MessageBoxA(nullptr, "Failed to initialize D3D11 renderer.", "Error", MB_ICONERROR | MB_OK);
 		return 1;
 	}
 
-	dx11->set_vsync(false);
 	dx11->set_clear_color({88, 88, 88});//({88, 122, 202});
 
 	segoe_font = dx11->register_font("Segoe UI Emoji", 32, FW_THIN, true);
@@ -165,15 +204,7 @@ int main() {
 			break;
 		}
 
-		// TODO: Fix issues with resize
-		if (update_size) {
-			dx11->resize();
-			dx11->reset();
-
-			update_size = false;
-		}
-
-		dx11->draw();
+		dx11->render();
 		draw_count++;
 
 		updated_draw.notify();
@@ -183,7 +214,16 @@ int main() {
 	draw.join();
 
 	dx11->release();
+	dx11.reset();
+
 	application->destroy();
+
+#if _DEBUG
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
+
+	if (!FreeConsole())
+		MessageBoxA(nullptr, "Unable to free console.", "Error", MB_ICONERROR);
+#endif
 
 	return 0;
 }

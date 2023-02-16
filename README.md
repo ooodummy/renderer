@@ -39,7 +39,7 @@ if (!application->create()) {
 auto dx11 = std::make_unique<renderer::d3d11_renderer>(carbon::application.get());
 
 // Initialize D3D11 pipeline
-if (!dx11->init()) {
+if (!dx11->initialize()) {
 	MessageBoxA(nullptr, "Failed to initialize renderer.", "Error", MB_ICONERROR | MB_OK);
 	return 1;
 }

@@ -25,11 +25,11 @@ namespace renderer {
 		void set_title(const std::string& title) override;
 		[[nodiscard]] std::string get_title() const override;
 
-		void set_pos(glm::i32vec2 pos) override;
-		[[nodiscard]] glm::i32vec2 get_pos() const override;
+		void set_pos(glm::i16vec2 pos) override;
+		[[nodiscard]] glm::i16vec2 get_pos() const override;
 
-		void set_size(glm::i32vec2 size) override;
-		[[nodiscard]] glm::i32vec2 get_size() const override;
+		void set_size(glm::i16vec2 size) override;
+		[[nodiscard]] glm::i16vec2 get_size() const override;
 
 		bool set_visibility(bool visible) override;
 		[[nodiscard]] uint32_t get_dpi() const override;
