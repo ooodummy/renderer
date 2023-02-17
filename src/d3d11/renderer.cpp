@@ -24,14 +24,14 @@ bool renderer::d3d11_renderer::initialize() {
 	device_resources_->create_window_size_dependent_resources();
 	create_window_size_dependent_resources();
 
-	if (FT_Init_FreeType(&library_))
+	if (FT_Init_FreeType(&library_) != FT_Err_Ok)
 		return false;
 
 	return true;
 }
 
 bool renderer::d3d11_renderer::release() {
-	if (FT_Done_FreeType(library_))
+	if (FT_Done_FreeType(library_) != FT_Err_Ok)
 		return false;
 
 	return true;
@@ -102,11 +102,11 @@ void renderer::d3d11_renderer::render() {
 	clear();
 	resize_buffers();
 
-	auto context = device_resources_->get_device_context();
+	const auto context = device_resources_->get_device_context();
 
-	auto vertex_buffer = device_resources_->get_vertex_buffer();
-	auto index_buffer = device_resources_->get_index_buffer();
-	auto input_layout = device_resources_->get_input_layout();
+	const auto vertex_buffer = device_resources_->get_vertex_buffer();
+	const auto index_buffer = device_resources_->get_index_buffer();
+	const auto input_layout = device_resources_->get_input_layout();
 
 	UINT stride = sizeof(vertex);
 	UINT offset = 0;
@@ -120,9 +120,9 @@ void renderer::d3d11_renderer::render() {
 
 	// Resolve MSAA render target
 	if (msaa_enabled_) {
-		auto render_target_view = device_resources_->get_render_target_view();
-		auto render_target = device_resources_->get_render_target();
-		auto back_buffer_format = device_resources_->get_back_buffer_format();
+		const auto render_target_view = device_resources_->get_render_target_view();
+		const auto render_target = device_resources_->get_render_target();
+		const auto back_buffer_format = device_resources_->get_back_buffer_format();
 
 		context->ResolveSubresource(render_target, 0, msaa_render_target_.Get(), 0, back_buffer_format);
 
@@ -145,8 +145,8 @@ void renderer::d3d11_renderer::clear() {
 		context->OMSetRenderTargets(1, msaa_render_target_view_.GetAddressOf(), msaa_depth_stencil_view_.Get());
 	}
 	else {
-		auto render_target = device_resources_->get_render_target_view();
-		auto depth_stencil = device_resources_->get_depth_stencil_view();
+		const auto render_target = device_resources_->get_render_target_view();
+		const auto depth_stencil = device_resources_->get_depth_stencil_view();
 
 		context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -155,29 +155,29 @@ void renderer::d3d11_renderer::clear() {
 	}
 
 	// Set shaders
-	auto vertex_shader = device_resources_->get_vertex_shader();
-	auto pixel_shader = device_resources_->get_pixel_shader();
+	const auto vertex_shader = device_resources_->get_vertex_shader();
+	const auto pixel_shader = device_resources_->get_pixel_shader();
 
 	context->VSSetShader(vertex_shader, nullptr, 0);
 	context->PSSetShader(pixel_shader, nullptr, 0);
 
 	// Set constant buffers
-	auto projection_buffer = device_resources_->get_projection_buffer();
-	auto global_buffer = device_resources_->get_global_buffer();
+	const auto projection_buffer = device_resources_->get_projection_buffer();
+	const auto global_buffer = device_resources_->get_global_buffer();
 
 	context->VSSetConstantBuffers(0, 1, &projection_buffer);
 	context->PSSetConstantBuffers(1, 1, &global_buffer);
 
 	// Set viewport
-	auto viewport = device_resources_->get_screen_viewport();
+	const auto viewport = device_resources_->get_screen_viewport();
 
 	context->RSSetViewports(1, &viewport);
 
 	// Set states
-	auto blend_state = device_resources_->get_blend_state();
-	auto depth_state = device_resources_->get_depth_stencil_state();
-	auto rasterizer_state = device_resources_->get_rasterizer_state();
-	auto sampler_state = device_resources_->get_sampler_state();
+	const auto blend_state = device_resources_->get_blend_state();
+	const auto depth_state = device_resources_->get_depth_stencil_state();
+	const auto rasterizer_state = device_resources_->get_rasterizer_state();
+	const auto sampler_state = device_resources_->get_sampler_state();
 
 	context->OMSetBlendState(blend_state, nullptr, 0xffffffff);
 	context->OMSetDepthStencilState(depth_state, NULL);
@@ -188,8 +188,8 @@ void renderer::d3d11_renderer::clear() {
 }
 
 void renderer::d3d11_renderer::draw_buffers() {
-	auto context = device_resources_->get_device_context();
-	auto command_buffer = device_resources_->get_command_buffer();
+	const auto context = device_resources_->get_device_context();
+	const auto command_buffer = device_resources_->get_command_buffer();
 
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -200,7 +200,7 @@ void renderer::d3d11_renderer::draw_buffers() {
 	for (const auto& [active, working] : buffers_) {
 		auto& batches = active->get_batches();
 
-		for (auto& batch : batches) {
+		for (const auto& batch : batches) {
 			D3D11_MAPPED_SUBRESOURCE mapped_resource;
 			HRESULT hr = context->Map(command_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 			assert(SUCCEEDED(hr));
@@ -239,7 +239,7 @@ void renderer::d3d11_renderer::on_window_size_change(glm::i16vec2 size) {
 }
 
 void renderer::d3d11_renderer::create_device_dependent_resources() {
-	auto device = device_resources_->get_device();
+	const auto device = device_resources_->get_device();
 
 	// Check for MSAA support
 	for (sample_count_ = target_sample_count_; sample_count_ > 1; sample_count_--) {
@@ -257,10 +257,10 @@ void renderer::d3d11_renderer::create_device_dependent_resources() {
 }
 
 void renderer::d3d11_renderer::create_window_size_dependent_resources() {
-	auto device = device_resources_->get_device();
-	auto back_buffer_format = device_resources_->get_back_buffer_format();
-	auto depth_buffer_format = device_resources_->get_depth_buffer_format();
-	auto back_buffer_size = device_resources_->get_back_buffer_size();
+	const auto device = device_resources_->get_device();
+	const auto back_buffer_format = device_resources_->get_back_buffer_format();
+	const auto depth_buffer_format = device_resources_->get_depth_buffer_format();
+	const auto back_buffer_size = device_resources_->get_back_buffer_size();
 
 	CD3D11_TEXTURE2D_DESC render_target_desc(back_buffer_format,
 											 back_buffer_size.x,
@@ -294,8 +294,6 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 
 	hr = device->CreateDepthStencilView(depth_stencil.Get(), nullptr, msaa_depth_stencil_view_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
-
-
 }
 
 void renderer::d3d11_renderer::on_device_lost() {
@@ -325,7 +323,6 @@ void renderer::d3d11_renderer::on_device_lost() {
 			font->char_set = {};
 		}
 	}
-
 }
 
 void renderer::d3d11_renderer::on_device_restored() {
@@ -335,9 +332,9 @@ void renderer::d3d11_renderer::on_device_restored() {
 }
 
 void renderer::d3d11_renderer::resize_buffers() {
-	auto context = device_resources_->get_device_context();
-	auto vertex_buffer = device_resources_->get_vertex_buffer();
-	auto buffer_size = device_resources_->get_buffer_size();
+	const auto context = device_resources_->get_device_context();
+	const auto vertex_buffer = device_resources_->get_vertex_buffer();
+	const auto buffer_size = device_resources_->get_buffer_size();
 
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -428,7 +425,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 
 	auto device = device_resources_->get_device();
 
-	ComPtr<ID3D11Texture2D> texture = nullptr;
+	ComPtr<ID3D11Texture2D> texture;
 	auto hr = device->CreateTexture2D(&texture_desc, &texture_data, texture.GetAddressOf());
 	assert(SUCCEEDED(hr));
 

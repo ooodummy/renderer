@@ -112,6 +112,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 	const auto rounding = factor;
 	const auto arc = factor * M_PI * 2.0f;
 
+	buf->push_key(COLOR_RED);
+
 	// Testing arc performance
 	buf->draw_line({200.0f, 200.0f}, {300.0f, 300.0f}, COLOR_WHITE, thickness);
 	buf->draw_rect({350.0f, 200.0f, 100.0f, 100.0f}, COLOR_RED, thickness);
@@ -128,12 +130,14 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->push_font(segoe_font);
 
 	std::string demo_string = "Hello, world!";
-	buf->draw_text<std::string>({25.0f, 60.0f}, demo_string, COLOR_WHITE);
+	buf->draw_text<std::string>({25.0f, 60.0f}, demo_string, COLOR_RED);
 	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0", COLOR_WHITE);
 
 	// Test if the get text size result is accurate
 	auto size = dx11->get_text_size(demo_string, segoe_font);
 	buf->draw_rect({25.0f, 60.0f - size.y, size.x, size.y}, COLOR_RED);
+
+	buf->pop_key();
 
 	buf->pop_font();
 }

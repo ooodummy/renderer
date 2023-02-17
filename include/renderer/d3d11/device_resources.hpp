@@ -80,6 +80,7 @@ namespace renderer {
 		[[nodiscard]] ID3D11DeviceContext1* get_device_context() { return device_context_.Get(); };
 
 		[[nodiscard]] ID3D11Texture2D* get_render_target() { return render_target_.Get(); };
+		[[nodiscard]] ID3D11Texture2D* get_depth_stencil() { return depth_stencil_.Get(); };
 
 		[[nodiscard]] ID3D11RenderTargetView* get_render_target_view() { return render_target_view_.Get(); };
 		[[nodiscard]] ID3D11DepthStencilView* get_depth_stencil_view() { return depth_stencil_view_.Get(); };
