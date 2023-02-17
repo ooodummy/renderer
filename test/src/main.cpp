@@ -136,7 +136,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	std::string demo_string = fmt::format("Hello, world! {}", performance.get_fps());
 	buf->draw_text<std::string>({25.0f, 60.0f}, demo_string, COLOR_RED);
-	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0");
+	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0 \U0001F60E \u2603");
 
 	// Test if the get text size result is accurate
 	auto size = dx11->get_text_size(demo_string, segoe_font);
