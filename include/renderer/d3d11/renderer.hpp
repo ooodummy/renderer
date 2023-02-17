@@ -27,7 +27,7 @@ namespace renderer {
 		void clear();
 		void resize_buffers();
 
-		void draw_buffers();
+		void draw_batches();
 
 		void create_device_dependent_resources();
 		void create_window_size_dependent_resources();
@@ -72,7 +72,6 @@ namespace renderer {
 		std::unique_ptr<d3d11_device_resources> device_resources_;
 
 		// Extra resources
-
 		// MSAA render target resources
 		bool msaa_enabled_;
 

@@ -80,10 +80,12 @@ namespace renderer {
 		operator color_hsva() const;
 		operator glm::vec4() const;
 
+		[[nodiscard]] color_rgba alpha(uint8_t a) const;
+
 		bool operator==(const color_rgba& o) const;
 		bool operator!=(const color_rgba& o) const;
 
-		color_rgba ease(const color_rgba& o, float p, ease_type type = linear) const;
+		[[nodiscard]] color_rgba ease(const color_rgba& o, float p, ease_type type = linear) const;
 
 		uint8_t r, g, b, a;
 	};

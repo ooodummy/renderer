@@ -208,3 +208,7 @@ bool renderer::color_rgba::operator==(const renderer::color_rgba& o) const {
 bool renderer::color_rgba::operator!=(const renderer::color_rgba& o) const {
 	return memcmp(this, &o, sizeof(color_rgba)) != 0;
 }
+
+renderer::color_rgba renderer::color_rgba::alpha(uint8_t _a) const {
+	return { r, g, b, _a };
+}

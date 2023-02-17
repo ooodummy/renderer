@@ -14,6 +14,7 @@
 #include <dxgidebug.h>
 #endif
 
+#include "renderer/d3d11/shaders/constant_buffers.hpp"
 #include "renderer/util/util.hpp"
 
 using Microsoft::WRL::ComPtr;
@@ -96,17 +97,17 @@ namespace renderer {
 
 		[[nodiscard]] ID3D11InputLayout* get_input_layout() const { return input_layout_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_vertex_buffer() const { return vertex_buffer_.Get(); };
-		[[nodiscard]] ID3D11Buffer* get_index_buffer() const { return index_buffer_.Get(); };
 		[[nodiscard]] size_t get_buffer_size() const { return buffer_size_; };
 
 		[[nodiscard]] ID3D11Buffer* get_projection_buffer() const { return projection_buffer_.Get(); };
-		[[nodiscard]] ID3D11Buffer* get_global_buffer() const { return global_buffer_.Get(); };
 		[[nodiscard]] ID3D11Buffer* get_command_buffer() const { return command_buffer_.Get(); };
 
 		[[nodiscard]] DXGI_FORMAT get_back_buffer_format() const { return back_buffer_format_; };
 		[[nodiscard]] DXGI_FORMAT get_depth_buffer_format() const { return depth_buffer_format_; };
 
-		[[nodiscard]] glm::i16vec2 get_back_buffer_size() const { return back_buffer_size_; };
+		[[nodiscard]] glm::u16vec2 get_back_buffer_size() const { return back_buffer_size_; };
+
+		void set_command_buffer(const renderer::command_buffer& buffer);
 
 	private:
 		// Check for SDK layer support
@@ -123,7 +124,6 @@ namespace renderer {
 		void create_render_target_view();
 		void create_depth_stencil_view();
 		void update_projection();
-		void update_dimensions();
 		void create_shaders_and_layout();
 		void create_states();
 		void create_constant_buffers();
@@ -139,6 +139,10 @@ namespace renderer {
 		ComPtr<ID3D11DeviceContext1> device_context_;
 		ComPtr<IDXGISwapChain1> swap_chain_;
 		ComPtr<ID3DUserDefinedAnnotation> annotation_;
+
+#ifdef _DEBUG
+		ComPtr<ID3D11Debug> debug_;
+#endif
 
 		// Render objects
 		ComPtr<ID3D11Texture2D> render_target_;
@@ -160,13 +164,11 @@ namespace renderer {
 		// Buffers
 		ComPtr<ID3D11InputLayout> input_layout_;
 		ComPtr<ID3D11Buffer> vertex_buffer_;
-		ComPtr<ID3D11Buffer> index_buffer_;
 		size_t buffer_size_ = 0;
 
 		// Constant buffers
 		glm::mat4x4 projection_matrix_;
 		ComPtr<ID3D11Buffer> projection_buffer_;
-		ComPtr<ID3D11Buffer> global_buffer_;
 		ComPtr<ID3D11Buffer> command_buffer_;
 
 		// Properties
@@ -179,7 +181,7 @@ namespace renderer {
 		std::shared_ptr<win32_window> window_;
 		D3D_FEATURE_LEVEL feature_level_;
 		RECT output_size_;
-		glm::i16vec2 back_buffer_size_;
+		glm::u16vec2 back_buffer_size_;
 
 		// HDR support
 		DXGI_COLOR_SPACE_TYPE color_space_;

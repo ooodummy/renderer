@@ -17,8 +17,8 @@ renderer::sync_manager updated_buf;
 
 bool close_requested = false;
 
-int draw_count = 0;
 size_t segoe_font;
+renderer::performance_counter performance;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	static bool in_size_move = false;
@@ -110,9 +110,9 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	const auto thickness = factor * 30.0f + 1.0f;
 	const auto rounding = factor;
-	const auto arc = factor * M_PI * 2.0f;
+	const auto arc = factor * glm::two_pi<float>();
 
-	buf->push_key(COLOR_RED);
+	//buf->push_key(COLOR_RED);
 
 	// Testing arc performance
 	buf->draw_line({200.0f, 200.0f}, {300.0f, 300.0f}, COLOR_WHITE, thickness);
@@ -127,17 +127,22 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_circle({550.0f, 400.0f}, 50.0f, COLOR_WHITE, thickness, 32);
 	buf->draw_circle_filled({700.0f, 400.0f}, 50.0f, COLOR_RED, 32);
 
+	// Alpha blending
+	buf->draw_circle_filled({125.0f, 190.0f}, 30.0f, COLOR_RED.alpha(175), 32);
+	buf->draw_circle_filled({105.0f, 225.0f}, 30.0f, COLOR_BLUE.alpha(175), 32);
+	buf->draw_circle_filled({145.0f, 225.0f}, 30.0f, COLOR_GREEN.alpha(175), 32);
+
 	buf->push_font(segoe_font);
 
-	std::string demo_string = "Hello, world!";
+	std::string demo_string = fmt::format("Hello, world! {}", performance.get_fps());
 	buf->draw_text<std::string>({25.0f, 60.0f}, demo_string, COLOR_RED);
-	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0", COLOR_WHITE);
+	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0");
 
 	// Test if the get text size result is accurate
 	auto size = dx11->get_text_size(demo_string, segoe_font);
 	buf->draw_rect({25.0f, 60.0f - size.y, size.x, size.y}, COLOR_RED);
 
-	buf->pop_key();
+	//buf->pop_key();
 
 	buf->pop_font();
 }
@@ -218,7 +223,7 @@ int main() {
 		}
 
 		dx11->render();
-		draw_count++;
+		performance.tick();
 
 		updated_draw.notify();
 		updated_buf.wait();

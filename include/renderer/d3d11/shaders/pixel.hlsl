@@ -1,10 +1,6 @@
 #include "types.hlsl"
 
-cbuffer global : register(b0) {
-	float2 size;
-}
-
-cbuffer command : register(b1) {
+cbuffer command : register(b0) {
 	bool scissor_enable;
 	float4 scissor_bounds;
 	bool scissor_in;

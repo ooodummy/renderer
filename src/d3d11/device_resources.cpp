@@ -3,8 +3,6 @@
 #include "renderer/d3d11/shaders/compiled/pixel.h"
 #include "renderer/d3d11/shaders/compiled/vertex.h"
 
-#include "renderer/d3d11/shaders/constant_buffers.hpp"
-
 #include "renderer/util/win32_window.hpp"
 
 #include "renderer/vertex.hpp"
@@ -112,8 +110,8 @@ void renderer::d3d11_device_resources::create_window_size_dependent_resources() 
 	render_target_.Reset();
 	device_context_->Flush();
 
-	back_buffer_size_.x = std::max<UINT>(static_cast<UINT>(output_size_.right - output_size_.left), 1u);
-	back_buffer_size_.y = std::max<UINT>(static_cast<UINT>(output_size_.bottom - output_size_.top), 1u);
+	back_buffer_size_.x = std::max<uint16_t>(static_cast<uint16_t>(output_size_.right - output_size_.left), 1u);
+	back_buffer_size_.y = std::max<uint16_t>(static_cast<uint16_t>(output_size_.bottom - output_size_.top), 1u);
 
 	update_swap_chain();
 
@@ -125,11 +123,15 @@ void renderer::d3d11_device_resources::create_window_size_dependent_resources() 
 	screen_viewport_ = {
 		0.0f, 0.0f,
 		static_cast<float>(back_buffer_size_.x), static_cast<float>(back_buffer_size_.y),
-		0.0f, 1.0f
+		D3D11_MIN_DEPTH, D3D11_MAX_DEPTH
 	};
 
 	update_projection();
-	update_dimensions();
+
+#ifdef _DEBUG
+	if (debug_)
+		debug_->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+#endif
 }
 
 void renderer::d3d11_device_resources::set_window(std::shared_ptr<win32_window> window) {
@@ -299,8 +301,9 @@ void renderer::d3d11_device_resources::create_factory() {
 		auto hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, __uuidof(IDXGIFactory2), (void**)&dxgi_factory_);
 		assert(SUCCEEDED(hr));
 
-		dxgi_info_queue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-		dxgi_info_queue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+		dxgi_info_queue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+		dxgi_info_queue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
+		dxgi_info_queue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, TRUE);
 
 		DXGI_INFO_QUEUE_MESSAGE_ID hide[] = {
 			80,// IDXGISwapChain::GetContainingOutput:
@@ -506,13 +509,12 @@ void renderer::d3d11_device_resources::create_device() {
 
 void renderer::d3d11_device_resources::create_debug_interface() {
 #ifdef _DEBUG
-	ComPtr<ID3D11Debug> debug;
-	if (SUCCEEDED(device_.As(&debug))) {
+	if (SUCCEEDED(device_.As(&debug_))) {
 		ComPtr<ID3D11InfoQueue> info_queue;
-		if (SUCCEEDED(debug.As(&info_queue))) {
+		if (SUCCEEDED(debug_.As(&info_queue))) {
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
-			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
+			//info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
 
 			D3D11_MESSAGE_ID hide[] = {
 				D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
@@ -557,22 +559,24 @@ void renderer::d3d11_device_resources::update_swap_chain() {
 		return;
 	}
 
-	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc{};
-	swap_chain_desc.Width = back_buffer_size_.x;
-	swap_chain_desc.Height = back_buffer_size_.y;
-	swap_chain_desc.Format = back_buffer_format;
-	swap_chain_desc.Stereo = FALSE;
-	swap_chain_desc.SampleDesc.Count = 1;
-	swap_chain_desc.SampleDesc.Quality = 0;
-	swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swap_chain_desc.BufferCount = back_buffer_count_;
-	swap_chain_desc.Scaling = DXGI_SCALING_NONE;
-	swap_chain_desc.SwapEffect = (options_ & (device_options::flip_present |
-											  device_options::allow_tearing |
-											  device_options::enable_hdr))
-								 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
-	swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-	swap_chain_desc.Flags = (options_ & allow_tearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+	DXGI_SWAP_EFFECT swap_effect = (options_ & (device_options::flip_present |
+												device_options::allow_tearing |
+												device_options::enable_hdr))
+								   ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+
+	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {
+		back_buffer_size_.x,
+		back_buffer_size_.y,
+		back_buffer_format,
+		FALSE,
+		{ 1, 0 },
+		DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		back_buffer_count_,
+		DXGI_SCALING_NONE,
+		swap_effect,
+		DXGI_ALPHA_MODE_IGNORE,
+		(options_ & device_options::allow_tearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u
+	};
 
 	DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_swap_chain_desc{};
 	fullscreen_swap_chain_desc.Windowed = TRUE;
@@ -595,8 +599,8 @@ void renderer::d3d11_device_resources::create_render_target_view() {
 	auto hr = swap_chain_->GetBuffer(0, IID_PPV_ARGS(render_target_.ReleaseAndGetAddressOf()));
 	assert(SUCCEEDED(hr));
 
-	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2D, back_buffer_format_);
-
+	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2D,
+														   back_buffer_format_);
 	hr = device_->CreateRenderTargetView(render_target_.Get(),
 										 &render_target_view_desc,
 										 render_target_view_.ReleaseAndGetAddressOf());
@@ -613,11 +617,11 @@ void renderer::d3d11_device_resources::create_depth_stencil_view() {
 											 1,
 											 1,
 											 D3D11_BIND_DEPTH_STENCIL);
-
 	HRESULT hr = device_->CreateTexture2D(&depth_stencil_desc, nullptr, depth_stencil_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
-	CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D, depth_buffer_format_);
+	CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D,
+														   depth_buffer_format_);
 	hr = device_->CreateDepthStencilView(depth_stencil_.Get(), &depth_stencil_view_desc, depth_stencil_view_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 }
@@ -641,23 +645,6 @@ void renderer::d3d11_device_resources::update_projection() {
 	device_context_->Unmap(projection_buffer_.Get(), 0);
 
 	DPRINTF("[+] Updated vertex shader projection matrix\n");
-}
-
-void renderer::d3d11_device_resources::update_dimensions() {
-	global_buffer global{};
-	global.dimensions = { static_cast<float>(back_buffer_size_.x), static_cast<float>(back_buffer_size_.y) };
-
-	D3D11_MAPPED_SUBRESOURCE mapped_resource;
-	HRESULT hr = device_context_->Map(global_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-	assert(SUCCEEDED(hr));
-
-	{
-		memcpy(mapped_resource.pData, &global, sizeof(global_buffer));
-	}
-
-	device_context_->Unmap(global_buffer_.Get(), 0);
-
-	DPRINTF("[+] Updated pixel shader global dimensions\n");
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
@@ -748,25 +735,16 @@ void renderer::d3d11_device_resources::create_states() {
 }
 
 void renderer::d3d11_device_resources::create_constant_buffers() {
-	D3D11_BUFFER_DESC buffer_desc;
-	buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-	buffer_desc.ByteWidth = sizeof(glm::mat4x4);
-	buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	buffer_desc.MiscFlags = 0;
+	CD3D11_BUFFER_DESC buffer_desc(sizeof(glm::mat4x4),
+								   D3D11_BIND_CONSTANT_BUFFER,
+								   D3D11_USAGE_DYNAMIC,
+								   D3D11_CPU_ACCESS_WRITE);
 
 	HRESULT hr = device_->CreateBuffer(&buffer_desc, nullptr, projection_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 	DPRINTF("[+] Created projection buffer\n");
 
-	buffer_desc.ByteWidth = sizeof(renderer::global_buffer);
-
-	hr = device_->CreateBuffer(&buffer_desc, nullptr, global_buffer_.ReleaseAndGetAddressOf());
-	assert(SUCCEEDED(hr));
-	DPRINTF("[+] Created global buffer\n");
-
 	buffer_desc.ByteWidth = sizeof(renderer::command_buffer);
-
 	hr = device_->CreateBuffer(&buffer_desc, nullptr, command_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 	DPRINTF("[+] Created command buffer\n");
@@ -788,24 +766,12 @@ void renderer::d3d11_device_resources::resize_buffers(size_t vertex_count) {
 
 	auto hr = device_->CreateBuffer(&vertex_desc, nullptr, vertex_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
-
-	D3D11_BUFFER_DESC index_desc;
-	index_desc.ByteWidth = buffer_size_ * sizeof(uint32_t);
-	index_desc.Usage = D3D11_USAGE_DYNAMIC;
-	index_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	index_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	index_desc.MiscFlags = 0;
-	index_desc.StructureByteStride = 0;
-
-	hr = device_->CreateBuffer(&index_desc, nullptr, index_buffer_.ReleaseAndGetAddressOf());
-	assert(SUCCEEDED(hr));
 }
 
 void renderer::d3d11_device_resources::release_resources() {
 	vertex_buffer_.Reset();
 
 	command_buffer_.Reset();
-	global_buffer_.Reset();
 	projection_buffer_.Reset();
 	pixel_shader_.Reset();
 	vertex_shader_.Reset();
@@ -826,17 +792,24 @@ void renderer::d3d11_device_resources::release_resources() {
 	annotation_.Reset();
 
 #ifdef _DEBUG
-	{
-		ComPtr<ID3D11Debug> debug;
-		if (SUCCEEDED(device_.As(&debug))) {
-			debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
-		}
-	}
+	if (debug_)
+		debug_->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY);
+	debug_.Reset();
 #endif
 
 	// Device
 	device_.Reset();
 	dxgi_factory_.Reset();
+}
+
+void renderer::d3d11_device_resources::set_command_buffer(const renderer::command_buffer& buffer) {
+	D3D11_MAPPED_SUBRESOURCE mapped_resource;
+	HRESULT hr = device_context_->Map(command_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+	assert(SUCCEEDED(hr));
+
+	memcpy(mapped_resource.pData, &buffer, sizeof(command_buffer));
+
+	device_context_->Unmap(command_buffer_.Get(), 0);
 }
 
 std::shared_ptr<renderer::win32_window> renderer::d3d11_device_resources::get_window() {

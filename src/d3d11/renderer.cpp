@@ -105,18 +105,15 @@ void renderer::d3d11_renderer::render() {
 	const auto context = device_resources_->get_device_context();
 
 	const auto vertex_buffer = device_resources_->get_vertex_buffer();
-	const auto index_buffer = device_resources_->get_index_buffer();
 	const auto input_layout = device_resources_->get_input_layout();
 
 	UINT stride = sizeof(vertex);
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
 
-	context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
-
 	context->IASetInputLayout(input_layout);
 
-	draw_buffers();
+	draw_batches();
 
 	// Resolve MSAA render target
 	if (msaa_enabled_) {
@@ -163,10 +160,8 @@ void renderer::d3d11_renderer::clear() {
 
 	// Set constant buffers
 	const auto projection_buffer = device_resources_->get_projection_buffer();
-	const auto global_buffer = device_resources_->get_global_buffer();
 
 	context->VSSetConstantBuffers(0, 1, &projection_buffer);
-	context->PSSetConstantBuffers(1, 1, &global_buffer);
 
 	// Set viewport
 	const auto viewport = device_resources_->get_screen_viewport();
@@ -187,7 +182,7 @@ void renderer::d3d11_renderer::clear() {
 	context->PSSetSamplers(0, 1, &sampler_state);
 }
 
-void renderer::d3d11_renderer::draw_buffers() {
+void renderer::d3d11_renderer::draw_batches() {
 	const auto context = device_resources_->get_device_context();
 	const auto command_buffer = device_resources_->get_command_buffer();
 
@@ -201,17 +196,9 @@ void renderer::d3d11_renderer::draw_buffers() {
 		auto& batches = active->get_batches();
 
 		for (const auto& batch : batches) {
-			D3D11_MAPPED_SUBRESOURCE mapped_resource;
-			HRESULT hr = context->Map(command_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-			assert(SUCCEEDED(hr));
+			device_resources_->set_command_buffer(batch.command);
 
-			{
-				memcpy(mapped_resource.pData, &batch.command, sizeof(command_buffer));
-			}
-
-			context->Unmap(command_buffer, 0);
-
-			context->PSSetConstantBuffers(1, 1, &command_buffer);
+			context->PSSetConstantBuffers(0, 1, &command_buffer);
 			context->PSSetShaderResources(0, 1, &batch.srv);
 			context->IASetPrimitiveTopology(batch.type);
 
