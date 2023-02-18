@@ -1,7 +1,7 @@
 #include "renderer/buffer.hpp"
 
-#include "renderer/shapes/polyline.hpp"
 #include "renderer/renderer.hpp"
+#include "renderer/shapes/polyline.hpp"
 
 #include <glm/gtx/quaternion.hpp>
 
@@ -341,6 +341,9 @@ void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, co
 }
 
 void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {
+	if (!glyph.srv)
+		return;
+
 	draw_textured_quad(
 	{ pos.x + static_cast<float>(glyph.bearing.x), pos.y - static_cast<float>(glyph.bearing.y), glyph.size }, glyph.srv,
 	col, !glyph.colored);

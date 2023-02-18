@@ -1,15 +1,15 @@
 #ifndef RENDERER_BUFFER_HPP
 #define RENDERER_BUFFER_HPP
 
-#include "renderer/d3d11/renderer.hpp"
-#include "renderer/d3d11/shaders/constant_buffers.hpp"
+#include "color.hpp"
+#include "font.hpp"
 
+#include "renderer/shaders/constant_buffers.hpp"
 #include "renderer/shapes/bezier.hpp"
 #include "renderer/shapes/polyline.hpp"
 
-#include <stack>
-
 #include <glm/gtx/rotate_vector.hpp>
+#include <stack>
 
 namespace renderer {
 	class batch {
@@ -30,7 +30,7 @@ namespace renderer {
 		command_buffer command{};
 	};
 
-	class base_renderer;
+	class d3d11_renderer;
 
 	// Buffer system from https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {

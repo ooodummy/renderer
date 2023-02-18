@@ -1,4 +1,4 @@
-#include "renderer/d3d11/renderer.hpp"
+#include "renderer/renderer.hpp"
 
 #include "renderer/buffer.hpp"
 #include "renderer/util/win32_window.hpp"
@@ -6,13 +6,12 @@
 #include <d3d11.h>
 #include <freetype/ftbitmap.h>
 #include <freetype/ftstroke.h>
-
 #include <glm/gtc/matrix_transform.hpp>
 
 renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	msaa_enabled_(true),
 	target_sample_count_(8) {
-	device_resources_ = std::make_unique<d3d11_device_resources>();
+	device_resources_ = std::make_unique<device_resources>();
 	device_resources_->set_window(window);
 	device_resources_->register_device_notify(this);
 }
@@ -369,38 +368,39 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	if (FT_Load_Char(font->face, c, load_flags) != FT_Err_Ok)
 		return false;
 
-	FT_Bitmap bitmap;
-	FT_Bitmap_Init(&bitmap);
-
-	// Convert a bitmap object with depth of 4bpp making the number of used
-	// bytes per line (aka the pitch) a multiple of alignment
-	if (FT_Bitmap_Convert(library_, &font->face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
-		return false;
-
 	auto& glyph = font->char_set[c];
 	glyph.colored = font->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
 
-	auto& target_bitmap = glyph.colored ? font->face->glyph->bitmap : bitmap;
+	FT_Bitmap* src_bitmap = &font->face->glyph->bitmap;
 
-	glyph.size = { target_bitmap.width ? target_bitmap.width : 16,
-				   target_bitmap.rows ? target_bitmap.rows : 16 };
+	if (!glyph.colored) {
+		FT_Bitmap bitmap;
+		FT_Bitmap_Init(&bitmap);
+
+		// Convert a bitmap object with depth of 4bpp making the number of used
+		// bytes per line (aka the pitch) a multiple of alignment
+		if (FT_Bitmap_Convert(library_, &font->face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
+			return false;
+
+		src_bitmap = &bitmap;
+	}
+
+	glyph.size = { src_bitmap->width ? src_bitmap->width : 16,
+				   src_bitmap->rows ? src_bitmap->rows : 16 };
 	glyph.bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
 	glyph.advance = font->face->glyph->advance.x;
 
-	if (c == ' ')
+	if (!src_bitmap->buffer || c == ' ')
 		return true;
 
-	auto* data = new uint8_t[target_bitmap.rows * target_bitmap.pitch];
-	memcpy(data, target_bitmap.buffer, target_bitmap.rows * target_bitmap.pitch);
-
 	D3D11_SUBRESOURCE_DATA texture_data;
-	texture_data.pSysMem = data;
-	texture_data.SysMemPitch = target_bitmap.pitch;
+	texture_data.pSysMem = src_bitmap->buffer;
+	texture_data.SysMemPitch = src_bitmap->pitch;
 	texture_data.SysMemSlicePitch = 0;
 
 	D3D11_TEXTURE2D_DESC texture_desc{};
-	texture_desc.Width = target_bitmap.width;
-	texture_desc.Height = target_bitmap.rows;
+	texture_desc.Width = src_bitmap->width;
+	texture_desc.Height = src_bitmap->rows;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
 	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_A8_UNORM;
 	texture_desc.SampleDesc.Count = 1;
@@ -416,8 +416,6 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	auto hr = device->CreateTexture2D(&texture_desc, &texture_data, texture.GetAddressOf());
 	assert(SUCCEEDED(hr));
 
-	delete[] data;
-
 	D3D11_SHADER_RESOURCE_VIEW_DESC shader_resource_view_desc;
 	shader_resource_view_desc.Format = texture_desc.Format;
 	shader_resource_view_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -429,8 +427,10 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 										  &glyph.srv);
 	assert(SUCCEEDED(hr));
 
-	if (FT_Bitmap_Done(library_, &bitmap) != FT_Err_Ok)
-		return false;
+	if (!glyph.colored) {
+		if (FT_Bitmap_Done(library_, &*src_bitmap) != FT_Err_Ok)
+			return false;
+	}
 
 	return true;
 }
@@ -456,11 +456,11 @@ renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) 
 }
 
 // https://www.rastertek.com/dx11s2tut05.html
-renderer::d3d11_texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
-	d3d11_texture2d texture{};
+/*renderer::texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
+	texture2d texture{};
 
-	/*texture.texture = nullptr;
-	texture.srv = D3DX*/
+	texture.texture = nullptr;
+	texture.srv = D3DX
 
 	return texture;
-}
+}*/

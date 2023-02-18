@@ -1,5 +1,5 @@
-#ifndef RENDERER_D3D11_DEVICE_RESOURCES_HPP
-#define RENDERER_D3D11_DEVICE_RESOURCES_HPP
+#ifndef RENDERER_DEVICE_RESOURCES_HPP
+#define RENDERER_DEVICE_RESOURCES_HPP
 
 #include <d3d11_1.h>
 #include <dxgi1_6.h>
@@ -14,7 +14,7 @@
 #include <dxgidebug.h>
 #endif
 
-#include "renderer/d3d11/shaders/constant_buffers.hpp"
+#include "renderer/shaders/constant_buffers.hpp"
 #include "renderer/util/util.hpp"
 
 using Microsoft::WRL::ComPtr;
@@ -33,7 +33,7 @@ namespace renderer {
 
 	// https://github.com/kevinmoran/BeginnerDirect3D11
 	// https://github.com/walbourn/directx-vs-templates/blob/main/d3d11game_win32_dr/DeviceResources.cpp
-	class d3d11_device_resources {
+	class device_resources {
 	public:
 		enum device_options {
 			flip_present = 1 << 0,
@@ -41,11 +41,13 @@ namespace renderer {
 			enable_hdr = 1 << 2
 		};
 
-		d3d11_device_resources(DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM,
+		device_resources(DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM,
 							   DXGI_FORMAT depth_buffer_format = DXGI_FORMAT_D32_FLOAT,
 							   UINT back_buffer_count = 2,
 							   D3D_FEATURE_LEVEL min_feature_level = D3D_FEATURE_LEVEL_11_0,
 							   UINT options = flip_present | allow_tearing);
+
+		void set_swap_chain(IDXGISwapChain* swap_chain);
 
 		//explicit d3d11_device_resources(std::shared_ptr<win32_window> window);
 
@@ -107,7 +109,7 @@ namespace renderer {
 
 		[[nodiscard]] glm::u16vec2 get_back_buffer_size() const { return back_buffer_size_; };
 
-		void set_command_buffer(const renderer::command_buffer& buffer);
+		void set_command_buffer(const command_buffer& buffer);
 
 	private:
 		// Check for SDK layer support

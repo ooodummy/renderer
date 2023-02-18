@@ -1,12 +1,17 @@
-#ifndef RENDERER_D3D11_TEXTURE_ATLAS_HPP
-#define RENDERER_D3D11_TEXTURE_ATLAS_HPP
-
-#include "texture2d.hpp"
+#ifndef RENDERER_TEXTURE2D_HPP
+#define RENDERER_TEXTURE2D_HPP
 
 #include <map>
 #include <memory>
 
+#include <d3d11.h>
+
 namespace renderer {
+	class texture2d {
+		ID3D11Texture2D* texture;
+		ID3D11ShaderResourceView* srv;
+	};
+
 	// TODO: Texture atlas and UV mapping to batch textures
 	class texture_atlas {
 	private:

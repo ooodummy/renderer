@@ -7,12 +7,12 @@ find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(freetype CONFIG REQUIRED)
 
-file(MAKE_DIRECTORY include/renderer/d3d11/shaders/compiled)
+file(MAKE_DIRECTORY include/renderer/shaders/compiled)
 
 add_custom_target(shaders)
 
 set_source_files_properties(
-        include/renderer/d3d11/shaders/pixel.hlsl
+        include/renderer/shaders/pixel.hlsl
         PROPERTIES
         VS_SHADER_TYPE "ps"
         VS_SHADER_MODEL "5_0"
@@ -20,7 +20,7 @@ set_source_files_properties(
         VS_SHADER_VARIABLE_NAME "pixel_shader_data"
 )
 set_source_files_properties(
-        include/renderer/d3d11/shaders/vertex.hlsl
+        include/renderer/shaders/vertex.hlsl
         PROPERTIES
         VS_SHADER_TYPE "vs"
         VS_SHADER_MODEL "5_0"
@@ -45,11 +45,11 @@ function(build_shader SHADER HEADER)
     )
 endfunction()
 
-build_shader(include/renderer/d3d11/shaders/pixel.hlsl include/renderer/d3d11/shaders/compiled/pixel.h)
-build_shader(include/renderer/d3d11/shaders/vertex.hlsl include/renderer/d3d11/shaders/compiled/vertex.h)
+build_shader(include/renderer/shaders/pixel.hlsl include/renderer/shaders/compiled/pixel.h)
+build_shader(include/renderer/shaders/vertex.hlsl include/renderer/shaders/compiled/vertex.h)
 
 file(GLOB_RECURSE SOURCES src/*.*)
-add_library(${PROJECT_NAME} STATIC ${SOURCES} include/renderer/d3d11/shaders/pixel.hlsl)
+add_library(${PROJECT_NAME} STATIC ${SOURCES} include/renderer/shaders/pixel.hlsl)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm)

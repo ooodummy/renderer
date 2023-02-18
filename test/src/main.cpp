@@ -1,6 +1,5 @@
-#include <renderer/core.hpp>
-
 #include <Dwmapi.h>
+#include <renderer/renderer.hpp>
 #include <thread>
 
 extern "C"
@@ -134,13 +133,13 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	buf->push_font(segoe_font);
 
-	std::string demo_string = fmt::format("Hello, world! {}", performance.get_fps());
+	std::string demo_string = fmt::format("Hello World! {}", performance.get_fps());
 	buf->draw_text<std::string>({25.0f, 60.0f}, demo_string, COLOR_RED);
 	buf->draw_text<std::u32string>({25.0f, 105.0f}, U"Unicode example: \u26F0 \U0001F60E \u2603");
 
 	// Test if the get text size result is accurate
-	auto size = dx11->get_text_size(demo_string, segoe_font);
-	buf->draw_rect({25.0f, 60.0f - size.y, size.x, size.y}, COLOR_RED);
+	//auto size = dx11->get_text_size(demo_string, segoe_font);
+	//buf->draw_rect({25.0f, 60.0f - size.y, size.x, size.y}, COLOR_RED);
 
 	//buf->pop_key();
 
@@ -192,7 +191,7 @@ int main() {
 	// Testing Win32 window attributes
 	/*{
 		auto attribute = DWMWCP_DONOTROUND;
-		DwmSetWindowAttribute(window->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
+		DwmSetWindowAttribute(application->get_hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &attribute, sizeof(attribute));
 	}*/
 
 	dx11 = std::make_unique<renderer::d3d11_renderer>(application);
@@ -202,7 +201,8 @@ int main() {
 		return 1;
 	}
 
-	dx11->set_clear_color({88, 88, 88});//({88, 122, 202});
+	//dx11->set_clear_color({88, 88, 88});
+	dx11->set_clear_color({88, 122, 202});
 
 	segoe_font = dx11->register_font("Segoe UI Emoji", 32, FW_THIN, true);
 
