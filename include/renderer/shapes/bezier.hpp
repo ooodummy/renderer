@@ -1,6 +1,8 @@
 #ifndef RENDERER_SHAPES_BEZIER_HPP
 #define RENDERER_SHAPES_BEZIER_HPP
 
+#include "renderer/shapes/shape.hpp"
+
 #include <array>
 #include <vector>
 

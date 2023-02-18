@@ -1,8 +1,7 @@
 #ifndef RENDERER_BUFFER_HPP
 #define RENDERER_BUFFER_HPP
 
-#include "color.hpp"
-#include "font.hpp"
+#include "renderer/renderer.hpp"
 
 #include "renderer/shaders/constant_buffers.hpp"
 #include "renderer/shapes/bezier.hpp"
@@ -29,8 +28,6 @@ namespace renderer {
 		// Used to set shader options
 		command_buffer command{};
 	};
-
-	class d3d11_renderer;
 
 	// Buffer system from https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {

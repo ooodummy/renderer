@@ -45,7 +45,7 @@ namespace renderer {
 							   DXGI_FORMAT depth_buffer_format = DXGI_FORMAT_D32_FLOAT,
 							   UINT back_buffer_count = 2,
 							   D3D_FEATURE_LEVEL min_feature_level = D3D_FEATURE_LEVEL_11_0,
-							   UINT options = flip_present | allow_tearing);
+							   UINT options = 0);
 
 		void set_swap_chain(IDXGISwapChain* swap_chain);
 
@@ -135,6 +135,8 @@ namespace renderer {
 		void release_resources();
 
 	private:
+		bool within_present_hook = false;
+
 		// Basic context
 		ComPtr<IDXGIFactory2> dxgi_factory_;
 		ComPtr<ID3D11Device1> device_ = nullptr;

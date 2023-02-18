@@ -24,13 +24,15 @@ renderer::device_resources::device_resources(DXGI_FORMAT back_buffer_format,
 	options_(options) {}
 
 void renderer::device_resources::set_swap_chain(IDXGISwapChain* swap_chain) {
+	within_present_hook = true;
+
 	assert(swap_chain);
 
 	DXGI_SWAP_CHAIN_DESC swap_chain_description;
 	auto hr = swap_chain->GetDesc(&swap_chain_description);
 	assert(SUCCEEDED(hr));
 
-	window_ = std::make_shared<win32_window>(swap_chain_description.OutputWindow);
+	set_window(std::make_shared<win32_window>(swap_chain_description.OutputWindow));
 
 	ComPtr<ID3D11Device> base_device;
 	hr = swap_chain->GetDevice(IID_PPV_ARGS(base_device.ReleaseAndGetAddressOf()));
@@ -99,9 +101,11 @@ void renderer::device_resources::create_window_size_dependent_resources() {
 	assert(window_->get_hwnd());
 
 	device_context_->OMSetRenderTargets(0, nullptr, nullptr);
+
 	depth_stencil_view_.Reset();
 	render_target_view_.Reset();
 	depth_stencil_.Reset();
+
 	render_target_.Reset();
 	device_context_->Flush();
 
@@ -182,6 +186,9 @@ void renderer::device_resources::register_device_notify(renderer::i_device_notif
 }
 
 void renderer::device_resources::present() {
+	if (within_present_hook)
+		return;
+
 	auto hr = E_FAIL;
 
 	if (options_ & device_options::allow_tearing)
@@ -418,7 +425,7 @@ void renderer::device_resources::get_hardware_adapter(IDXGIAdapter1** pp_adapter
 }
 
 void renderer::device_resources::create_device() {
-	if (device_)
+	if (within_present_hook)
 		return;
 
 	UINT creation_flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -526,6 +533,9 @@ void renderer::device_resources::create_debug_interface() {
 }
 
 void renderer::device_resources::update_swap_chain() {
+	if (within_present_hook)
+		return;
+
 	const DXGI_FORMAT back_buffer_format = (options_ & (device_options::flip_present |
 														device_options::allow_tearing |
 														device_options::enable_hdr))

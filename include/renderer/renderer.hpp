@@ -1,11 +1,9 @@
 #ifndef RENDERER_RENDERER_HPP
 #define RENDERER_RENDERER_HPP
 
-#include "buffer.hpp"
 #include "font.hpp"
-#include "renderer/color.hpp"
-#include "renderer/device_resources.hpp"
-#include "renderer/renderer.hpp"
+#include "color.hpp"
+#include "device_resources.hpp"
 #include "shapes/polyline.hpp"
 #include "texture.hpp"
 #include "util/win32_window.hpp"
@@ -16,6 +14,8 @@
 #include <shared_mutex>
 
 namespace renderer {
+	class buffer;
+
 	struct buffer_node {
 		std::unique_ptr<buffer> active;
 		std::unique_ptr<buffer> working;
@@ -27,6 +27,7 @@ namespace renderer {
 	class d3d11_renderer : public i_device_notify {
 	public:
 		explicit d3d11_renderer(std::shared_ptr<win32_window> window);
+		explicit d3d11_renderer(IDXGISwapChain* swap_chain);
 
 		bool initialize();
 		bool release();
@@ -81,6 +82,8 @@ namespace renderer {
 		}
 
 		void set_clear_color(const color_rgba& color);
+
+		device_resources* get_device_resources() const { return device_resources_.get(); }
 
 	private:
 		std::shared_mutex buffer_list_mutex_;

@@ -16,6 +16,14 @@ renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	device_resources_->register_device_notify(this);
 }
 
+renderer::d3d11_renderer::d3d11_renderer(IDXGISwapChain* swap_chain) :
+	msaa_enabled_(false),
+	target_sample_count_(8) {
+	device_resources_ = std::make_unique<device_resources>();
+	device_resources_->set_swap_chain(swap_chain);
+	device_resources_->register_device_notify(this);
+}
+
 bool renderer::d3d11_renderer::initialize() {
 	device_resources_->create_device_resources();
 	create_device_dependent_resources();
@@ -122,7 +130,7 @@ void renderer::d3d11_renderer::render() {
 
 		context->ResolveSubresource(render_target, 0, msaa_render_target_.Get(), 0, back_buffer_format);
 
-		context->OMSetRenderTargets(1, &render_target_view, nullptr);
+		//context->OMSetRenderTargets(1, &render_target_view, nullptr);
 	}
 
 	device_resources_->present();
@@ -135,7 +143,7 @@ void renderer::d3d11_renderer::clear() {
 	auto context = device_resources_->get_device_context();
 
 	if (msaa_enabled_) {
-		context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
+		//context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(msaa_depth_stencil_view_.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		context->OMSetRenderTargets(1, msaa_render_target_view_.GetAddressOf(), msaa_depth_stencil_view_.Get());
@@ -144,7 +152,7 @@ void renderer::d3d11_renderer::clear() {
 		const auto render_target = device_resources_->get_render_target_view();
 		const auto depth_stencil = device_resources_->get_depth_stencil_view();
 
-		context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
+		//context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		context->OMSetRenderTargets(1, &render_target, depth_stencil);

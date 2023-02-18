@@ -5,7 +5,9 @@
 
 // TODO: Avoid Windows.h and any platform independent things later on
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <Windows.h>
 
 namespace renderer {

@@ -1,6 +1,5 @@
 #include "renderer/buffer.hpp"
 
-#include "renderer/renderer.hpp"
 #include "renderer/shapes/polyline.hpp"
 
 #include <glm/gtx/quaternion.hpp>
