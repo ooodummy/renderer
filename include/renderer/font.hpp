@@ -5,6 +5,7 @@
 using Microsoft::WRL::ComPtr;
 
 #include <unordered_map>
+#include <memory>
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -62,9 +63,9 @@ namespace renderer {
 		bool anti_aliased;
 		size_t outline;
 
-		FT_Face face = nullptr;
+		FT_Face face;
 
-		std::unordered_map<uint32_t, glyph> char_set;
+		std::unordered_map<uint32_t, std::shared_ptr<glyph>> char_set;
 	};
 }// namespace renderer
 

@@ -41,6 +41,11 @@ bool renderer::d3d11_renderer::initialize() {
 }
 
 bool renderer::d3d11_renderer::release() {
+	for (auto& font : fonts_) {
+		if (FT_Done_Face(font->face) != FT_Err_Ok)
+			return false;
+	}
+
 	FT_Stroker_Done(stroker_);
 
 	if (FT_Done_FreeType(library_) != FT_Err_Ok)
@@ -376,12 +381,14 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	if (FT_Load_Char(font->face, c, load_flags) != FT_Err_Ok)
 		return false;
 
-	auto& glyph = font->char_set[c];
-	glyph.colored = font->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
+	auto glyph = std::make_shared<renderer::glyph>();
+	font->char_set[c] = glyph;
+
+	glyph->colored = font->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
 
 	FT_Bitmap* src_bitmap = &font->face->glyph->bitmap;
 
-	if (!glyph.colored) {
+	if (!glyph->colored && font->anti_aliased) {
 		FT_Bitmap bitmap;
 		FT_Bitmap_Init(&bitmap);
 
@@ -399,10 +406,10 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 		// TODO: Stroke outline then maybe apply it onto the glyphs bitmap or draw it in a separate render pass above
 	}
 
-	glyph.size = { src_bitmap->width ? src_bitmap->width : 16,
+	glyph->size = { src_bitmap->width ? src_bitmap->width : 16,
 				   src_bitmap->rows ? src_bitmap->rows : 16 };
-	glyph.bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
-	glyph.advance = font->face->glyph->advance.x;
+	glyph->bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
+	glyph->advance = font->face->glyph->advance.x;
 
 	if (!src_bitmap->buffer/* || c == ' '*/)
 		return true;
@@ -416,7 +423,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	texture_desc.Width = src_bitmap->width;
 	texture_desc.Height = src_bitmap->rows;
 	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = glyph.colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_A8_UNORM;
+	texture_desc.Format = glyph->colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_A8_UNORM;
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
@@ -438,10 +445,10 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 
 	hr = device->CreateShaderResourceView(texture.Get(),
 										  &shader_resource_view_desc,
-										  glyph.shader_resource_view.ReleaseAndGetAddressOf());
+										  glyph->shader_resource_view.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
-	if (!glyph.colored) {
+	if (!glyph->colored) {
 		if (FT_Bitmap_Done(library_, &*src_bitmap) != FT_Err_Ok)
 			return false;
 	}
@@ -453,7 +460,7 @@ renderer::font* renderer::d3d11_renderer::get_font(size_t id) {
 	return fonts_[id].get();
 }
 
-renderer::glyph renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
+std::shared_ptr<renderer::glyph> renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
 	std::unique_lock lock_guard(font_list_mutex_);
 
 	auto& font = fonts_[id];

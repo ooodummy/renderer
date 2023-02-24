@@ -133,30 +133,34 @@ void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, c
 }
 
 // TODO: Optimized circle points
+// https://en.wikipedia.org/wiki/Rotation_matrix
 void renderer::buffer::add_arc_vertices(vertex* vertices,
 										size_t offset,
 										const glm::vec2& pos,
 										float start,
 										float length,
 										float radius,
-										renderer::color_rgba col,
+										color_rgba col1,
+										color_rgba col2,
 										float thickness,
 										size_t segments,
 										bool triangle_fan) {
 	thickness /= 2.0f;
 
 	const auto step = length / static_cast<float>(segments);
-	const auto ss = sin(step), cs = cos(step);
-	auto sa = sinf(start), ca = cosf(start);
+
+	// Matrix coefficients
+	const auto ss = glm::sin(step), cs = glm::cos(step);
+	auto sa = glm::sin(start), ca = glm::cos(start);
 
 	for (size_t i = 0; i <= segments; i++) {
 		if (triangle_fan) {
-			vertices[offset] = { pos, col };
-			vertices[offset + 1] = { radius * ca + pos.x, radius * sa + pos.y, col };
+			vertices[offset] = { pos, col1 };
+			vertices[offset + 1] = { radius * ca + pos.x, radius * sa + pos.y, col2 };
 		}
 		else {
-			vertices[offset] = { (radius - thickness) * ca + pos.x, (radius - thickness) * sa + pos.y, col };
-			vertices[offset + 1] = { (radius + thickness) * ca + pos.x, (radius + thickness) * sa + pos.y, col };
+			vertices[offset] = { (radius - thickness) * ca + pos.x, (radius - thickness) * sa + pos.y, col1 };
+			vertices[offset + 1] = { (radius + thickness) * ca + pos.x, (radius + thickness) * sa + pos.y, col2 };
 		}
 
 		const auto tmp = sa * cs + ca * ss;
@@ -167,6 +171,35 @@ void renderer::buffer::add_arc_vertices(vertex* vertices,
 	}
 }
 
+void renderer::buffer::add_arc_vertices(renderer::vertex* vertices,
+										size_t offset,
+										const glm::vec2& pos,
+										float start,
+										float length,
+										float radius,
+										renderer::color_rgba col,
+										float thickness,
+										size_t segments,
+										bool triangle_fan) {
+	add_arc_vertices(vertices, offset, pos, start, length, radius, col, col, thickness, segments, triangle_fan);
+}
+
+void renderer::buffer::draw_arc(const glm::vec2& pos,
+								float start,
+								float length,
+								float radius,
+								color_rgba col1,
+								color_rgba col2,
+								float thickness,
+								size_t segments,
+								bool triangle_fan) {
+	const auto vertex_count = (segments + 1) * 2;
+	auto* vertices = new vertex[vertex_count];
+	add_arc_vertices(vertices, 0, pos, start, length, radius, col1, col2, thickness, segments, triangle_fan);
+	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	delete[] vertices;
+}
+
 void renderer::buffer::draw_arc(const glm::vec2& pos,
 								float start,
 								float length,
@@ -175,11 +208,7 @@ void renderer::buffer::draw_arc(const glm::vec2& pos,
 								float thickness,
 								size_t segments,
 								bool triangle_fan) {
-	const auto vertex_count = (segments + 1) * 2;
-	auto* vertices = new vertex[vertex_count];
-	add_arc_vertices(vertices, 0, pos, start, length, radius, col, thickness, segments, triangle_fan);
-	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	delete[] vertices;
+	draw_arc(pos, start, length, radius, col, col, thickness, segments, triangle_fan);
 }
 
 void renderer::buffer::draw_rect(const glm::vec4& rect, color_rgba col, float thickness) {
@@ -347,14 +376,14 @@ void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, co
 	draw_arc(pos, 3 * M_PI / 2.0f, M_PI * 2.0f, radius, col, 0.0f, segments, true);
 }
 
-void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {
-	if (!glyph.shader_resource_view)
+void renderer::buffer::draw_glyph(const glm::vec2& pos, std::shared_ptr<glyph> glyph, color_rgba col) {
+	if (!glyph->shader_resource_view)
 		return;
 
-	draw_textured_quad({ pos.x + static_cast<float>(glyph.bearing.x),
-						 pos.y - static_cast<float>(glyph.bearing.y),
-						 glyph.size }, glyph.shader_resource_view.Get(),
-					   col, !glyph.colored);
+	draw_textured_quad({ pos.x + static_cast<float>(glyph->bearing.x),
+						 pos.y - static_cast<float>(glyph->bearing.y),
+						 glyph->size }, glyph->shader_resource_view.Get(),
+					   col, !glyph->colored);
 }
 
 void renderer::buffer::draw_line(const glm::vec3& start, const glm::vec3& end, renderer::color_rgba col) {
@@ -477,3 +506,4 @@ void renderer::buffer::update_font() {
 		active_font = font_list_.top();
 	}
 }
+

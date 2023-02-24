@@ -37,6 +37,7 @@ namespace renderer {
 
 		void clear();
 
+	private:
 		void add_vertices(vertex* vertices, size_t N);
 		void add_vertices(vertex* vertices,
 						  size_t N,
@@ -50,6 +51,7 @@ namespace renderer {
 						  ID3D11ShaderResourceView* srv = nullptr,
 						  color_rgba col = { 255, 255, 255, 255 });
 
+	public:
 		void add_shape(shape& shape);
 
 		void draw_triangle_filled(const glm::vec2& pos1,
@@ -63,6 +65,15 @@ namespace renderer {
 		void draw_line(const glm::vec2& start, const glm::vec2& end,
 					   color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 
+		void draw_arc(const glm::vec2& pos,
+					  float start,
+					  float length,
+					  float radius,
+					  color_rgba col1 = COLOR_WHITE,
+					  color_rgba col2 = COLOR_WHITE,
+					  float thickness = 1.0f,
+					  size_t segments = 16,
+					  bool triangle_fan = false);
 		void draw_arc(const glm::vec2& pos,
 					  float start,
 					  float length,
@@ -139,20 +150,16 @@ namespace renderer {
 
 			switch (h_align) {
 				case text_align_top:
-					pos.y += font->height;
+					pos.y += static_cast<float>(font->height);
 					break;
 				case text_align_center:
 					pos.y += size.y / 2.0f;
-					break;
-				case text_align_bottom:
 					break;
 				default:
 					break;
 			}
 
 			switch (v_align) {
-				case text_align_left:
-					break;
 				case text_align_center:
 					pos.x -= size.x / 2.0f;
 					break;
@@ -163,11 +170,11 @@ namespace renderer {
 					break;
 			}
 
-			for (auto c : text) {
-				auto glyph = dx11_->get_font_glyph(font_id, c);
+			for (const auto c : text) {
+				const auto glyph = dx11_->get_font_glyph(font_id, c);
 				draw_glyph(pos, glyph, col);
 
-				pos.x += static_cast<float>(glyph.advance) / 64.0f;
+				pos.x += static_cast<float>(glyph->advance) / 64.0f;
 			}
 		}
 
@@ -229,6 +236,18 @@ namespace renderer {
 		command_buffer active_command{};
 		size_t active_font = 0;
 
+		// Can't really think of a better alternative to allow gradients
+		static void add_arc_vertices(vertex* vertices,
+									 size_t offset,
+									 const glm::vec2& pos,
+									 float start,
+									 float length,
+									 float radius,
+									 color_rgba col1,
+									 color_rgba col2,
+									 float thickness,
+									 size_t segments = 16,
+									 bool triangle_fan = false);
 		static void add_arc_vertices(vertex* vertices,
 									 size_t offset,
 									 const glm::vec2& pos,
@@ -240,7 +259,7 @@ namespace renderer {
 									 size_t segments = 16,
 									 bool triangle_fan = false);
 
-		void draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col = COLOR_WHITE);
+		void draw_glyph(const glm::vec2& pos, std::shared_ptr<glyph> glyph, color_rgba col = COLOR_WHITE);
 	};
 }// namespace renderer
 

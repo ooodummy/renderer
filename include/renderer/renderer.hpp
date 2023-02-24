@@ -45,8 +45,8 @@ namespace renderer {
 		void create_device_dependent_resources();
 		void create_window_size_dependent_resources();
 
-		void on_device_lost();
-		void on_device_restored();
+		void on_device_lost() override;
+		void on_device_restored() override;
 
 	public:
 		void render();
@@ -58,13 +58,9 @@ namespace renderer {
 		void swap_buffers(size_t id);
 
 		size_t register_font(std::string family, int size, int weight, bool anti_aliased = true, size_t outline = 0);
-		//size_t register_font(const char* file_base, int file_size, int size, int weight, bool anti_aliased = true)
-		//override;
 
 		font* get_font(size_t id);
-		glyph get_font_glyph(size_t id, uint32_t c);
-
-		//d3d11_texture2d create_texture(LPCTSTR file);
+		std::shared_ptr<renderer::glyph> get_font_glyph(size_t id, uint32_t c);
 
 		// TODO: Do any glyphs have issues when it comes to their attributes?
 		template<typename T>
@@ -72,18 +68,16 @@ namespace renderer {
 			glm::vec2 size{};
 
 			for (const auto& c : text) {
-				auto glyph = get_font_glyph(font_id, c);
+				const auto glyph = get_font_glyph(font_id, c);
 
-				size.x += static_cast<float>(glyph.advance) / 64.0f;
-				size.y = std::max(size.y, static_cast<float>(glyph.size.y));
+				size.x += static_cast<float>(glyph->advance) / 64.0f;
+				size.y = std::max(size.y, static_cast<float>(glyph->size.y));
 			}
 
 			return size;
 		}
 
 		void set_clear_color(const color_rgba& color);
-
-		device_resources* get_device_resources() const { return device_resources_.get(); }
 
 	private:
 		std::shared_mutex buffer_list_mutex_;
