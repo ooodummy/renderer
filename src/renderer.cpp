@@ -291,10 +291,6 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 }
 
 void renderer::d3d11_renderer::on_device_lost() {
-	msaa_depth_stencil_view_.Reset();
-	msaa_render_target_view_.Reset();
-	msaa_render_target_.Reset();
-
 	{
 		std::unique_lock lock_guard(buffer_list_mutex_);
 
