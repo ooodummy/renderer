@@ -117,7 +117,12 @@ namespace renderer {
 		void update_swap_chain();
 		void create_render_target_view();
 		void create_depth_stencil_view();
-		void update_projection();
+
+	public:
+		void set_projection(const glm::mat4x4& projection);
+		void set_orthographic_projection();
+
+	private:
 		void create_shaders_and_layout();
 		void create_states();
 		void create_constant_buffers();
@@ -163,7 +168,6 @@ namespace renderer {
 		size_t buffer_size_ = 0;
 
 		// Constant buffers
-		glm::mat4x4 projection_matrix_;
 		ComPtr<ID3D11Buffer> projection_buffer_;
 		ComPtr<ID3D11Buffer> command_buffer_;
 

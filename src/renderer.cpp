@@ -34,10 +34,15 @@ bool renderer::d3d11_renderer::initialize() {
 	if (FT_Init_FreeType(&library_) != FT_Err_Ok)
 		return false;
 
+	if (FT_Stroker_New(library_, &stroker_) != FT_Err_Ok)
+		return false;
+
 	return true;
 }
 
 bool renderer::d3d11_renderer::release() {
+	FT_Stroker_Done(stroker_);
+
 	if (FT_Done_FreeType(library_) != FT_Err_Ok)
 		return false;
 
@@ -76,10 +81,14 @@ void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color
 	clear_color_ = glm::vec4(color);
 }
 
-size_t renderer::d3d11_renderer::register_font(std::string family, int size, int weight, bool anti_aliased) {
+size_t renderer::d3d11_renderer::register_font(std::string family,
+											   int size,
+											   int weight,
+											   bool anti_aliased,
+											   size_t outline) {
 	const auto id = fonts_.size();
 
-	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased));
+	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased, outline));
 	auto& font = fonts_.back();
 
 	auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
@@ -384,12 +393,18 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 		src_bitmap = &bitmap;
 	}
 
+	if (font->outline > 0) {
+		FT_Stroker_Set(stroker_, font->outline * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
+
+		// TODO: Stroke outline then maybe apply it onto the glyphs bitmap or draw it in a separate render pass above
+	}
+
 	glyph.size = { src_bitmap->width ? src_bitmap->width : 16,
 				   src_bitmap->rows ? src_bitmap->rows : 16 };
 	glyph.bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
 	glyph.advance = font->face->glyph->advance.x;
 
-	if (!src_bitmap->buffer || c == ' ')
+	if (!src_bitmap->buffer/* || c == ' '*/)
 		return true;
 
 	D3D11_SUBRESOURCE_DATA texture_data;

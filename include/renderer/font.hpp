@@ -9,9 +9,12 @@ using Microsoft::WRL::ComPtr;
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+
 #include <d3d11.h>
-#include <freetype/freetype.h>
 #include <glm/vec2.hpp>
+
+#include <freetype/freetype.h>
+#include <freetype/ftstroke.h>
 
 // https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
 
@@ -40,12 +43,13 @@ namespace renderer {
 	};
 
 	struct font {
-		font(std::string family, int size, int weight, bool anti_aliased = true) :
-			family(std::move(family)),
+		font(const std::string& family, int size, int weight, bool anti_aliased = true, size_t outline = 0) :
+			family(family),
 			size(size),
 			weight(weight),
-			anti_aliased(anti_aliased) {
-			path = get_font_path(this->family);
+			anti_aliased(anti_aliased),
+			outline(outline) {
+			path = get_font_path(family);
 		}
 
 		std::string family;
@@ -56,8 +60,10 @@ namespace renderer {
 		int height;
 
 		bool anti_aliased;
+		size_t outline;
 
 		FT_Face face = nullptr;
+
 		std::unordered_map<uint32_t, glyph> char_set;
 	};
 }// namespace renderer

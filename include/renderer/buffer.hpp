@@ -60,8 +60,8 @@ namespace renderer {
 								  color_rgba col3 = COLOR_WHITE);
 
 		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
-		void
-		draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
+		void draw_line(const glm::vec2& start, const glm::vec2& end,
+					   color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 
 		void draw_arc(const glm::vec2& pos,
 					  float start,
@@ -179,6 +179,9 @@ namespace renderer {
 					   text_align v_align = text_align_bottom) {
 			draw_text(pos, text, active_font, col, h_align, v_align);
 		}
+
+		void draw_line(const glm::vec3& start, const glm::vec3& end, color_rgba col = COLOR_WHITE);
+		void draw_lines(std::vector<std::pair<glm::vec3, glm::vec3>> lines, color_rgba col = COLOR_WHITE);
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();

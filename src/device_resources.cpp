@@ -125,7 +125,7 @@ void renderer::device_resources::create_window_size_dependent_resources() {
 		D3D11_MIN_DEPTH, D3D11_MAX_DEPTH
 	};
 
-	update_projection();
+	set_orthographic_projection();
 
 #ifdef _DEBUG
 	if (debug_)
@@ -626,23 +626,25 @@ void renderer::device_resources::create_depth_stencil_view() {
 	assert(SUCCEEDED(hr));
 }
 
-void renderer::device_resources::update_projection() {
-	projection_matrix_ = glm::ortho(screen_viewport_.TopLeftX,
-									screen_viewport_.Width,
-									screen_viewport_.Height,
-									screen_viewport_.TopLeftY,
-									screen_viewport_.MinDepth,
-									screen_viewport_.MaxDepth);
-
+void renderer::device_resources::set_projection(const glm::mat4x4& projection) {
 	D3D11_MAPPED_SUBRESOURCE mapped_resource;
 	HRESULT hr = device_context_->Map(projection_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 	assert(SUCCEEDED(hr));
 
 	{
-		memcpy(mapped_resource.pData, &projection_matrix_, sizeof(glm::mat4x4));
+		memcpy(mapped_resource.pData, &projection, sizeof(glm::mat4x4));
 	}
 
 	device_context_->Unmap(projection_buffer_.Get(), 0);
+}
+
+void renderer::device_resources::set_orthographic_projection() {
+	set_projection(glm::ortho(screen_viewport_.TopLeftX,
+							  screen_viewport_.Width,
+							  screen_viewport_.Height,
+							  screen_viewport_.TopLeftY,
+							  screen_viewport_.MinDepth,
+							  screen_viewport_.MaxDepth));
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1

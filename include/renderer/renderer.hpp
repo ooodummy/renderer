@@ -57,7 +57,7 @@ namespace renderer {
 
 		void swap_buffers(size_t id);
 
-		size_t register_font(std::string family, int size, int weight, bool anti_aliased = true);
+		size_t register_font(std::string family, int size, int weight, bool anti_aliased = true, size_t outline = 0);
 		//size_t register_font(const char* file_base, int file_size, int size, int weight, bool anti_aliased = true)
 		//override;
 
@@ -91,7 +91,6 @@ namespace renderer {
 
 		std::unique_ptr<device_resources> device_resources_;
 
-		// Extra resources
 		// MSAA render target resources
 		bool msaa_enabled_;
 
@@ -102,11 +101,12 @@ namespace renderer {
 		ComPtr<ID3D11RenderTargetView> msaa_render_target_view_;
 		ComPtr<ID3D11DepthStencilView> msaa_depth_stencil_view_;
 
-		// Options
 		glm::vec4 clear_color_;
 
-		// Fonts
 		FT_Library library_;
+
+		// Used for glyph outlines
+		FT_Stroker stroker_ = nullptr;
 
 		std::shared_mutex font_list_mutex_;
 		std::vector<std::shared_ptr<font>> fonts_;

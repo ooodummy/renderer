@@ -357,6 +357,29 @@ void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, colo
 					   col, !glyph.colored);
 }
 
+void renderer::buffer::draw_line(const glm::vec3& start, const glm::vec3& end, renderer::color_rgba col) {
+	vertex vertices[] = {
+		{ start.x, start.y, start.z, col, 0.0f, 0.0f },
+		{ end.x, end.y, end.z, col, 0.0f, 0.0f }
+	};
+
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+}
+
+void renderer::buffer::draw_lines(std::vector<std::pair<glm::vec3, glm::vec3>> lines, renderer::color_rgba col) {
+	auto* vertices = new vertex[lines.size() * 2];
+
+	size_t offset = 0;
+	for (const auto& line : lines) {
+		vertices[offset] = { line.first.x, line.first.y, line.first.z, col, 0.0f, 0.0f };
+		vertices[offset + 1] = { line.second.x, line.second.y, line.second.z, col, 0.0f, 0.0f };
+		offset += 2;
+	}
+
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	delete[] vertices;
+}
+
 renderer::buffer::scissor_command::scissor_command(glm::vec4 bounds, bool in, bool circle) :
 	bounds(bounds),
 	in(in),

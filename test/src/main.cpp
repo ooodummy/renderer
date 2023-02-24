@@ -207,7 +207,7 @@ int main() {
 	//dx11->set_clear_color({88, 88, 88});
 	dx11->set_clear_color({88, 122, 202});
 
-	segoe_font = dx11->register_font("Segoe UI Emoji", 32, FW_THIN, true);
+	segoe_font = dx11->register_font("Segoe UI Emoji", 32, FW_THIN, true, 1);
 
 	std::thread draw(draw_thread);
 
