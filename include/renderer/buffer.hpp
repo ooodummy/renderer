@@ -52,6 +52,13 @@ namespace renderer {
 
 		void add_shape(shape& shape);
 
+		void draw_triangle_filled(const glm::vec2& pos1,
+								  const glm::vec2& pos2,
+								  const glm::vec2& pos3,
+								  color_rgba col1 = COLOR_WHITE,
+								  color_rgba col2 = COLOR_WHITE,
+								  color_rgba col3 = COLOR_WHITE);
+
 		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
 		void
 		draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col = COLOR_WHITE, float thickness = 1.0f);

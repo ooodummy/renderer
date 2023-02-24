@@ -21,6 +21,31 @@ void renderer::timer::reset() {
 }
 
 std::chrono::milliseconds renderer::timer::get_elapsed_duration() {
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() -
-																 begin);
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begin);
+}
+
+renderer::performance_counter::performance_counter() {
+	QueryPerformanceFrequency(&frequency_);
+	QueryPerformanceCounter(&last_time_);
+}
+
+void renderer::performance_counter::tick() {
+	LARGE_INTEGER current_time;
+	QueryPerformanceCounter(&current_time);
+
+	second_counter_ += current_time.QuadPart - last_time_.QuadPart;
+	last_time_ = current_time;
+
+	frame_count_++;
+	frames_this_second_++;
+
+	if (second_counter_ >= frequency_.QuadPart) {
+		frames_per_second_ = frames_this_second_;
+		frames_this_second_ = 0;
+		second_counter_ %= frequency_.QuadPart;
+	}
+}
+
+uint32_t renderer::performance_counter::get_fps() const {
+	return frames_per_second_;
 }

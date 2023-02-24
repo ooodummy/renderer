@@ -804,3 +804,37 @@ void renderer::device_resources::set_command_buffer(const renderer::command_buff
 std::shared_ptr<renderer::win32_window> renderer::device_resources::get_window() {
 	return window_;
 }
+
+void renderer::device_resources::begin_event(const wchar_t* name) {
+	annotation_->BeginEvent(name);
+}
+
+void renderer::device_resources::end_event() {
+	annotation_->EndEvent();
+}
+
+void renderer::device_resources::set_marker(const wchar_t* name) {
+	annotation_->SetMarker(name);
+}
+
+ID3D11Device1* renderer::device_resources::get_device() const { return device_.Get(); }
+ID3D11DeviceContext1* renderer::device_resources::get_device_context() { return device_context_.Get(); }
+ID3D11Texture2D* renderer::device_resources::get_render_target() { return render_target_.Get(); }
+ID3D11Texture2D* renderer::device_resources::get_depth_stencil() { return depth_stencil_.Get(); }
+ID3D11RenderTargetView* renderer::device_resources::get_render_target_view() { return render_target_view_.Get(); }
+ID3D11DepthStencilView* renderer::device_resources::get_depth_stencil_view() { return depth_stencil_view_.Get(); }
+D3D11_VIEWPORT renderer::device_resources::get_screen_viewport() { return screen_viewport_; }
+ID3D11SamplerState* renderer::device_resources::get_sampler_state() const { return sampler_state_.Get(); }
+ID3D11RasterizerState* renderer::device_resources::get_rasterizer_state() const { return rasterizer_state_.Get(); }
+ID3D11DepthStencilState* renderer::device_resources::get_depth_stencil_state() const { return depth_stencil_state_.Get(); }
+ID3D11BlendState* renderer::device_resources::get_blend_state() const { return blend_state_.Get(); }
+ID3D11VertexShader* renderer::device_resources::get_vertex_shader() const { return vertex_shader_.Get(); }
+ID3D11PixelShader* renderer::device_resources::get_pixel_shader() const { return pixel_shader_.Get(); }
+ID3D11InputLayout* renderer::device_resources::get_input_layout() const { return input_layout_.Get(); }
+ID3D11Buffer* renderer::device_resources::get_vertex_buffer() const { return vertex_buffer_.Get(); }
+size_t renderer::device_resources::get_buffer_size() const { return buffer_size_; }
+ID3D11Buffer* renderer::device_resources::get_projection_buffer() const { return projection_buffer_.Get(); }
+ID3D11Buffer* renderer::device_resources::get_command_buffer() const { return command_buffer_.Get(); }
+DXGI_FORMAT renderer::device_resources::get_back_buffer_format() const { return back_buffer_format_; }
+DXGI_FORMAT renderer::device_resources::get_depth_buffer_format() const { return depth_buffer_format_; }
+glm::u16vec2 renderer::device_resources::get_back_buffer_size() const { return back_buffer_size_; }

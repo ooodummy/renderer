@@ -45,7 +45,7 @@ namespace renderer {
 							   DXGI_FORMAT depth_buffer_format = DXGI_FORMAT_D32_FLOAT,
 							   UINT back_buffer_count = 2,
 							   D3D_FEATURE_LEVEL min_feature_level = D3D_FEATURE_LEVEL_11_0,
-							   UINT options = 0);
+							   UINT options = flip_present | allow_tearing);
 
 		void set_swap_chain(IDXGISwapChain* swap_chain);
 
@@ -65,49 +65,41 @@ namespace renderer {
 		void update_color_space();
 
 		// Performance events
-		void begin_event(_In_z_ const wchar_t* name) {
-			annotation_->BeginEvent(name);
-		}
-
-		void end_event() {
-			annotation_->EndEvent();
-		}
-
-		void set_marker(_In_z_ const wchar_t* name) {
-			annotation_->SetMarker(name);
-		}
+		void begin_event(_In_z_ const wchar_t* name);
+		void end_event();
+		void set_marker(_In_z_ const wchar_t* name);
 
 		[[nodiscard]] std::shared_ptr<win32_window> get_window();
 
-		[[nodiscard]] ID3D11Device1* get_device() const { return device_.Get(); };
-		[[nodiscard]] ID3D11DeviceContext1* get_device_context() { return device_context_.Get(); };
+		[[nodiscard]] ID3D11Device1* get_device() const;
+		[[nodiscard]] ID3D11DeviceContext1* get_device_context();
 
-		[[nodiscard]] ID3D11Texture2D* get_render_target() { return render_target_.Get(); };
-		[[nodiscard]] ID3D11Texture2D* get_depth_stencil() { return depth_stencil_.Get(); };
+		[[nodiscard]] ID3D11Texture2D* get_render_target();
+		[[nodiscard]] ID3D11Texture2D* get_depth_stencil();
 
-		[[nodiscard]] ID3D11RenderTargetView* get_render_target_view() { return render_target_view_.Get(); };
-		[[nodiscard]] ID3D11DepthStencilView* get_depth_stencil_view() { return depth_stencil_view_.Get(); };
-		[[nodiscard]] D3D11_VIEWPORT get_screen_viewport() { return screen_viewport_; };
+		[[nodiscard]] ID3D11RenderTargetView* get_render_target_view();
+		[[nodiscard]] ID3D11DepthStencilView* get_depth_stencil_view();
+		[[nodiscard]] D3D11_VIEWPORT get_screen_viewport();
 
-		[[nodiscard]] ID3D11SamplerState* get_sampler_state() const { return sampler_state_.Get(); };
-		[[nodiscard]] ID3D11RasterizerState* get_rasterizer_state() const { return rasterizer_state_.Get(); };
-		[[nodiscard]] ID3D11DepthStencilState* get_depth_stencil_state() const { return depth_stencil_state_.Get(); };
-		[[nodiscard]] ID3D11BlendState* get_blend_state() const { return blend_state_.Get(); };
+		[[nodiscard]] ID3D11SamplerState* get_sampler_state() const;
+		[[nodiscard]] ID3D11RasterizerState* get_rasterizer_state() const;
+		[[nodiscard]] ID3D11DepthStencilState* get_depth_stencil_state() const;
+		[[nodiscard]] ID3D11BlendState* get_blend_state() const;
 
-		[[nodiscard]] ID3D11VertexShader* get_vertex_shader() const { return vertex_shader_.Get(); };
-		[[nodiscard]] ID3D11PixelShader* get_pixel_shader() const { return pixel_shader_.Get(); };
+		[[nodiscard]] ID3D11VertexShader* get_vertex_shader() const;
+		[[nodiscard]] ID3D11PixelShader* get_pixel_shader() const;
 
-		[[nodiscard]] ID3D11InputLayout* get_input_layout() const { return input_layout_.Get(); };
-		[[nodiscard]] ID3D11Buffer* get_vertex_buffer() const { return vertex_buffer_.Get(); };
-		[[nodiscard]] size_t get_buffer_size() const { return buffer_size_; };
+		[[nodiscard]] ID3D11InputLayout* get_input_layout() const;
+		[[nodiscard]] ID3D11Buffer* get_vertex_buffer() const;
+		[[nodiscard]] size_t get_buffer_size() const;
 
-		[[nodiscard]] ID3D11Buffer* get_projection_buffer() const { return projection_buffer_.Get(); };
-		[[nodiscard]] ID3D11Buffer* get_command_buffer() const { return command_buffer_.Get(); };
+		[[nodiscard]] ID3D11Buffer* get_projection_buffer() const;
+		[[nodiscard]] ID3D11Buffer* get_command_buffer() const;
 
-		[[nodiscard]] DXGI_FORMAT get_back_buffer_format() const { return back_buffer_format_; };
-		[[nodiscard]] DXGI_FORMAT get_depth_buffer_format() const { return depth_buffer_format_; };
+		[[nodiscard]] DXGI_FORMAT get_back_buffer_format() const;
+		[[nodiscard]] DXGI_FORMAT get_depth_buffer_format() const;
 
-		[[nodiscard]] glm::u16vec2 get_back_buffer_size() const { return back_buffer_size_; };
+		[[nodiscard]] glm::u16vec2 get_back_buffer_size() const;
 
 		void set_command_buffer(const command_buffer& buffer);
 

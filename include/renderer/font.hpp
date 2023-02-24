@@ -31,9 +31,7 @@ namespace renderer {
 	std::string get_font_path(const std::string& family);
 
 	struct glyph {
-		//ComPtr<ID3D11Texture2D> texture;
-		//ComPtr<ID3D11ShaderResourceView> shader_resource_view;
-		ID3D11ShaderResourceView* srv;
+		ComPtr<ID3D11ShaderResourceView> shader_resource_view;
 
 		glm::u32vec2 size;
 		glm::i32vec2 bearing;

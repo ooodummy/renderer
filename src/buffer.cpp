@@ -35,8 +35,7 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t N) {
 	memcpy(&vertices_[vertices_.size() - N], vertices, N * sizeof(vertex));
 }
 
-void renderer::buffer::add_vertices(
-vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* srv, color_rgba col) {
+void renderer::buffer::add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* srv, color_rgba col) {
 	if (batches_.empty()) {
 		batches_.emplace_back(0, type);
 		split_batch_ = false;
@@ -92,6 +91,21 @@ void renderer::buffer::add_vertices(vertex (&vertices)[N],
 void renderer::buffer::add_shape(shape& shape) {
 	shape.check_recalculation();
 	add_vertices(shape.vertices_, shape.vertex_count_, shape.type_, shape.srv_, shape.col_);
+}
+
+void renderer::buffer::draw_triangle_filled(const glm::vec2& pos1,
+											const glm::vec2& pos2,
+											const glm::vec2& pos3,
+											renderer::color_rgba col1,
+											renderer::color_rgba col2,
+											renderer::color_rgba col3) {
+	vertex vertices[] = {
+		{pos1.x, pos1.y, col1},
+		{pos2.x, pos2.y, col2},
+		{pos3.x, pos3.y, col3}
+	};
+
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
 void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
@@ -289,16 +303,13 @@ void renderer::buffer::draw_rect_rounded_filled(const glm::vec4& rect,
 	offset += arc_vertices;
 
 	vertices[offset] = {
-		{rect.x + rect.w - rounding, rect.y + rect.z - rounding},
-		col
+		{rect.x + rect.w - rounding, rect.y + rect.z - rounding}, col
 	};
 	vertices[offset + 1] = {
-		{rect.x, rect.y + rounding},
-		col
+		{rect.x, rect.y + rounding}, col
 	};
 	vertices[offset + 2] = {
-		{rect.x + rect.w - rounding, rect.y + rounding},
-		col
+		{rect.x + rect.w - rounding, rect.y + rounding}, col
 	};
 
 	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -310,9 +321,6 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 
 	active_command.is_texture = true;
 	active_command.is_mask = is_mask;
-
-	//active_command.texture_size.x = static_cast<int>(rect.z);
-	//active_command.texture_size.y = static_cast<int>(rect.w);
 
 	vertex vertices[] = {
 		{ rect.x,			  rect.y,		  col, 0.0f, 0.0f},
@@ -340,25 +348,14 @@ void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, co
 }
 
 void renderer::buffer::draw_glyph(const glm::vec2& pos, const glyph& glyph, color_rgba col) {
-	if (!glyph.srv)
+	if (!glyph.shader_resource_view)
 		return;
 
-	draw_textured_quad(
-	{ pos.x + static_cast<float>(glyph.bearing.x), pos.y - static_cast<float>(glyph.bearing.y), glyph.size }, glyph.srv,
-	col, !glyph.colored);
-
-	//draw_circle_filled(pos, 2.0f, col);
-	//draw_line(pos, {pos.x + glyph.advance / 64, pos.y});
-	//draw_rect({pos.x + glyph.bearing.x, pos.y - glyph.bearing.y, glyph.bearing.x + glyph.size.x, glyph.size.y});
+	draw_textured_quad({ pos.x + static_cast<float>(glyph.bearing.x),
+						 pos.y - static_cast<float>(glyph.bearing.y),
+						 glyph.size }, glyph.shader_resource_view.Get(),
+					   col, !glyph.colored);
 }
-
-/*void renderer::buffer::draw_text(glm::vec2 pos,
-								 const std::string& text,
-								 renderer::color_rgba col,
-								 renderer::text_align h_align,
-								 renderer::text_align v_align) {
-	draw_text(pos, text, active_font, col, h_align, v_align);
-}*/
 
 renderer::buffer::scissor_command::scissor_command(glm::vec4 bounds, bool in, bool circle) :
 	bounds(bounds),

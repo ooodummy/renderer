@@ -1,6 +1,8 @@
-#include <Dwmapi.h>
 #include <renderer/renderer.hpp>
+#include <renderer/buffer.hpp>
+
 #include <thread>
+#include <Dwmapi.h>
 
 extern "C"
 {
@@ -68,18 +70,18 @@ void draw_test_primitives(renderer::buffer* buf) {
 	static float factor = 0.0f;
 	static bool reverse = false;
 
-	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(10)) {
+	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(5)) {
 		animation_timer.reset();
 
 		if (reverse) {
-			factor -= 0.005f;
+			factor -= 0.0025f;
 			if (factor <= 0.0f) {
 				reverse = false;
 				factor = 0.0f;
 			}
 		}
 		else {
-			factor += 0.005f;
+			factor += 0.0025f;
 			if (factor >= 1.0f) {
 				reverse = true;
 				factor = 1.0f;
@@ -130,6 +132,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_circle_filled({125.0f, 190.0f}, 30.0f, COLOR_RED.alpha(175), 32);
 	buf->draw_circle_filled({105.0f, 225.0f}, 30.0f, COLOR_BLUE.alpha(175), 32);
 	buf->draw_circle_filled({145.0f, 225.0f}, 30.0f, COLOR_GREEN.alpha(175), 32);
+	buf->draw_triangle_filled({125.0f, 190.0f}, {105.0f, 225.0f}, {145.0f, 225.0f}, COLOR_RED, COLOR_GREEN, COLOR_BLUE);
 
 	buf->push_font(segoe_font);
 

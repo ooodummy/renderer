@@ -37,43 +37,14 @@ namespace renderer {
 
 	class performance_counter {
 	public:
-		performance_counter() {
-			QueryPerformanceFrequency(&frequency_);
-			QueryPerformanceCounter(&last_time_);
+		performance_counter();
 
-			max_delta_ = frequency_.QuadPart / 10;
-		};
-
-		void tick() {
-			LARGE_INTEGER current_time;
-			QueryPerformanceCounter(&current_time);
-
-			uint64_t delta_time = current_time.QuadPart - last_time_.QuadPart;
-
-			last_time_ = current_time;
-			second_counter_ += delta_time;
-
-			if (delta_time > max_delta_)
-				delta_time = max_delta_;
-
-			frame_count_++;
-			frames_this_second_++;
-
-			if (second_counter_ >= frequency_.QuadPart) {
-				frames_per_second_ = frames_this_second_;
-				frames_this_second_ = 0;
-				second_counter_ %= frequency_.QuadPart;
-			}
-		}
-
-		uint32_t get_fps() const {
-			return frames_per_second_;
-		}
+		void tick();
+		uint32_t get_fps() const;
 
 	private:
 		LARGE_INTEGER frequency_;
 		LARGE_INTEGER last_time_;
-		uint64_t max_delta_;
 
 		uint32_t frame_count_;
 		uint32_t frames_per_second_;
