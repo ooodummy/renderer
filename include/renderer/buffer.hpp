@@ -145,10 +145,12 @@ namespace renderer {
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
+			draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
+
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
 
-			switch (h_align) {
+			switch (v_align) {
 				case text_align_top:
 					pos.y += static_cast<float>(font->height);
 					break;
@@ -159,7 +161,7 @@ namespace renderer {
 					break;
 			}
 
-			switch (v_align) {
+			switch (h_align) {
 				case text_align_center:
 					pos.x -= size.x / 2.0f;
 					break;
