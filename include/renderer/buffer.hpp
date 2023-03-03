@@ -11,6 +11,18 @@
 #include <stack>
 
 namespace renderer {
+	enum rect_edges {
+		edge_top_left = 1 << 0,
+		edge_top_right = 1 << 1,
+		edge_bottom_left = 1 << 2,
+		edge_bottom_right = 1 << 3,
+		edge_left = edge_top_left | edge_bottom_left,
+		edge_right = edge_top_right | edge_bottom_right,
+		edge_top = edge_top_left | edge_top_right,
+		edge_bottom = edge_bottom_left | edge_bottom_right,
+		edge_all = edge_top | edge_bottom
+	};
+
 	class batch {
 	public:
 		batch(size_t size, D3D_PRIMITIVE_TOPOLOGY type) : size(size), type(type) {}
@@ -86,14 +98,16 @@ namespace renderer {
 		void draw_rect(const glm::vec4& rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 		void draw_rect_filled(const glm::vec4& rect, color_rgba col = COLOR_WHITE);
 
-		void draw_rect_rounded(const glm::vec4& rect,
+		void draw_rect_rounded(glm::vec4 rect,
 							   float rounding = 0.1f,
 							   color_rgba = COLOR_WHITE,
 							   float thickness = 1.0f,
+							   rect_edges edge = edge_all,
 							   size_t segments = 16);
-		void draw_rect_rounded_filled(const glm::vec4& rect,
+		void draw_rect_rounded_filled(glm::vec4 rect,
 									  float rounding = 0.1f,
 									  color_rgba = COLOR_WHITE,
+									  rect_edges edge = edge_all,
 									  size_t segments = 16);
 
 		void draw_textured_quad(const glm::vec4& rect,
@@ -145,7 +159,7 @@ namespace renderer {
 					   color_rgba col = COLOR_WHITE,
 					   text_align h_align = text_align_left,
 					   text_align v_align = text_align_bottom) {
-			draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
+			//draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
 
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
