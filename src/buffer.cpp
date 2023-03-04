@@ -117,7 +117,14 @@ void renderer::buffer::draw_point(const glm::vec2& pos, color_rgba col) {
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 }
 
-void renderer::buffer::draw_line(const glm::vec2& start, const glm::vec2& end, color_rgba col, float thickness) {
+void renderer::buffer::draw_line(glm::vec2 start, glm::vec2 end, color_rgba col, float thickness) {
+	if (thickness <= 1.0f) {
+		thickness = 1.0f;
+		start.y += 0.5f;
+		end.x += 1.0f;
+		end.y += 0.5f;
+	}
+
 	// I bet doing all this math for a line is not a good idea
 	const line_segment segment(start, end);
 	const auto normal = segment.normal() * (thickness / 2.0f);
