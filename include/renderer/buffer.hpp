@@ -185,6 +185,9 @@ namespace renderer {
 					break;
 			}
 
+			pos.x = std::floor(pos.x);
+			pos.y = std::floor(pos.y);
+
 			for (const auto c : text) {
 				const auto glyph = dx11_->get_font_glyph(font_id, c);
 				draw_glyph(pos, glyph, col);
