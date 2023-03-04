@@ -147,7 +147,7 @@ void renderer::buffer::add_arc_vertices(vertex* vertices,
 										bool triangle_fan) {
 	thickness /= 2.0f;
 
-	const auto step = length / static_cast<float>(segments);
+	const auto step = length / static_cast<float>(segments - 1);
 
 	// Matrix coefficients
 	const auto ss = glm::sin(step), cs = glm::cos(step);
@@ -211,46 +211,33 @@ void renderer::buffer::draw_arc(const glm::vec2& pos,
 	draw_arc(pos, start, length, radius, col, col, thickness, segments, triangle_fan);
 }
 
-void renderer::buffer::draw_rect(const glm::vec4& rect, color_rgba col, float thickness) {
-	// TODO: Rotation around origin
-
+void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness) {
 	if (thickness <= 1.0f) {
-		vertex vertices[] = {
-			{ rect.x + 1.0f, rect.y + 1.0f, col},
-			{ rect.x, rect.y, col},
-			{ rect.x + rect.z, rect.y + 1.0f, col},
-			{ rect.x + rect.z + 1.0f, rect.y, col},
-			{ rect.x + rect.z, rect.y + rect.w, col},
-			{ rect.x + rect.z + 1.0f, rect.y + rect.w + 1.0f, col},
-			{ rect.x + 1.0f, rect.y + rect.w, col},
-			{ rect.x, rect.y + rect.w + 1.0f, col},
-			{ rect.x + 1.0f, rect.y + 1.0f, col},
-			{ rect.x, rect.y, col},
-		};
+		thickness = 1.0f;
 
-		add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		rect.x += 0.5f;
+		rect.y += 0.5f;
 	}
-	else {
-		thickness /= 2.0f;
 
-		vertex vertices[] = {
-			{ rect.x + thickness, rect.y + thickness, col},
-			{ rect.x - thickness, rect.y - thickness, col},
-			{ rect.x + rect.z - thickness, rect.y + thickness, col},
-			{ rect.x + rect.z + thickness, rect.y - thickness, col},
-			{ rect.x + rect.z - thickness, rect.y + rect.w - thickness, col},
-			{ rect.x + rect.z + thickness, rect.y + rect.w + thickness, col},
-			{ rect.x + thickness, rect.y + rect.w - thickness, col},
-			{ rect.x - thickness, rect.y + rect.w + thickness, col},
-			{ rect.x + thickness, rect.y + thickness, col},
-			{ rect.x - thickness, rect.y - thickness, col},
-		};
+	thickness /= 2.0f;
 
-		add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	}
+	vertex vertices[] = {
+		{ rect.x + thickness, rect.y + thickness, col},
+		{ rect.x - thickness, rect.y - thickness, col},
+		{ rect.x + rect.z - thickness, rect.y + thickness, col},
+		{ rect.x + rect.z + thickness, rect.y - thickness, col},
+		{ rect.x + rect.z - thickness, rect.y + rect.w - thickness, col},
+		{ rect.x + rect.z + thickness, rect.y + rect.w + thickness, col},
+		{ rect.x + thickness, rect.y + rect.w - thickness, col},
+		{ rect.x - thickness, rect.y + rect.w + thickness, col},
+		{ rect.x + thickness, rect.y + thickness, col},
+		{ rect.x - thickness, rect.y - thickness, col},
+	};
+
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
-void renderer::buffer::draw_rect_filled(const glm::vec4& rect, color_rgba col) {
+void renderer::buffer::draw_rect_filled(glm::vec4 rect, color_rgba col) {
 	vertex vertices[] = {
 		{rect.x,			  rect.y,		  col},
 		{ rect.x + rect.z + 1.0f, rect.y,		   col},
@@ -262,8 +249,14 @@ void renderer::buffer::draw_rect_filled(const glm::vec4& rect, color_rgba col) {
 }
 
 void renderer::buffer::draw_rect_rounded(glm::vec4 rect, float rounding, renderer::color_rgba col, float thickness, rect_edges edge, size_t segments) {
-	rect.x += 1.0f;
-	rect.y += 1.0f;
+	if (thickness <= 1.0f) {
+		thickness = 1.0f;
+
+		rect.x += 0.5f;
+		rect.y += 0.5f;
+	}
+
+	const auto half_thickness = thickness / 2.0f;
 	rounding = std::min(rounding, std::max(rect.w, rect.z) / 2.0f);
 
 	size_t edge_count = 0;
@@ -288,106 +281,50 @@ void renderer::buffer::draw_rect_rounded(glm::vec4 rect, float rounding, rendere
 		offset += arc_vertices;
 	}
 	else {
-		vertices[offset++] = { rect.x + thickness, rect.y + thickness, col };
-		vertices[offset++] = { rect.x - thickness, rect.y - thickness, col };
+		vertices[offset++] = { rect.x + half_thickness, rect.y + half_thickness, col };
+		vertices[offset++] = { rect.x - half_thickness, rect.y - half_thickness, col };
 	}
 
 	if (edge & edge_top_right) {
-		add_arc_vertices(vertices, offset, { rect.x + rect.w - rounding, rect.y + rounding }, 3.0f * M_PI / 2.0f,
+		add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rounding }, 3.0f * M_PI / 2.0f,
 						 M_PI / 2.0f, rounding, col, thickness, segments);
 		offset += arc_vertices;
 	}
 	else {
-		vertices[offset++] = { rect.x + rect.z - thickness, rect.y + thickness, col };
-		vertices[offset++] = { rect.x + rect.z + thickness, rect.y - thickness, col };
+		vertices[offset++] = { rect.x + rect.z - half_thickness, rect.y + half_thickness, col };
+		vertices[offset++] = { rect.x + rect.z + half_thickness, rect.y - half_thickness, col };
 	}
 
 	if (edge & edge_bottom_right) {
-		add_arc_vertices(vertices, offset, { rect.x + rect.w - rounding, rect.y + rect.z - rounding }, 0.0f, M_PI / 2.0f,
+		add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rect.w - rounding }, 0.0f, M_PI / 2.0f,
 						 rounding, col, thickness, segments);
 		offset += arc_vertices;
 	}
 	else {
-		vertices[offset++] = { rect.x + rect.z - thickness, rect.y + rect.w - thickness, col };
-		vertices[offset++] = { rect.x + rect.z + thickness, rect.y + rect.w + thickness, col };
+		vertices[offset++] = { rect.x + rect.z - half_thickness, rect.y + rect.w - half_thickness, col };
+		vertices[offset++] = { rect.x + rect.z + half_thickness, rect.y + rect.w + half_thickness, col };
 	}
 
 	if (edge & edge_bottom_left) {
-		add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rect.z - rounding }, M_PI / 2.0f, M_PI / 2.0f,
+		add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rect.w - rounding }, M_PI / 2.0f, M_PI / 2.0f,
 						 rounding, col, thickness, segments);
 		offset += arc_vertices;
 	}
 	else {
-		vertices[offset++] = { rect.x + thickness, rect.y + rect.w - thickness, col };
-		vertices[offset++] = { rect.x - thickness, rect.y + rect.w + thickness, col };
+		vertices[offset++] = { rect.x + half_thickness, rect.y + rect.w - half_thickness, col };
+		vertices[offset++] = { rect.x - half_thickness, rect.y + rect.w + half_thickness, col };
 	}
 
 	if (edge & edge_top_left) {
-		vertices[offset++] = { rect.x + thickness, rect.y + rounding, col };
-		vertices[offset++] = { rect.x - thickness, rect.y + rounding, col };
+		vertices[offset++] = { rect.x + half_thickness, rect.y + rounding, col };
+		vertices[offset++] = { rect.x - half_thickness, rect.y + rounding, col };
 	}
 	else {
-		vertices[offset++] = { rect.x + thickness, rect.y + thickness, col };
-		vertices[offset++] = { rect.x - thickness, rect.y - thickness, col };
+		vertices[offset++] = { rect.x + half_thickness, rect.y + half_thickness, col };
+		vertices[offset++] = { rect.x - half_thickness, rect.y - half_thickness, col };
 	}
 
-	/*add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rounding }, 3.0f * M_PI / 2.0f,
-					 M_PI / 2.0f, rounding, col, thickness, segments);
-	offset += arc_vertices;
-	add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rect.w - rounding }, 0.0f, M_PI / 2.0f,
-					 rounding, col, thickness, segments);
-	offset += arc_vertices;
-	add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rect.w - rounding }, M_PI / 2.0f, M_PI / 2.0f,
-					 rounding, col, thickness, segments);
-	offset += arc_vertices;
-
-	thickness /= 2.0f;
-
-	vertices[offset] = {
-		{rect.x + thickness, rect.y + rounding},
-		col
-	};
-	vertices[offset + 1] = {
-		{rect.x - thickness, rect.y + rounding},
-		col
-	};*/
-
-	// floor y
-	//vertices[segments + 1]
-	//vertices[segments + 2]
-	//vertices[segments + 3]
-	/*offset = segments * 2;
-	vertices[offset].pos.y = std::floorf(vertices[offset].pos.y);
-	vertices[offset + 1].pos.y = std::floorf(vertices[offset + 1].pos.y);
-	vertices[offset + 2].pos.y = std::floorf(vertices[offset + 2].pos.y);
-	vertices[offset + 3].pos.y = std::floorf(vertices[offset + 3].pos.y);
-
-	offset += segments * 2 + 2;
-	vertices[offset].pos.x = std::floorf(vertices[offset].pos.x);
-	vertices[offset + 1].pos.x = std::floorf(vertices[offset + 1].pos.x);
-	vertices[offset + 2].pos.x = std::floorf(vertices[offset + 2].pos.x);
-	vertices[offset + 3].pos.x = std::floorf(vertices[offset + 3].pos.x);
-
-	offset += segments * 2 + 2;
-	vertices[offset].pos.y = std::floorf(vertices[offset].pos.y);
-	vertices[offset + 1].pos.y = std::floorf(vertices[offset + 1].pos.y);
-	vertices[offset + 2].pos.y = std::floorf(vertices[offset + 2].pos.y);
-	vertices[offset + 3].pos.y = std::floorf(vertices[offset + 3].pos.y);
-
-	offset += segments * 2 + 2;
-	vertices[offset].pos.x = std::floorf(vertices[offset].pos.x);
-	vertices[offset + 1].pos.x = std::floorf(vertices[offset + 1].pos.x);
-	vertices[offset + 2].pos.x = std::floorf(vertices[offset + 2].pos.x);
-	vertices[offset + 3].pos.x = std::floorf(vertices[offset + 3].pos.x);*/
-
-	/*for (size_t i = 0; i < vertex_count; i++) {
-		auto& vertex = vertices[i];
-		vertex.pos.x = std::floorf(vertex.pos.x);
-		vertex.pos.y = std::floorf(vertex.pos.y);
-	}*/
-
 	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
 	delete[] vertices;
 }
 
@@ -399,36 +336,70 @@ void renderer::buffer::draw_rect_rounded_filled(glm::vec4 rect,
 												size_t segments) {
 	rect.z += 1.0f;
 	rect.w += 1.0f;
+
 	rounding = std::min(rounding, std::max(rect.w, rect.z) / 2.0f);
 
-	const auto arc_vertices = (segments + 1) * 2;
-	const auto vertex_count = arc_vertices * 4 + 3;
+	size_t edge_count = 0;
+	if (edge & edge_top_left)
+		edge_count++;
+	if (edge & edge_top_right)
+		edge_count++;
+	if (edge & edge_bottom_left)
+		edge_count++;
+	if (edge & edge_bottom_right)
+		edge_count++;
+
+	const auto arc_vertices = segments * 2;
+	const auto vertex_count = arc_vertices * edge_count + 2 * (4 - edge_count) + 5;
 
 	auto* vertices = new vertex[vertex_count];
 	size_t offset = 0;
 
-	add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rounding }, M_PI, M_PI / 2.0f, rounding, col, 0.0f,
-					 segments, true);
-	offset += arc_vertices;
-	add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rounding }, 3.0f * M_PI / 2.0f,
-					 M_PI / 2.0f, rounding, col, 0.0f, segments, true);
-	offset += arc_vertices;
-	add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rect.w - rounding }, 0.0f, M_PI / 2.0f,
-					 rounding, col, 0.0f, segments, true);
-	offset += arc_vertices;
-	add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rect.w - rounding }, M_PI / 2.0f, M_PI / 2.0f,
-					 rounding, col, 0.0f, segments, true);
-	offset += arc_vertices;
+	if (edge & edge_top_left) {
+		add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rounding }, M_PI, M_PI / 2.0f, rounding, col, 0.0f,
+						 segments, true);
+		offset += arc_vertices;
+	}
+	else {
+		vertices[offset++] = { rect.x, rect.y + rounding, col };
+		vertices[offset++] = { rect.x, rect.y, col };
+	}
 
-	vertices[offset] = {
-		{rect.x + rect.z - rounding, rect.y + rect.w - rounding}, col
-	};
-	vertices[offset + 1] = {
-		{rect.x, rect.y + rounding}, col
-	};
-	vertices[offset + 2] = {
-		{rect.x + rect.z - rounding, rect.y + rounding}, col
-	};
+	if (edge & edge_top_right) {
+		add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rounding }, 3.0f * M_PI / 2.0f,
+						 M_PI / 2.0f, rounding, col, 0.0f, segments, true);
+		offset += arc_vertices;
+	}
+	else {
+		vertices[offset++] = { rect.x + rect.z - rounding, rect.y + rounding, col };
+		vertices[offset++] = { rect.x + rect.z, rect.y, col };
+	}
+
+	if (edge & edge_bottom_right) {
+		add_arc_vertices(vertices, offset, { rect.x + rect.z - rounding, rect.y + rect.w - rounding }, 0.0f, M_PI / 2.0f,
+						 rounding, col, 0.0f, segments, true);
+		offset += arc_vertices;
+	}
+	else {
+		vertices[offset++] = { rect.x + rect.z - rounding, rect.y + rect.w - rounding, col };
+		vertices[offset++] = { rect.x + rect.z, rect.y + rect.w, col };
+	}
+
+	if (edge & edge_bottom_left) {
+		add_arc_vertices(vertices, offset, { rect.x + rounding, rect.y + rect.w - rounding }, M_PI / 2.0f, M_PI / 2.0f,
+						 rounding, col, 0.0f, segments, true);
+		offset += arc_vertices;
+	}
+	else {
+		vertices[offset++] = { rect.x + rounding, rect.y + rect.w - rounding, col };
+		vertices[offset++] = { rect.x, rect.y + rect.w, col };
+	}
+
+	vertices[offset++] = { rect.x, rect.y + rect.w - rounding, col };
+	vertices[offset++] = { rect.x, rect.y + rect.w - rounding, col };
+	vertices[offset++] = { rect.x + rect.z - rounding, rect.y + rect.w - rounding, col };
+	vertices[offset++] = { rect.x, rect.y + rounding, col };
+	vertices[offset++] = { rect.x + rect.z - rounding, rect.y + rounding, col };
 
 	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	delete[] vertices;

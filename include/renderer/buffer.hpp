@@ -95,28 +95,27 @@ namespace renderer {
 					  size_t segments = 16,
 					  bool triangle_fan = false);
 
-		void draw_rect(const glm::vec4& rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
-		void draw_rect_filled(const glm::vec4& rect, color_rgba col = COLOR_WHITE);
+		void draw_rect(glm::vec4 rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
+		void draw_rect_filled(glm::vec4 rect, color_rgba col = COLOR_WHITE);
 
 		void draw_rect_rounded(glm::vec4 rect,
 							   float rounding = 0.1f,
 							   color_rgba = COLOR_WHITE,
 							   float thickness = 1.0f,
 							   rect_edges edge = edge_all,
-							   size_t segments = 16);
+							   size_t segments = 8);
 		void draw_rect_rounded_filled(glm::vec4 rect,
 									  float rounding = 0.1f,
 									  color_rgba = COLOR_WHITE,
 									  rect_edges edge = edge_all,
-									  size_t segments = 16);
+									  size_t segments = 8);
 
 		void draw_textured_quad(const glm::vec4& rect,
 								ID3D11ShaderResourceView* srv,
 								color_rgba col = COLOR_WHITE,
 								bool is_mask = false);
 
-		void draw_circle(
-		const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
+		void draw_circle(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
 		void draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
 		template<size_t N>
