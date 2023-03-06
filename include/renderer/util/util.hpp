@@ -42,9 +42,15 @@ namespace renderer {
 		void tick();
 		uint32_t get_fps() const;
 
+		float get_dt() const;
+
 	private:
+		static constexpr uint64_t ticks_per_second_ = 10000000;
+
 		LARGE_INTEGER frequency_;
 		LARGE_INTEGER last_time_;
+
+		uint64_t delta_time_;
 
 		uint32_t frame_count_;
 		uint32_t frames_per_second_;

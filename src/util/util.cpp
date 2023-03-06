@@ -33,6 +33,10 @@ void renderer::performance_counter::tick() {
 	LARGE_INTEGER current_time;
 	QueryPerformanceCounter(&current_time);
 
+	delta_time_ = static_cast<uint64_t>(current_time.QuadPart - last_time_.QuadPart);
+	delta_time_ *= ticks_per_second_;
+	delta_time_ /= static_cast<uint64_t>(frequency_.QuadPart);
+
 	second_counter_ += current_time.QuadPart - last_time_.QuadPart;
 	last_time_ = current_time;
 
@@ -48,4 +52,8 @@ void renderer::performance_counter::tick() {
 
 uint32_t renderer::performance_counter::get_fps() const {
 	return frames_per_second_;
+}
+
+float renderer::performance_counter::get_dt() const {
+	return static_cast<float>(delta_time_) / static_cast<float>(ticks_per_second_);
 }

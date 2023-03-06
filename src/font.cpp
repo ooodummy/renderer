@@ -2,7 +2,7 @@
 
 #include <ShlObj.h>
 
-std::string renderer::get_font_path(const std::string& family) {
+/*std::string renderer::get_font_path(const std::string& family) {
 	HKEY key;
 	RegOpenKeyExA(HKEY_LOCAL_MACHINE, R"(Software\Microsoft\Windows NT\CurrentVersion\Fonts)", 0, KEY_READ, &key);
 
@@ -32,4 +32,4 @@ std::string renderer::get_font_path(const std::string& family) {
 	SHGetFolderPathA(nullptr, CSIDL_FONTS, nullptr, 0, buf);
 
 	return std::string(buf) + '\\' + path;
-}
+}*/

@@ -98,11 +98,13 @@ size_t renderer::d3d11_renderer::register_font(std::string family,
 
 	auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
 	if (error == FT_Err_Unknown_File_Format) {
-		MessageBoxA(nullptr, "Error", "The font file could be opened and read, but it appears that it's font format is unsupported.", MB_ICONERROR | MB_OK);
+		MessageBoxA(nullptr,"The font file could be opened and read, but it appears that it's font format is "
+							 "unsupported.", "Error", MB_ICONERROR | MB_OK);
 		assert(false);
 	}
 	else if (error != FT_Err_Ok) {
-		MessageBoxA(nullptr, "Error", "The font file could not be opened or read, or that it is broken.", MB_ICONERROR | MB_OK);
+		MessageBoxA(nullptr, "The font file could not be opened or read, or that it is broken.", "Error", MB_ICONERROR
+																										  | MB_OK);
 		assert(false);
 	}
 

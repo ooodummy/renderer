@@ -32,7 +32,7 @@ namespace renderer {
 		text_align_bottom
 	};
 
-	std::string get_font_path(const std::string& family);
+	//std::string get_font_path(const std::string& family);
 
 	struct glyph {
 		ComPtr<ID3D11ShaderResourceView> shader_resource_view;
@@ -50,7 +50,7 @@ namespace renderer {
 			weight(weight),
 			anti_aliased(anti_aliased),
 			outline(outline) {
-			path = get_font_path(family);
+			path = family;//= get_font_path(family);
 		}
 
 		std::string family;

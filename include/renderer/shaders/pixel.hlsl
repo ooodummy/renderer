@@ -1,4 +1,5 @@
 #include "types.hlsl"
+#include "rgb2hsv.hlsl"
 
 cbuffer command : register(b0) {
 	bool scissor_enable;
@@ -43,11 +44,20 @@ float4 ps_main(VS_Output input) : SV_TARGET {
 	}
 
 	if (is_texture) {
+		float4 sampled = active_texture.Sample(samplerState, input.uv);
+
 		if (is_mask) {
-			return float4(input.color.x, input.color.y, input.color.z, active_texture.Sample(samplerState, input.uv).w);
+			// Set sampled hue to be input hue
+			/*float3 hsl = RGBtoHSL(sampled.xyz);
+			hsl.x = RGBtoHSL(input.color.xyz).x;
+
+			float3 rgb = HSLtoRGB(hsl);
+			return float4(rgb.xyz, sampled.w * input.color.w);*/
+
+			return float4(input.color.xyz, sampled.w * input.color.w);
 		}
 
-		return active_texture.Sample(samplerState, input.uv);
+		return sampled;
 	}
 
 	return input.color;
