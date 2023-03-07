@@ -337,7 +337,7 @@ void renderer::d3d11_renderer::resize_buffers() {
 	const auto vertex_buffer = device_resources_->get_vertex_buffer();
 	const auto buffer_size = device_resources_->get_buffer_size();
 
-	std::unique_lock lock_guard(buffer_list_mutex_);
+	std::shared_lock lock_guard(buffer_list_mutex_);
 
 	size_t vertex_count = 0;
 
@@ -355,11 +355,12 @@ void renderer::d3d11_renderer::resize_buffers() {
 			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
 			assert(SUCCEEDED(hr));
 
+			char* write_ptr = static_cast<char*>(mapped_subresource.pData);
 			for (const auto& [active, working] : buffers_) {
-				auto& vertices = active->get_vertices();
+				const auto& vertices = active->get_vertices();
 
-				memcpy(mapped_subresource.pData, vertices.data(), vertices.size() * sizeof(vertex));
-				mapped_subresource.pData = static_cast<char*>(mapped_subresource.pData) + vertices.size();
+				memcpy(write_ptr, vertices.data(), vertices.size() * sizeof(vertex));
+				write_ptr += vertices.size();
 			}
 
 			context->Unmap(vertex_buffer, 0);

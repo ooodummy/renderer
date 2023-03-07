@@ -264,7 +264,7 @@ void renderer::buffer::draw_rect_rounded(glm::vec4 rect, float rounding, rendere
 	}
 
 	const auto half_thickness = thickness / 2.0f;
-	rounding = std::min(rounding, std::max(rect.w, rect.z) / 2.0f);
+	rounding = std::min(rounding, std::min(rect.w, rect.z) / 2.0f);
 
 	size_t edge_count = 0;
 	if (edge & edge_top_left)
@@ -344,7 +344,7 @@ void renderer::buffer::draw_rect_rounded_filled(glm::vec4 rect,
 	rect.z += 1.0f;
 	rect.w += 1.0f;
 
-	rounding = std::min(rounding, std::max(rect.w, rect.z) / 2.0f);
+	rounding = std::min(rounding, std::min(rect.w, rect.z) / 2.0f);
 
 	size_t edge_count = 0;
 	if (edge & edge_top_left)
