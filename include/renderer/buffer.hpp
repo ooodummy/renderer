@@ -98,6 +98,8 @@ namespace renderer {
 		void draw_rect(glm::vec4 rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 		void draw_rect_filled(glm::vec4 rect, color_rgba col = COLOR_WHITE);
 
+		// TODO: Experiencing crashes when using rounding on widgets in carbon no idea why since 0 or negative sizing
+		//  doesn't crash and the crash is located in renderer::resize_buffers when we memcpy the data from our vertices
 		void draw_rect_rounded(glm::vec4 rect,
 							   float rounding = 0.1f,
 							   color_rgba = COLOR_WHITE,

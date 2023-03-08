@@ -9,6 +9,7 @@
 #include <glm/trigonometric.hpp>
 
 // TODO: Fix polyline tessellation
+// https://stackoverflow.com/questions/60440682/drawing-a-line-in-modern-opengl
 
 namespace renderer {
 	enum joint_type {

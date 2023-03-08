@@ -35,6 +35,7 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t N) {
 	memcpy(&vertices_[vertices_.size() - N], vertices, N * sizeof(vertex));
 }
 
+// TODO: Utilize index buffer
 void renderer::buffer::add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TOPOLOGY type, ID3D11ShaderResourceView* srv, color_rgba col) {
 	if (batches_.empty()) {
 		batches_.emplace_back(0, type);
