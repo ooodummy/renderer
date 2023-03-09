@@ -39,6 +39,7 @@ namespace renderer {
 
 		// Used to set shader options
 		command_buffer command{};
+		glm::mat4x4 projection{};
 	};
 
 	// Buffer system from https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
@@ -222,6 +223,9 @@ namespace renderer {
 		void push_font(size_t font_id);
 		void pop_font();
 
+		void push_projection(const glm::mat4x4& projection);
+		void pop_projection();
+
 		const std::vector<vertex>& get_vertices();
 		const std::vector<batch>& get_batches();
 
@@ -247,14 +251,17 @@ namespace renderer {
 		std::stack<color_rgba> key_list_;
 		std::stack<float> blur_list_;
 		std::stack<size_t> font_list_;
+		std::stack<glm::mat4x4> projection_list_;
 
 		void update_scissor();
 		void update_key();
 		void update_blur();
 		void update_font();
+		void update_projection();
 
 		command_buffer active_command{};
 		size_t active_font = 0;
+		glm::mat4x4 active_projection;
 
 		// Can't really think of a better alternative to allow gradients
 		static void add_arc_vertices(vertex* vertices,

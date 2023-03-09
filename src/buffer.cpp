@@ -77,6 +77,7 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TO
 	new_batch.srv = srv;
 	new_batch.color = col;
 	new_batch.command = active_command;
+	new_batch.projection = active_projection;
 
 	add_vertices(vertices, N);
 }
@@ -555,6 +556,17 @@ void renderer::buffer::pop_font() {
 	update_font();
 }
 
+void renderer::buffer::push_projection(const glm::mat4x4& projection) {
+	projection_list_.push(projection);
+	update_projection();
+}
+
+void renderer::buffer::pop_projection() {
+	assert(!projection_list_.empty());
+	projection_list_.pop();
+	update_projection();
+}
+
 void renderer::buffer::update_blur() {
 	split_batch_ = true;
 
@@ -575,3 +587,11 @@ void renderer::buffer::update_font() {
 	}
 }
 
+void renderer::buffer::update_projection() {
+	if (projection_list_.empty()) {
+		active_projection = glm::mat4(1.0f);
+	}
+	else {
+		active_projection = projection_list_.top();
+	}
+}
