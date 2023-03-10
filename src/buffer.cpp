@@ -653,6 +653,10 @@ void renderer::buffer::draw_sphere(const glm::vec3& pos, float radius, color_rgb
 	delete[] vertices;
 }
 
+void renderer::buffer::draw_cylinder(const glm::vec3& start, const glm::vec3& end, float radius, renderer::color_rgba col, size_t segments) {
+
+}
+
 renderer::buffer::scissor_command::scissor_command(glm::vec4 bounds, bool in, bool circle) :
 	bounds(bounds),
 	in(in),

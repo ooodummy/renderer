@@ -35,6 +35,10 @@ namespace renderer {
 		align_top_right = align_top | align_right,
 		align_bottom_left = align_bottom | align_left,
 		align_bottom_right = align_bottom | align_right,
+		align_center_left = align_left | align_vertical,
+		align_center_right = align_right | align_vertical,
+		align_center_top = align_top | align_horizontal,
+		align_center_bottom = align_bottom | align_horizontal,
 		align_center = align_vertical | align_horizontal
 	};
 
