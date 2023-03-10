@@ -202,6 +202,7 @@ namespace renderer {
 		void draw_bounds_filled(const glm::vec3& center, const glm::vec3& extents, color_rgba col = COLOR_WHITE);
 
 		void draw_sphere(const glm::vec3& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
+		void draw_circle(const glm::vec3& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24, glm::vec2 rotation = { 0.0f, 0.0f });
 
 		void draw_cylinder(const glm::vec3& start, const glm::vec3& end, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 

@@ -529,35 +529,35 @@ void renderer::buffer::draw_bounds_filled(const glm::vec3& center, const glm::ve
 	const auto y = extents.y;
 	const auto z = extents.z;
 
-const auto edge0 = center + glm::vec3(-x, -y, z);
-const auto edge1 = center + glm::vec3(x, -y, z);
-const auto edge2 = center + glm::vec3(x, y, z);
-const auto edge3 = center + glm::vec3(-x, y, z);
-const auto edge4 = center + glm::vec3(-x, -y, -z);
-const auto edge5 = center + glm::vec3(x, -y, -z);
-const auto edge6 = center + glm::vec3(x, y, -z);
-const auto edge7 = center + glm::vec3(-x, y, -z);
+	const auto edge0 = center + glm::vec3(-x, -y, z);
+	const auto edge1 = center + glm::vec3(x, -y, z);
+	const auto edge2 = center + glm::vec3(x, y, z);
+	const auto edge3 = center + glm::vec3(-x, y, z);
+	const auto edge4 = center + glm::vec3(-x, -y, -z);
+	const auto edge5 = center + glm::vec3(x, -y, -z);
+	const auto edge6 = center + glm::vec3(x, y, -z);
+	const auto edge7 = center + glm::vec3(-x, y, -z);
 
-vertex vertices[] = {
-	{ edge0, col },
-	{ edge1, col },
-	{ edge3, col },
-	{ edge2, col },
-	{ edge7, col },
-	{ edge6, col },
-	{ edge4, col },
-	{ edge6, col },
-	{ edge5, col },
-	{ edge2, col },
-	{ edge5, col },
-	{ edge1, col },
-	{ edge4, col },
-	{ edge0, col },
-	{ edge7, col },
-	{ edge3, col }
-};
+	vertex vertices[] = {
+		{ edge0, col },
+		{ edge1, col },
+		{ edge3, col },
+		{ edge2, col },
+		{ edge7, col },
+		{ edge6, col },
+		{ edge4, col },
+		{ edge6, col },
+		{ edge5, col },
+		{ edge2, col },
+		{ edge5, col },
+		{ edge1, col },
+		{ edge4, col },
+		{ edge0, col },
+		{ edge7, col },
+		{ edge3, col }
+	};
 
-add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
 // TODO: Just make one sphere point list and multiply it to scale
@@ -595,23 +595,6 @@ void renderer::buffer::draw_sphere(const glm::vec3& pos, float radius, color_rgb
 			}
 		}
 
-		/*for (size_t i = 0; i < segments; i++) {
-			const float theta = static_cast<float>(i) / static_cast<float>(segments) * M_PI * 2.0f;
-			const float st = std::sin(theta);
-			const float ct = std::cos(theta);
-
-			for (size_t j = 0; j < segments + 1; j++) {
-				const float phi = static_cast<float>(j) / static_cast<float>(segments) * M_PI;
-				const float sp = std::sin(phi);
-				const float cp = std::cos(phi);
-
-				points.emplace_back(
-					radius * sp * ct,
-					radius * cp,
-					radius * sp * st);
-			}
-		}*/
-
 		std::vector<glm::vec3> triangle_list;
 		triangle_list.reserve(vertex_count);
 
@@ -639,6 +622,23 @@ void renderer::buffer::draw_sphere(const glm::vec3& pos, float radius, color_rgb
 			}
 		}
 
+		/*for (size_t i = 0; i < segments; i++) {
+			const float theta = static_cast<float>(i) / static_cast<float>(segments) * M_PI * 2.0f;
+			const float st = std::sin(theta);
+			const float ct = std::cos(theta);
+
+		for (size_t j = 0; j < segments + 1; j++) {
+			const float phi = static_cast<float>(j) / static_cast<float>(segments) * M_PI;
+			const float sp = std::sin(phi);
+			const float cp = std::cos(phi);
+
+			points.emplace_back(
+			radius * sp * ct,
+			radius * cp,
+			radius * sp * st);
+		}
+	}*/
+
 		precomputed_sphere_points[radius] = triangle_list;
 	}
 
@@ -651,6 +651,10 @@ void renderer::buffer::draw_sphere(const glm::vec3& pos, float radius, color_rgb
 
 	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 	delete[] vertices;
+}
+
+void renderer::buffer::draw_circle(const glm::vec3& pos, float radius, renderer::color_rgba col, size_t segments, glm::vec2 rotation) {
+
 }
 
 void renderer::buffer::draw_cylinder(const glm::vec3& start, const glm::vec3& end, float radius, renderer::color_rgba col, size_t segments) {
