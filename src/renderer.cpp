@@ -338,7 +338,7 @@ void renderer::d3d11_renderer::on_device_restored() {
 
 void renderer::d3d11_renderer::resize_buffers() {
 	const auto context = device_resources_->get_device_context();
-	const auto vertex_buffer = device_resources_->get_vertex_buffer();
+	auto vertex_buffer = device_resources_->get_vertex_buffer();
 	const auto buffer_size = device_resources_->get_buffer_size();
 
 	std::shared_lock lock_guard(buffer_list_mutex_);
@@ -352,6 +352,7 @@ void renderer::d3d11_renderer::resize_buffers() {
 	if (vertex_count > 0) {
 		if (!vertex_buffer || buffer_size <= vertex_count) {
 			device_resources_->resize_buffers(vertex_count + 250);
+			vertex_buffer = device_resources_->get_vertex_buffer();
 		}
 
 		if (vertex_buffer) {

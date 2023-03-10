@@ -159,34 +159,21 @@ namespace renderer {
 					   const T& text,
 					   size_t font_id,
 					   color_rgba col = COLOR_WHITE,
-					   text_align h_align = text_align_left,
-					   text_align v_align = text_align_bottom) {
+					   uint32_t flags = align_top_left) {
 			//draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
 
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
 
-			switch (v_align) {
-				case text_align_top:
-					pos.y += static_cast<float>(font->height);
-					break;
-				case text_align_center:
-					pos.y += size.y / 2.0f;
-					break;
-				default:
-					break;
-			}
+			if (flags & align_top)
+				pos.y += static_cast<float>(font->height);
+			else if (flags & align_vertical)
+				pos.y += size.y / 2.0f;
 
-			switch (h_align) {
-				case text_align_center:
-					pos.x -= size.x / 2.0f;
-					break;
-				case text_align_right:
-					pos.x -= size.x;
-					break;
-				default:
-					break;
-			}
+			if (flags & align_horizontal)
+				pos.x -= size.x / 2.0f;
+			else if (flags & align_right)
+				pos.x -= size.x;
 
 			pos.x = std::floor(pos.x);
 			pos.y = std::floor(pos.y);
@@ -203,13 +190,18 @@ namespace renderer {
 		void draw_text(glm::vec2 pos,
 					   const T& text,
 					   color_rgba col = COLOR_WHITE,
-					   text_align h_align = text_align_left,
-					   text_align v_align = text_align_bottom) {
-			draw_text(pos, text, active_font, col, h_align, v_align);
+					   uint32_t flags = align_top_left) {
+			draw_text(pos, text, active_font, col, flags);
 		}
 
 		void draw_line(const glm::vec3& start, const glm::vec3& end, color_rgba col = COLOR_WHITE);
-		void draw_lines(std::vector<std::pair<glm::vec3, glm::vec3>> lines, color_rgba col = COLOR_WHITE);
+		void draw_line_strip(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
+		void draw_line_list(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
+
+		void draw_bounds(const glm::vec3& center, const glm::vec3& extents, color_rgba col = COLOR_WHITE);
+		void draw_bounds_filled(const glm::vec3& center, const glm::vec3& extents, color_rgba col = COLOR_WHITE);
+
+		void draw_sphere(const glm::vec3& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();

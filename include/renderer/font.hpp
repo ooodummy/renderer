@@ -24,12 +24,18 @@ namespace renderer {
 	// Texture atlas can be used for font's to reduce sizes and batch
 	// Could create a buffer and then when drawing textured quads I could just add them to the texture and draw that
 	// I don't know how ordering the z position can be handled when doing this though
-	enum text_align {
-		text_align_top,
-		text_align_left,
-		text_align_center,
-		text_align_right,
-		text_align_bottom
+	enum text_flags : uint32_t {
+		align_top = 1 << 0,
+		align_left = 1 << 1,
+		align_vertical = 1 << 2,
+		align_right = 1 << 3,
+		align_bottom = 1 << 4,
+		align_horizontal = 1 << 5,
+		align_top_left = align_top | align_left,
+		align_top_right = align_top | align_right,
+		align_bottom_left = align_bottom | align_left,
+		align_bottom_right = align_bottom | align_right,
+		align_center = align_vertical | align_horizontal
 	};
 
 	//std::string get_font_path(const std::string& family);

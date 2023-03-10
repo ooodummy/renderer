@@ -457,24 +457,199 @@ void renderer::buffer::draw_glyph(const glm::vec2& pos, std::shared_ptr<glyph> g
 
 void renderer::buffer::draw_line(const glm::vec3& start, const glm::vec3& end, renderer::color_rgba col) {
 	vertex vertices[] = {
-		{ start.x, start.y, start.z, col, 0.0f, 0.0f },
-		{ end.x, end.y, end.z, col, 0.0f, 0.0f }
+		{ start.x, start.y, start.z, col },
+		{ end.x, end.y, end.z, col }
 	};
 
 	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
-void renderer::buffer::draw_lines(std::vector<std::pair<glm::vec3, glm::vec3>> lines, renderer::color_rgba col) {
-	auto* vertices = new vertex[lines.size() * 2];
+void renderer::buffer::draw_line_strip(std::vector<glm::vec3> points, renderer::color_rgba col) {
+	if (points.empty())
+		return;
 
-	size_t offset = 0;
-	for (const auto& line : lines) {
-		vertices[offset] = { line.first.x, line.first.y, line.first.z, col, 0.0f, 0.0f };
-		vertices[offset + 1] = { line.second.x, line.second.y, line.second.z, col, 0.0f, 0.0f };
-		offset += 2;
+	auto* vertices = new vertex[points.size()];
+
+	for (size_t i = 0; i < points.size(); i++) {
+		vertices[i] = { points[i], col };
 	}
 
-	add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	add_vertices(vertices, points.size(), D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	delete[] vertices;
+}
+
+void renderer::buffer::draw_line_list(std::vector<glm::vec3> points, color_rgba col) {
+	if (points.empty())
+		return;
+
+	auto* vertices = new vertex[points.size()];
+
+	for (size_t i = 0; i < points.size(); i++) {
+		vertices[i] = { points[i], col };
+	}
+
+	add_vertices(vertices, points.size(), D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	delete[] vertices;
+}
+
+void renderer::buffer::draw_bounds(const glm::vec3& center, const glm::vec3& extents, renderer::color_rgba col) {
+	const auto x = extents.x;
+	const auto y = extents.y;
+	const auto z = extents.z;
+
+	const auto edge0 = center + glm::vec3(-x, -y, z);
+	const auto edge1 = center + glm::vec3(x, -y, z);
+	const auto edge2 = center + glm::vec3(x, y, z);
+	const auto edge3 = center + glm::vec3(-x, y, z);
+	const auto edge4 = center + glm::vec3(-x, -y, -z);
+	const auto edge5 = center + glm::vec3(x, -y, -z);
+	const auto edge6 = center + glm::vec3(x, y, -z);
+	const auto edge7 = center + glm::vec3(-x, y, -z);
+
+	std::vector<glm::vec3> line_list = {
+		edge0, edge1,
+		edge1, edge2,
+		edge2, edge3,
+		edge3, edge0,
+		edge3, edge7,
+		edge7, edge6,
+		edge6, edge2,
+		edge0, edge4,
+		edge4, edge5,
+		edge5, edge1,
+		edge4, edge7,
+		edge5, edge6
+	};
+
+	draw_line_list(line_list, col);
+}
+
+void renderer::buffer::draw_bounds_filled(const glm::vec3& center, const glm::vec3& extents, renderer::color_rgba col) {
+	const auto x = extents.x;
+	const auto y = extents.y;
+	const auto z = extents.z;
+
+const auto edge0 = center + glm::vec3(-x, -y, z);
+const auto edge1 = center + glm::vec3(x, -y, z);
+const auto edge2 = center + glm::vec3(x, y, z);
+const auto edge3 = center + glm::vec3(-x, y, z);
+const auto edge4 = center + glm::vec3(-x, -y, -z);
+const auto edge5 = center + glm::vec3(x, -y, -z);
+const auto edge6 = center + glm::vec3(x, y, -z);
+const auto edge7 = center + glm::vec3(-x, y, -z);
+
+vertex vertices[] = {
+	{ edge0, col },
+	{ edge1, col },
+	{ edge3, col },
+	{ edge2, col },
+	{ edge7, col },
+	{ edge6, col },
+	{ edge4, col },
+	{ edge6, col },
+	{ edge5, col },
+	{ edge2, col },
+	{ edge5, col },
+	{ edge1, col },
+	{ edge4, col },
+	{ edge0, col },
+	{ edge7, col },
+	{ edge3, col }
+};
+
+add_vertices(vertices, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+}
+
+// TODO: Just make one sphere point list and multiply it to scale
+// DONT CHANGE SEGMENT COUNT FOR NOW
+std::unordered_map<float, std::vector<glm::vec3>> precomputed_sphere_points;
+
+// http://www.songho.ca/opengl/gl_sphere.html
+void renderer::buffer::draw_sphere(const glm::vec3& pos, float radius, color_rgba col, size_t segments) {
+	const auto point_count = (segments + 1) * (segments + 1);
+	// This is only because we are duplicating vertices and not using a index buffer
+	const auto vertex_count = segments * segments * 6 - (segments * 6);
+
+	if (precomputed_sphere_points.find(radius) == precomputed_sphere_points.end())  {
+		// Generate vertices
+		std::vector<glm::vec3> points;
+		points.reserve(point_count);
+
+		float sectorStep = 2.0f * M_PI / segments;
+		float stackStep = M_PI / segments;
+		float sectorAngle, stackAngle;
+		float xy, z;
+
+		for(int i = 0; i <= segments; ++i) {
+			stackAngle = M_PI / 2 - i * stackStep;// starting from pi/2 to -pi/2
+			xy = radius * cosf(stackAngle);		// r * cos(u)
+			z = radius * sinf(stackAngle);		// r * sin(u)
+
+			// add (sectorCount+1) vertices per stack
+			// the first and last vertices have same position and normal, but different tex coords
+			for (int j = 0; j <= segments; ++j) {
+				sectorAngle = j * sectorStep;// starting from 0 to 2pi
+
+				// vertex position (x, y, z)
+				points.emplace_back(xy * cosf(sectorAngle), z, xy * sinf(sectorAngle));
+			}
+		}
+
+		/*for (size_t i = 0; i < segments; i++) {
+			const float theta = static_cast<float>(i) / static_cast<float>(segments) * M_PI * 2.0f;
+			const float st = std::sin(theta);
+			const float ct = std::cos(theta);
+
+			for (size_t j = 0; j < segments + 1; j++) {
+				const float phi = static_cast<float>(j) / static_cast<float>(segments) * M_PI;
+				const float sp = std::sin(phi);
+				const float cp = std::cos(phi);
+
+				points.emplace_back(
+					radius * sp * ct,
+					radius * cp,
+					radius * sp * st);
+			}
+		}*/
+
+		std::vector<glm::vec3> triangle_list;
+		triangle_list.reserve(vertex_count);
+
+		// TODO: Index buffer so I can just store indices needed easily
+		int k1, k2;
+		for(int i = 0; i < segments; ++i) {
+			k1 = i * (segments + 1);// beginning of current stack
+			k2 = k1 + segments + 1; // beginning of next stack
+
+			for (int j = 0; j < segments; ++j, ++k1, ++k2) {
+				// 2 triangles per sector excluding first and last stacks
+				// k1 => k2 => k1+1
+				if (i != 0) {
+					triangle_list.emplace_back(points[k1]);
+					triangle_list.emplace_back(points[k2]);
+					triangle_list.emplace_back(points[k1 + 1]);
+				}
+
+				// k1+1 => k2 => k2+1
+				if (i != (segments - 1)) {
+					triangle_list.emplace_back(points[k1 + 1]);
+					triangle_list.emplace_back(points[k2]);
+					triangle_list.emplace_back(points[k2 + 1]);
+				}
+			}
+		}
+
+		precomputed_sphere_points[radius] = triangle_list;
+	}
+
+	auto* vertices = new vertex[vertex_count];
+	auto& points = precomputed_sphere_points[radius];
+
+	for (size_t i = 0; i < vertex_count; i++) {
+		vertices[i] = { pos + points[i], col };
+	}
+
+	add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 	delete[] vertices;
 }
 
