@@ -109,6 +109,7 @@ void renderer::device_resources::create_window_size_dependent_resources() {
 	render_target_.Reset();
 	device_context_->Flush();
 
+	// TODO: Do not get back buffer size this way
 	back_buffer_size_.x = std::max<uint16_t>(static_cast<uint16_t>(output_size_.right - output_size_.left), 1u);
 	back_buffer_size_.y = std::max<uint16_t>(static_cast<uint16_t>(output_size_.bottom - output_size_.top), 1u);
 

@@ -17,7 +17,7 @@ renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 }
 
 renderer::d3d11_renderer::d3d11_renderer(IDXGISwapChain* swap_chain) :
-	msaa_enabled_(true),
+	msaa_enabled_(false),
 	target_sample_count_(8) {
 	device_resources_ = std::make_unique<device_resources>();
 	device_resources_->set_swap_chain(swap_chain);
@@ -122,19 +122,12 @@ size_t renderer::d3d11_renderer::register_font(std::string family,
 }
 
 void renderer::d3d11_renderer::render() {
+	backup_states();
+
 	clear();
 	resize_buffers();
 
 	const auto context = device_resources_->get_device_context();
-
-	const auto vertex_buffer = device_resources_->get_vertex_buffer();
-	const auto input_layout = device_resources_->get_input_layout();
-
-	UINT stride = sizeof(vertex);
-	UINT offset = 0;
-	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
-
-	context->IASetInputLayout(input_layout);
 
 	draw_batches();
 
@@ -150,6 +143,8 @@ void renderer::d3d11_renderer::render() {
 	}
 
 	device_resources_->present();
+
+	restore_states();
 }
 
 void renderer::d3d11_renderer::clear() {
@@ -159,7 +154,8 @@ void renderer::d3d11_renderer::clear() {
 	auto context = device_resources_->get_device_context();
 
 	if (msaa_enabled_) {
-		context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
+		if (!device_resources_->within_present_hook)
+			context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(msaa_depth_stencil_view_.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		context->OMSetRenderTargets(1, msaa_render_target_view_.GetAddressOf(), msaa_depth_stencil_view_.Get());
@@ -168,7 +164,8 @@ void renderer::d3d11_renderer::clear() {
 		const auto render_target = device_resources_->get_render_target_view();
 		const auto depth_stencil = device_resources_->get_depth_stencil_view();
 
-		context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
+		if (!device_resources_->within_present_hook)
+			context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		context->OMSetRenderTargets(1, &render_target, depth_stencil);
@@ -203,6 +200,10 @@ void renderer::d3d11_renderer::clear() {
 
 	// For some reason this is now needed after improving the device resource manager
 	context->PSSetSamplers(0, 1, &sampler_state);
+
+	const auto input_layout = device_resources_->get_input_layout();
+
+	context->IASetInputLayout(input_layout);
 }
 
 void renderer::d3d11_renderer::draw_batches() {
@@ -371,6 +372,10 @@ void renderer::d3d11_renderer::resize_buffers() {
 			context->Unmap(vertex_buffer, 0);
 		}
 	}
+
+	UINT stride = sizeof(vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
 }
 
 // https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
@@ -482,6 +487,65 @@ std::shared_ptr<renderer::glyph> renderer::d3d11_renderer::get_font_glyph(size_t
 	}
 
 	return glyph->second;
+}
+
+glm::vec2 renderer::d3d11_renderer::get_render_target_size() {
+	return { backup_viewport_.Width, backup_viewport_.Height };
+
+	const auto render_target = device_resources_->get_render_target();
+
+	if (!render_target)
+		return {};
+
+	D3D11_TEXTURE2D_DESC desc;
+	render_target->GetDesc(&desc);
+
+	return { static_cast<float>(desc.Width), static_cast<float>(desc.Height) };
+}
+
+void renderer::d3d11_renderer::backup_states() {
+	const auto context = device_resources_->get_device_context();
+
+	context->VSGetShader(backup_vertex_shader_.ReleaseAndGetAddressOf(), nullptr, nullptr);
+	context->PSGetShader(backup_pixel_shader_.ReleaseAndGetAddressOf(), nullptr, nullptr);
+
+	UINT backup_viewport_count_ = 1;
+	context->RSGetViewports(&backup_viewport_count_, &backup_viewport_);
+
+	context->OMGetBlendState(backup_blend_state_.ReleaseAndGetAddressOf(), backup_blend_factor_, &backup_blend_sample_mask_);
+	context->OMGetDepthStencilState(backup_depth_state_.ReleaseAndGetAddressOf(), &backup_depth_stencil_ref_);
+	context->RSGetState(backup_rasterizer_state_.ReleaseAndGetAddressOf());
+
+	context->PSGetSamplers(0, 1, backup_sampler_state_.ReleaseAndGetAddressOf());
+
+	context->IAGetInputLayout(backup_input_layout_.ReleaseAndGetAddressOf());
+
+	context->PSGetConstantBuffers(0, 1, backup_constant_buffer_.ReleaseAndGetAddressOf());
+	context->PSGetShaderResources(0, 1, backup_shader_resource_view_.ReleaseAndGetAddressOf());
+
+	context->IAGetPrimitiveTopology(&backup_primitive_topology_);
+}
+
+void renderer::d3d11_renderer::restore_states() {
+	const auto context = device_resources_->get_device_context();
+
+	context->VSSetShader(backup_vertex_shader_.Get(), nullptr, 0);
+	context->PSSetShader(backup_pixel_shader_.Get(), nullptr, 0);
+
+	context->RSSetViewports(1, &backup_viewport_);
+
+	context->OMSetBlendState(backup_blend_state_.Get(), backup_blend_factor_, backup_blend_sample_mask_);
+	context->OMSetDepthStencilState(backup_depth_state_.Get(), backup_depth_stencil_ref_);
+	context->RSSetState(backup_rasterizer_state_.Get());
+
+	context->PSSetSamplers(0, 1, backup_sampler_state_.GetAddressOf());
+
+	context->IASetInputLayout(backup_input_layout_.Get());
+
+	context->PSSetConstantBuffers(0, 1, backup_constant_buffer_.GetAddressOf());
+	context->PSSetShaderResources(0, 1, backup_shader_resource_view_.GetAddressOf());
+
+	context->IASetPrimitiveTopology(backup_primitive_topology_);
 }
 
 // https://www.rastertek.com/dx11s2tut05.html

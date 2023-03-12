@@ -84,6 +84,11 @@ namespace renderer {
 
 		void set_clear_color(const color_rgba& color);
 
+		glm::vec2 get_render_target_size();
+
+		void backup_states();
+		void restore_states();
+
 	private:
 		std::shared_mutex buffer_list_mutex_;
 		std::vector<buffer_node> buffers_;
@@ -111,6 +116,22 @@ namespace renderer {
 		std::vector<std::shared_ptr<font>> fonts_;
 
 		bool create_font_glyph(size_t id, uint32_t c);
+
+		// Backup render states
+		ComPtr<ID3D11VertexShader> backup_vertex_shader_;
+		ComPtr<ID3D11PixelShader> backup_pixel_shader_;
+		D3D11_VIEWPORT backup_viewport_;
+		ComPtr<ID3D11BlendState> backup_blend_state_;
+		FLOAT backup_blend_factor_[4];
+		UINT backup_blend_sample_mask_;
+		ComPtr<ID3D11DepthStencilState> backup_depth_state_;
+		UINT backup_depth_stencil_ref_;
+		ComPtr<ID3D11RasterizerState> backup_rasterizer_state_;
+		ComPtr<ID3D11SamplerState> backup_sampler_state_;
+		ComPtr<ID3D11InputLayout> backup_input_layout_;
+		ComPtr<ID3D11Buffer> backup_constant_buffer_;
+		ComPtr<ID3D11ShaderResourceView> backup_shader_resource_view_;
+		D3D11_PRIMITIVE_TOPOLOGY backup_primitive_topology_;
 	};
 }// namespace renderer
 

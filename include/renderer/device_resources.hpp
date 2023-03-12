@@ -131,9 +131,10 @@ namespace renderer {
 		void resize_buffers(size_t vertex_count);
 		void release_resources();
 
-	private:
+	public:
 		bool within_present_hook = false;
 
+	private:
 		// Basic context
 		ComPtr<IDXGIFactory2> dxgi_factory_;
 		ComPtr<ID3D11Device1> device_ = nullptr;
