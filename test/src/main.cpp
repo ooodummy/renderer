@@ -1,8 +1,8 @@
-#include <renderer/renderer.hpp>
-#include <renderer/buffer.hpp>
-
-#include <thread>
 #include <Dwmapi.h>
+#include <ShlObj.h>
+#include <renderer/buffer.hpp>
+#include <renderer/renderer.hpp>
+#include <thread>
 
 extern "C"
 {
@@ -110,7 +110,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 	polyline.set_color(rainbow);
 
 	const auto thickness = factor * 30.0f + 1.0f;
-	const auto rounding = factor;
+	const auto rounding = factor * 60.0f;
 	const auto arc = factor * glm::two_pi<float>();
 
 	//buf->push_key(COLOR_RED);
@@ -119,8 +119,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_line({200.0f, 200.0f}, {300.0f, 300.0f}, COLOR_WHITE, thickness);
 	buf->draw_rect({350.0f, 200.0f, 100.0f, 100.0f}, COLOR_RED, thickness);
 	buf->draw_rect_filled({500.0f, 200.0f, 100.0f, 100.0f}, COLOR_ORANGE);
-	buf->draw_rect_rounded({650.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_YELLOW, thickness);
-	buf->draw_rect_rounded_filled({800.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_GREEN);
+	buf->draw_rect_rounded({650.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_YELLOW.alpha(80), thickness);
+	buf->draw_rect_rounded_filled({800.0f, 200.0f, 100.0f, 100.0f}, rounding, COLOR_GREEN.alpha(80));
 	buf->draw_arc({250.0f, 400.0f}, arc, arc, 50.0f, COLOR_BLUE, thickness,
 				  32, false);
 	buf->draw_arc({400.0f, 400.0f}, arc, arc, 50.0f, COLOR_PURPLE, 0.0f, 32,
@@ -156,9 +156,11 @@ void draw_thread() {
 		updated_draw.wait();
 
 		auto buf = dx11->get_working_buffer(id);
+		buf->push_projection({});
 
 		draw_test_primitives(buf);
 
+		buf->pop_projection();
 		dx11->swap_buffers(id);
 		updated_buf.notify();
 	}
@@ -207,8 +209,11 @@ int main() {
 	//dx11->set_clear_color({88, 88, 88});
 	dx11->set_clear_color({88, 122, 202});
 
-	segoe_font = dx11->register_font("Segoe UI Emoji", 32, FW_THIN, true);
+	char csidl_fonts[MAX_PATH];
+	memset(csidl_fonts, 0, MAX_PATH);
+	SHGetFolderPathA(nullptr, CSIDL_FONTS, nullptr, 0, csidl_fonts);
 
+	segoe_font = dx11->register_font(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 32, FW_THIN, true);
 	std::thread draw(draw_thread);
 
 	application->set_visibility(true);

@@ -156,7 +156,7 @@ void renderer::buffer::add_arc_vertices(vertex* vertices,
 										bool triangle_fan) {
 	thickness /= 2.0f;
 
-	const auto step = length / static_cast<float>(segments - 1);
+	const auto step = length / static_cast<float>(segments);
 
 	// Matrix coefficients
 	const auto ss = glm::sin(step), cs = glm::cos(step);
