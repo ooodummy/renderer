@@ -1,10 +1,9 @@
 #ifndef RENDERER_UTIL_WINDOW_HPP
 #define RENDERER_UTIL_WINDOW_HPP
 
-#include <string>
-#include <memory>
-
 #include <glm/vec2.hpp>
+#include <memory>
+#include <string>
 
 namespace renderer {
 	class base_window : public std::enable_shared_from_this<base_window> {

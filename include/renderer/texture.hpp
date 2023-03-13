@@ -1,10 +1,9 @@
 #ifndef RENDERER_TEXTURE2D_HPP
 #define RENDERER_TEXTURE2D_HPP
 
+#include <d3d11.h>
 #include <map>
 #include <memory>
-
-#include <d3d11.h>
 
 namespace renderer {
 	class texture2d {

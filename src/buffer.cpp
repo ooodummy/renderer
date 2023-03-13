@@ -49,7 +49,7 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TO
 				batches_.emplace_back(0, type);
 			split_batch_ = false;
 		}
-		else if (previous.type != type || srv != nullptr || srv != previous.srv) {
+		else if (previous.type != type || srv != previous.srv) {
 			batches_.emplace_back(0, type);
 		}
 		else {

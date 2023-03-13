@@ -1,9 +1,9 @@
 #ifndef RENDERER_RENDERER_HPP
 #define RENDERER_RENDERER_HPP
 
-#include "font.hpp"
 #include "color.hpp"
 #include "device_resources.hpp"
+#include "font.hpp"
 #include "shapes/polyline.hpp"
 #include "texture.hpp"
 #include "util/win32_window.hpp"
@@ -73,10 +73,10 @@ namespace renderer {
 
 				size.x += static_cast<float>(glyph->advance) / 64.0f;
 
-				//if (c == ' ')
+				// if (c == ' ')
 				//	continue;
 
-				//size.y = std::max(size.y, static_cast<float>(glyph->size.y));
+				// size.y = std::max(size.y, static_cast<float>(glyph->size.y));
 			}
 
 			return size;

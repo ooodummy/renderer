@@ -1,5 +1,5 @@
-#include "types.hlsl"
 #include "rgb2hsv.hlsl"
+#include "types.hlsl"
 
 cbuffer command : register(b0) {
 	bool scissor_enable;

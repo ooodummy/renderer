@@ -4,9 +4,8 @@
 #include "renderer/shapes/shape.hpp"
 
 #include <array>
-#include <vector>
-
 #include <glm/glm.hpp>
+#include <vector>
 
 // TODO: Calculating the normal at a time point in a bezier curve seems to be the most expensive function in this
 //  codebase.
@@ -174,9 +173,7 @@ namespace renderer {
 
 	// TODO: Implement bezier shape caching
 	template<size_t N>
-	class bezier_shape : public shape {
-
-	};
+	class bezier_shape : public shape {};
 }// namespace renderer
 
 #endif

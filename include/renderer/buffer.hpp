@@ -2,7 +2,6 @@
 #define RENDERER_BUFFER_HPP
 
 #include "renderer/renderer.hpp"
-
 #include "renderer/shaders/constant_buffers.hpp"
 #include "renderer/shapes/bezier.hpp"
 #include "renderer/shapes/polyline.hpp"
@@ -42,7 +41,8 @@ namespace renderer {
 		glm::mat4x4 projection{};
 	};
 
-	// Buffer system from https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
+	// Buffer system from
+	// https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {
 	public:
 		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {}
@@ -75,8 +75,7 @@ namespace renderer {
 								  color_rgba col3 = COLOR_WHITE);
 
 		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
-		void draw_line(glm::vec2 start, glm::vec2 end,
-					   color_rgba col = COLOR_WHITE, float thickness = 1.0f);
+		void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
 
 		void draw_arc(const glm::vec2& pos,
 					  float start,
@@ -118,7 +117,8 @@ namespace renderer {
 								color_rgba col = COLOR_WHITE,
 								bool is_mask = false);
 
-		void draw_circle(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
+		void draw_circle(
+		const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
 		void draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
 		template<size_t N>
@@ -155,12 +155,9 @@ namespace renderer {
 		}
 
 		template<typename T>
-		void draw_text(glm::vec2 pos,
-					   const T& text,
-					   size_t font_id,
-					   color_rgba col = COLOR_WHITE,
-					   uint32_t flags = align_top_left) {
-			//draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
+		void draw_text(
+		glm::vec2 pos, const T& text, size_t font_id, color_rgba col = COLOR_WHITE, uint32_t flags = align_top_left) {
+			// draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
 
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
@@ -187,10 +184,7 @@ namespace renderer {
 		}
 
 		template<typename T>
-		void draw_text(glm::vec2 pos,
-					   const T& text,
-					   color_rgba col = COLOR_WHITE,
-					   uint32_t flags = align_top_left) {
+		void draw_text(glm::vec2 pos, const T& text, color_rgba col = COLOR_WHITE, uint32_t flags = align_top_left) {
 			draw_text(pos, text, active_font, col, flags);
 		}
 
@@ -202,9 +196,14 @@ namespace renderer {
 		void draw_bounds_filled(const glm::vec3& center, const glm::vec3& extents, color_rgba col = COLOR_WHITE);
 
 		void draw_sphere(const glm::vec3& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
-		void draw_circle(const glm::vec3& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24, glm::vec2 rotation = { 0.0f, 0.0f });
+		void draw_circle(const glm::vec3& pos,
+						 float radius,
+						 color_rgba col = COLOR_WHITE,
+						 size_t segments = 24,
+						 glm::vec2 rotation = { 0.0f, 0.0f });
 
-		void draw_cylinder(const glm::vec3& start, const glm::vec3& end, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
+		void draw_cylinder(
+		const glm::vec3& start, const glm::vec3& end, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();

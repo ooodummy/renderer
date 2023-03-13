@@ -4,18 +4,17 @@
 #include <wrl/client.h>
 using Microsoft::WRL::ComPtr;
 
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 
 #include <d3d11.h>
-#include <glm/vec2.hpp>
-
 #include <freetype/freetype.h>
 #include <freetype/ftstroke.h>
+#include <glm/vec2.hpp>
 
 // https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
 
@@ -42,7 +41,7 @@ namespace renderer {
 		align_center = align_vertical | align_horizontal
 	};
 
-	//std::string get_font_path(const std::string& family);
+	// std::string get_font_path(const std::string& family);
 
 	struct glyph {
 		ComPtr<ID3D11ShaderResourceView> shader_resource_view;

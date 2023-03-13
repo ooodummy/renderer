@@ -3,10 +3,9 @@
 
 #include "shape.hpp"
 
+#include <glm/trigonometric.hpp>
 #include <optional>
 #include <vector>
-
-#include <glm/trigonometric.hpp>
 
 // TODO: Fix polyline tessellation
 // https://stackoverflow.com/questions/60440682/drawing-a-line-in-modern-opengl

@@ -1,10 +1,10 @@
 #ifndef RENDERER_UTIL_UTIL_HPP
 #define RENDERER_UTIL_UTIL_HPP
 
+#include <Windows.h>
 #include <condition_variable>
 #include <fmt/core.h>
 #include <fmt/xchar.h>
-#include <Windows.h>
 
 #ifdef _DEBUG
 #define DPRINTF(text, ...) fmt::print(text, __VA_ARGS__)

@@ -1,14 +1,13 @@
 #ifndef RENDERER_DEVICE_RESOURCES_HPP
 #define RENDERER_DEVICE_RESOURCES_HPP
 
+#include <DirectXColors.h>
+#include <DirectXMath.h>
 #include <d3d11_1.h>
 #include <dxgi1_6.h>
 #include <glm/mat4x4.hpp>
 #include <memory>
 #include <wrl/client.h>
-
-#include <DirectXMath.h>
-#include <DirectXColors.h>
 
 #ifdef _DEBUG
 #include <dxgidebug.h>
@@ -42,18 +41,18 @@ namespace renderer {
 		};
 
 		device_resources(DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM,
-							   DXGI_FORMAT depth_buffer_format = DXGI_FORMAT_D32_FLOAT,
-							   UINT back_buffer_count = 2,
-							   D3D_FEATURE_LEVEL min_feature_level = D3D_FEATURE_LEVEL_11_0,
-							   UINT options = flip_present | allow_tearing);
+						 DXGI_FORMAT depth_buffer_format = DXGI_FORMAT_D32_FLOAT,
+						 UINT back_buffer_count = 2,
+						 D3D_FEATURE_LEVEL min_feature_level = D3D_FEATURE_LEVEL_11_0,
+						 UINT options = flip_present | allow_tearing);
 
 		void set_swap_chain(IDXGISwapChain* swap_chain);
 
-		//explicit d3d11_device_resources(std::shared_ptr<win32_window> window);
+		// explicit d3d11_device_resources(std::shared_ptr<win32_window> window);
 
 		// Used to initialize inside game present hook currently experiencing issues with trying to draw in present,
 		// causing nothing to be drawn.
-		//explicit d3d11_device_resources(const ComPtr<IDXGISwapChain>& swap_chain);
+		// explicit d3d11_device_resources(const ComPtr<IDXGISwapChain>& swap_chain);
 
 		void create_device_resources();
 		void create_window_size_dependent_resources();
@@ -65,9 +64,9 @@ namespace renderer {
 		void update_color_space();
 
 		// Performance events
-		void begin_event(_In_z_ const wchar_t* name);
+		void begin_event(const _In_z_ wchar_t* name);
 		void end_event();
-		void set_marker(_In_z_ const wchar_t* name);
+		void set_marker(const _In_z_ wchar_t* name);
 
 		[[nodiscard]] std::shared_ptr<win32_window> get_window();
 

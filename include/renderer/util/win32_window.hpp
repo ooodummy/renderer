@@ -20,7 +20,8 @@ namespace renderer {
 		// Used to handle a preexisting window
 		explicit win32_window(HWND hwnd);
 
-		// Never use create/destroy in constructor/destructor if we are just using this wrapper to wrap an existing window
+		// Never use create/destroy in constructor/destructor if we are just using this wrapper to wrap an existing
+		// window
 		bool create() override;
 		bool destroy() override;
 
