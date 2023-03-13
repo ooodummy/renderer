@@ -157,11 +157,12 @@ namespace renderer {
 		template<typename T>
 		void draw_text(
 		glm::vec2 pos, const T& text, size_t font_id, color_rgba col = COLOR_WHITE, uint32_t flags = align_top_left) {
-			// draw_rect_filled({pos.x, pos.y, 2.0f, 2.0f}, COLOR_RED);
+			//draw_rect_filled({pos.x, pos.y, 1.0f, 1.0f}, COLOR_RED);
 
 			const auto size = dx11_->get_text_size(text, font_id);
 			const auto font = dx11_->get_font(font_id);
 
+			// Should text height instead be the maximum height of the given text or the fonts height?
 			if (flags & align_top)
 				pos.y += static_cast<float>(font->height);
 			else if (flags & align_vertical)
