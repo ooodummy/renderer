@@ -5,6 +5,7 @@
 using Microsoft::WRL::ComPtr;
 
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 #ifndef NOMINMAX
