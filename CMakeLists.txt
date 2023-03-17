@@ -1,11 +1,20 @@
 cmake_minimum_required(VERSION 3.17)
 
 project(renderer)
+
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(fmt CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(freetype CONFIG REQUIRED)
+if(NOT TARGET fmt)
+    find_package(fmt CONFIG REQUIRED)
+endif()
+
+if(NOT TARGET glm)
+    find_package(glm CONFIG REQUIRED)
+endif()
+
+if(NOT TARGET freetype)
+    find_package(freetype CONFIG REQUIRED)
+endif()
 
 file(MAKE_DIRECTORY include/renderer/shaders/compiled)
 
@@ -52,7 +61,7 @@ file(GLOB_RECURSE SOURCES src/*.*)
 add_library(${PROJECT_NAME} STATIC ${SOURCES} include/renderer/shaders/pixel.hlsl)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm)
-target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 dxgi dxguid freetype)
+target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm freetype)
+target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 dxgi dxguid)
 
 add_dependencies(${PROJECT_NAME} shaders)
