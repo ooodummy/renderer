@@ -66,17 +66,17 @@ namespace renderer {
 		template<typename T>
 		glm::vec2 get_text_size(const T& text, size_t font_id = 0) {
 			glm::vec2 size{};
-			size.y = get_font(font_id)->height;
+			//size.y = get_font(font_id)->height;
 
 			for (const auto& c : text) {
 				const auto glyph = get_font_glyph(font_id, c);
 
 				size.x += static_cast<float>(glyph->advance) / 64.0f;
 
-				// if (c == ' ')
-				//	continue;
+				if (c == ' ')
+					continue;
 
-				// size.y = std::max(size.y, static_cast<float>(glyph->size.y));
+				size.y = std::max(size.y, static_cast<float>(glyph->size.y));
 			}
 
 			return size;
