@@ -125,6 +125,8 @@ void renderer::d3d11_renderer::render() {
 	backup_states();
 
 	clear();
+	setup_states();
+
 	resize_buffers();
 
 	const auto context = device_resources_->get_device_context();
@@ -148,9 +150,6 @@ void renderer::d3d11_renderer::render() {
 }
 
 void renderer::d3d11_renderer::clear() {
-	// Note: This should be enough to prepare the device context properly each frame in a present hook
-
-	// Clear views
 	auto context = device_resources_->get_device_context();
 
 	if (msaa_enabled_) {
@@ -170,40 +169,6 @@ void renderer::d3d11_renderer::clear() {
 
 		context->OMSetRenderTargets(1, &render_target, depth_stencil);
 	}
-
-	// Set shaders
-	const auto vertex_shader = device_resources_->get_vertex_shader();
-	const auto pixel_shader = device_resources_->get_pixel_shader();
-
-	context->VSSetShader(vertex_shader, nullptr, 0);
-	context->PSSetShader(pixel_shader, nullptr, 0);
-
-	// Set constant buffers
-	const auto projection_buffer = device_resources_->get_projection_buffer();
-
-	context->VSSetConstantBuffers(0, 1, &projection_buffer);
-
-	// Set viewport
-	const auto viewport = device_resources_->get_screen_viewport();
-
-	context->RSSetViewports(1, &viewport);
-
-	// Set states
-	const auto blend_state = device_resources_->get_blend_state();
-	const auto depth_state = device_resources_->get_depth_stencil_state();
-	const auto rasterizer_state = device_resources_->get_rasterizer_state();
-	const auto sampler_state = device_resources_->get_sampler_state();
-
-	context->OMSetBlendState(blend_state, nullptr, 0xffffffff);
-	context->OMSetDepthStencilState(depth_state, NULL);
-	context->RSSetState(rasterizer_state);
-
-	// For some reason this is now needed after improving the device resource manager
-	context->PSSetSamplers(0, 1, &sampler_state);
-
-	const auto input_layout = device_resources_->get_input_layout();
-
-	context->IASetInputLayout(input_layout);
 }
 
 void renderer::d3d11_renderer::draw_batches() {
@@ -424,7 +389,7 @@ bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
 	glyph->bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
 	glyph->advance = font->face->glyph->advance.x;
 
-	if (!src_bitmap->buffer/* || c == ' '*/)
+	if (!src_bitmap->buffer)
 		return true;
 
 	D3D11_SUBRESOURCE_DATA texture_data;
@@ -490,7 +455,7 @@ std::shared_ptr<renderer::glyph> renderer::d3d11_renderer::get_font_glyph(size_t
 }
 
 glm::vec2 renderer::d3d11_renderer::get_render_target_size() {
-	return { backup_viewport_.Width, backup_viewport_.Height };
+	//return { backup_viewport_.Width, backup_viewport_.Height };
 
 	const auto render_target = device_resources_->get_render_target();
 
@@ -503,57 +468,115 @@ glm::vec2 renderer::d3d11_renderer::get_render_target_size() {
 	return { static_cast<float>(desc.Width), static_cast<float>(desc.Height) };
 }
 
+void renderer::d3d11_renderer::setup_states() {
+	auto context = device_resources_->get_device_context();
+
+	// Set shaders
+	const auto vertex_shader = device_resources_->get_vertex_shader();
+	const auto pixel_shader = device_resources_->get_pixel_shader();
+
+	context->VSSetShader(vertex_shader, nullptr, 0);
+	context->PSSetShader(pixel_shader, nullptr, 0);
+
+	// Set constant buffers
+	const auto projection_buffer = device_resources_->get_projection_buffer();
+
+	context->VSSetConstantBuffers(0, 1, &projection_buffer);
+
+	// Set viewport
+	const auto viewport = device_resources_->get_screen_viewport();
+
+	context->RSSetViewports(1, &viewport);
+
+	// Set states
+	const auto blend_state = device_resources_->get_blend_state();
+	const auto depth_state = device_resources_->get_depth_stencil_state();
+	const auto rasterizer_state = device_resources_->get_rasterizer_state();
+	const auto sampler_state = device_resources_->get_sampler_state();
+
+	context->OMSetBlendState(blend_state, nullptr, 0xffffffff);
+	context->OMSetDepthStencilState(depth_state, NULL);
+	context->RSSetState(rasterizer_state);
+
+	// For some reason this is now needed after improving the device resource manager
+	context->PSSetSamplers(0, 1, &sampler_state);
+
+	const auto input_layout = device_resources_->get_input_layout();
+
+	context->IASetInputLayout(input_layout);
+}
+
 void renderer::d3d11_renderer::backup_states() {
 	const auto context = device_resources_->get_device_context();
 
-	context->VSGetShader(backup_vertex_shader_.ReleaseAndGetAddressOf(), nullptr, nullptr);
-	context->PSGetShader(backup_pixel_shader_.ReleaseAndGetAddressOf(), nullptr, nullptr);
+	state_ = {};
 
-	UINT backup_viewport_count_ = 1;
-	context->RSGetViewports(&backup_viewport_count_, &backup_viewport_);
+	state_.scissor_rects_count = state_.viewports_count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+	context->RSGetScissorRects(&state_.scissor_rects_count, state_.scissor_rects);
+	context->RSGetViewports(&state_.viewports_count, state_.viewports);
+	context->RSGetState(&state_.rasterizer_state);
 
-	context->OMGetBlendState(backup_blend_state_.ReleaseAndGetAddressOf(), backup_blend_factor_, &backup_blend_sample_mask_);
-	context->OMGetDepthStencilState(backup_depth_state_.ReleaseAndGetAddressOf(), &backup_depth_stencil_ref_);
-	context->RSGetState(backup_rasterizer_state_.ReleaseAndGetAddressOf());
+	context->OMGetBlendState(&state_.blend_state, state_.blend_factor, &state_.sample_mask);
+	context->OMGetDepthStencilState(&state_.depth_stencil_state, &state_.stencil_ref);
 
-	context->PSGetSamplers(0, 1, backup_sampler_state_.ReleaseAndGetAddressOf());
+	state_.pixel_shader_instances_count = state_.vertex_shader_instances_count = state_.geometry_shader_instances_count = 256;
 
-	context->IAGetInputLayout(backup_input_layout_.ReleaseAndGetAddressOf());
+	context->PSGetShaderResources(0, 1, &state_.pixel_shader_shader_resource);
+	context->PSGetSamplers(0, 1, &state_.pixel_shader_sampler);
+	context->PSGetShader(&state_.pixel_shader, state_.pixel_shader_instances, &state_.pixel_shader_instances_count);
 
-	context->PSGetConstantBuffers(0, 1, backup_constant_buffer_.ReleaseAndGetAddressOf());
-	context->PSGetShaderResources(0, 1, backup_shader_resource_view_.ReleaseAndGetAddressOf());
+	context->VSGetShader(&state_.vertex_shader, state_.vertex_shader_instances, &state_.vertex_shader_instances_count);
+	context->VSGetConstantBuffers(0, 1, &state_.vertex_shader_constant_buffer);
 
-	context->IAGetPrimitiveTopology(&backup_primitive_topology_);
+	context->GSGetShader(&state_.geometry_shader, state_.geometry_shader_instances, &state_.geometry_shader_instances_count);
+
+	context->IAGetPrimitiveTopology(&state_.primitive_topology);
+	context->IAGetIndexBuffer(&state_.index_buffer, &state_.index_buffer_format, &state_.index_buffer_offset);
+	context->IAGetVertexBuffers(0, 1, &state_.vertex_buffer, &state_.vertex_buffer_stride, &state_.vertex_buffer_offset);
+	context->IAGetInputLayout(&state_.input_layout);
 }
 
 void renderer::d3d11_renderer::restore_states() {
 	const auto context = device_resources_->get_device_context();
 
-	context->VSSetShader(backup_vertex_shader_.Get(), nullptr, 0);
-	context->PSSetShader(backup_pixel_shader_.Get(), nullptr, 0);
+	context->RSSetScissorRects(state_.scissor_rects_count, state_.scissor_rects);
+	context->RSSetViewports(state_.viewports_count, state_.viewports);
+	context->RSSetState(state_.rasterizer_state);
+	if (state_.rasterizer_state) state_.rasterizer_state->Release();
 
-	context->RSSetViewports(1, &backup_viewport_);
+	context->OMSetBlendState(state_.blend_state, state_.blend_factor, state_.sample_mask);
+	if (state_.blend_state) state_.blend_state->Release();
+	context->OMSetDepthStencilState(state_.depth_stencil_state, state_.stencil_ref);
+	if (state_.depth_stencil_state) state_.depth_stencil_state->Release();
 
-	context->OMSetBlendState(backup_blend_state_.Get(), backup_blend_factor_, backup_blend_sample_mask_);
-	context->OMSetDepthStencilState(backup_depth_state_.Get(), backup_depth_stencil_ref_);
-	context->RSSetState(backup_rasterizer_state_.Get());
+	context->PSSetShaderResources(0, 1, &state_.pixel_shader_shader_resource);
+	if (state_.pixel_shader_shader_resource) state_.pixel_shader_shader_resource->Release();
+	context->PSSetSamplers(0, 1, &state_.pixel_shader_sampler);
+	if (state_.pixel_shader_sampler) state_.pixel_shader_sampler->Release();
+	context->PSSetShader(state_.pixel_shader, state_.pixel_shader_instances, state_.pixel_shader_instances_count);
+	if (state_.pixel_shader) state_.pixel_shader->Release();
 
-	context->PSSetSamplers(0, 1, backup_sampler_state_.GetAddressOf());
+	for (UINT i = 0; i < state_.pixel_shader_instances_count; i++)
+		if (state_.pixel_shader_instances[i])
+			state_.pixel_shader_instances[i]->Release();
 
-	context->IASetInputLayout(backup_input_layout_.Get());
+	context->VSSetShader(state_.vertex_shader, state_.vertex_shader_instances, state_.vertex_shader_instances_count);
+	if (state_.vertex_shader) state_.vertex_shader->Release();
+	context->VSSetConstantBuffers(0, 1, &state_.vertex_shader_constant_buffer);
+	if (state_.vertex_shader_constant_buffer) state_.vertex_shader_constant_buffer->Release();
 
-	context->PSSetConstantBuffers(0, 1, backup_constant_buffer_.GetAddressOf());
-	context->PSSetShaderResources(0, 1, backup_shader_resource_view_.GetAddressOf());
+	for (UINT i = 0; i < state_.vertex_shader_instances_count; i++)
+		if (state_.vertex_shader_instances[i])
+			state_.vertex_shader_instances[i]->Release();
 
-	context->IASetPrimitiveTopology(backup_primitive_topology_);
+	context->GSSetShader(state_.geometry_shader, state_.geometry_shader_instances, state_.geometry_shader_instances_count);
+	if (state_.geometry_shader) state_.geometry_shader->Release();
+
+	context->IASetPrimitiveTopology(state_.primitive_topology);
+	context->IASetIndexBuffer(state_.index_buffer, state_.index_buffer_format, state_.index_buffer_offset);
+	if (state_.index_buffer) state_.index_buffer->Release();
+	context->IASetVertexBuffers(0, 1, &state_.vertex_buffer, &state_.vertex_buffer_stride, &state_.vertex_buffer_offset);
+	if (state_.vertex_buffer) state_.vertex_buffer->Release();
+	context->IASetInputLayout(state_.input_layout);
+	if (state_.input_layout) state_.input_layout->Release();
 }
-
-// https://www.rastertek.com/dx11s2tut05.html
-/*renderer::texture2d renderer::d3d11_renderer::create_texture(LPCTSTR file) {
-	texture2d texture{};
-
-	texture.texture = nullptr;
-	texture.srv = D3DX
-
-	return texture;
-}*/

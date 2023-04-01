@@ -1,5 +1,4 @@
 // https://www.chilliant.com/rgb2hsv.html
-
 float3 HUEtoRGB(in float H) {
     float R = abs(H * 6 - 3) - 1;
     float G = 2 - abs(H * 6 - 2);

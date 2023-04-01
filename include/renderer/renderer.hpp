@@ -86,9 +86,6 @@ namespace renderer {
 
 		glm::vec2 get_render_target_size();
 
-		void backup_states();
-		void restore_states();
-
 	private:
 		std::shared_mutex buffer_list_mutex_;
 		std::vector<buffer_node> buffers_;
@@ -118,20 +115,44 @@ namespace renderer {
 		bool create_font_glyph(size_t id, uint32_t c);
 
 		// Backup render states
-		ComPtr<ID3D11VertexShader> backup_vertex_shader_;
-		ComPtr<ID3D11PixelShader> backup_pixel_shader_;
-		D3D11_VIEWPORT backup_viewport_;
-		ComPtr<ID3D11BlendState> backup_blend_state_;
-		FLOAT backup_blend_factor_[4];
-		UINT backup_blend_sample_mask_;
-		ComPtr<ID3D11DepthStencilState> backup_depth_state_;
-		UINT backup_depth_stencil_ref_;
-		ComPtr<ID3D11RasterizerState> backup_rasterizer_state_;
-		ComPtr<ID3D11SamplerState> backup_sampler_state_;
-		ComPtr<ID3D11InputLayout> backup_input_layout_;
-		ComPtr<ID3D11Buffer> backup_constant_buffer_;
-		ComPtr<ID3D11ShaderResourceView> backup_shader_resource_view_;
-		D3D11_PRIMITIVE_TOPOLOGY backup_primitive_topology_;
+		struct backup_d3d11_state {
+			UINT                        scissor_rects_count;
+			UINT                        viewports_count;
+			D3D11_RECT                  scissor_rects[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+			D3D11_VIEWPORT              viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+			ID3D11RasterizerState*      rasterizer_state;
+			ID3D11BlendState*           blend_state;
+			FLOAT                       blend_factor[4];
+			UINT                        sample_mask;
+			UINT                        stencil_ref;
+			ID3D11DepthStencilState*    depth_stencil_state;
+			ID3D11ShaderResourceView*   pixel_shader_shader_resource;
+			ID3D11SamplerState*         pixel_shader_sampler;
+			ID3D11PixelShader*          pixel_shader;
+			ID3D11VertexShader*         vertex_shader;
+			ID3D11GeometryShader*       geometry_shader;
+			UINT                        pixel_shader_instances_count;
+			UINT                        vertex_shader_instances_count;
+			UINT                        geometry_shader_instances_count;
+			ID3D11ClassInstance*        pixel_shader_instances[256];
+			ID3D11ClassInstance*        vertex_shader_instances[256];
+			ID3D11ClassInstance*        geometry_shader_instances[256];
+			D3D11_PRIMITIVE_TOPOLOGY    primitive_topology;
+			ID3D11Buffer*               index_buffer;
+			ID3D11Buffer*               vertex_buffer;
+			ID3D11Buffer*               vertex_shader_constant_buffer;
+			UINT                        index_buffer_offset;
+			UINT                        vertex_buffer_stride;
+			UINT                        vertex_buffer_offset;
+			DXGI_FORMAT                 index_buffer_format;
+			ID3D11InputLayout*          input_layout;
+		};
+
+		backup_d3d11_state state_;
+
+		void setup_states();
+		void backup_states();
+		void restore_states();
 	};
 }// namespace renderer
 
