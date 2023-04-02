@@ -524,6 +524,7 @@ void renderer::d3d11_renderer::backup_states() {
 	context->PSGetShaderResources(0, 1, &state_.pixel_shader_shader_resource);
 	context->PSGetSamplers(0, 1, &state_.pixel_shader_sampler);
 	context->PSGetShader(&state_.pixel_shader, state_.pixel_shader_instances, &state_.pixel_shader_instances_count);
+	context->PSGetConstantBuffers(0, 1, &state_.pixel_shader_constant_buffer);
 
 	context->VSGetShader(&state_.vertex_shader, state_.vertex_shader_instances, &state_.vertex_shader_instances_count);
 	context->VSGetConstantBuffers(0, 1, &state_.vertex_shader_constant_buffer);
@@ -555,6 +556,8 @@ void renderer::d3d11_renderer::restore_states() {
 	if (state_.pixel_shader_sampler) state_.pixel_shader_sampler->Release();
 	context->PSSetShader(state_.pixel_shader, state_.pixel_shader_instances, state_.pixel_shader_instances_count);
 	if (state_.pixel_shader) state_.pixel_shader->Release();
+	context->PSSetConstantBuffers(0, 1, &state_.pixel_shader_constant_buffer);
+	if (state_.pixel_shader_constant_buffer) state_.pixel_shader_constant_buffer->Release();
 
 	for (UINT i = 0; i < state_.pixel_shader_instances_count; i++)
 		if (state_.pixel_shader_instances[i])

@@ -140,6 +140,7 @@ namespace renderer {
 			D3D11_PRIMITIVE_TOPOLOGY    primitive_topology;
 			ID3D11Buffer*               index_buffer;
 			ID3D11Buffer*               vertex_buffer;
+			ID3D11Buffer*			    pixel_shader_constant_buffer;
 			ID3D11Buffer*               vertex_shader_constant_buffer;
 			UINT                        index_buffer_offset;
 			UINT                        vertex_buffer_stride;
