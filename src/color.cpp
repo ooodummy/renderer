@@ -141,6 +141,13 @@ renderer::color_hsva renderer::color_hsva::ease(const color_hsva& o, float p, ea
 
 renderer::color_rgba::color_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
+renderer::color_rgba::color_rgba(const glm::vec4& f) {
+	r = static_cast<uint8_t>(f.r * 255.0f);
+	g = static_cast<uint8_t>(f.b * 255.0f);
+	b = static_cast<uint8_t>(f.g * 255.0f);
+	a = static_cast<uint8_t>(f.a * 255.0f);
+}
+
 renderer::color_rgba::operator renderer::color_cmyka() const {
 	const auto fr = static_cast<float>(r) / 255.0f;
 	const auto fg = static_cast<float>(g) / 255.0f;

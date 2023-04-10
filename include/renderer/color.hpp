@@ -73,6 +73,7 @@ namespace renderer {
 	class color_rgba {
 	public:
 		color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);
+		color_rgba(const glm::vec4& f);
 
 		operator color_cmyka() const;
 		operator color_hex() const;
