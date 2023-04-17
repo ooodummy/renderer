@@ -150,7 +150,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	const auto id = dx11->register_buffer();
+	const auto id = dx11->register_buffer(0, 1000000, 1000000);
 
 	while (!close_requested) {
 		updated_draw.wait();
