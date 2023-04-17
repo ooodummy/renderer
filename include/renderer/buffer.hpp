@@ -46,6 +46,10 @@ namespace renderer {
 	class buffer {
 	public:
 		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {}
+		explicit buffer(d3d11_renderer* dx11, size_t vertices_reserve_size, size_t batches_reserve_size) : dx11_(dx11) {
+			vertices_.reserve(vertices_reserve_size);
+			batches_.reserve(batches_reserve_size);
+		}
 		~buffer() = default;
 
 		void clear();
@@ -176,11 +180,15 @@ namespace renderer {
 			pos.x = std::floor(pos.x);
 			pos.y = std::floor(pos.y);
 
-			for (const auto c : text) {
-				const auto glyph = dx11_->get_font_glyph(font_id, c);
-				draw_glyph(pos, glyph, col);
+			{
+				std::shared_lock lock_guard(dx11_->get_font_mutex());
 
-				pos.x += static_cast<float>(glyph->advance) / 64.0f;
+				for (const auto c : text) {
+					const auto& glyph = dx11_->get_font_glyph(font_id, c);
+					draw_glyph(pos, glyph, col);
+
+					pos.x += static_cast<float>(glyph->advance) / 64.0f;
+				}
 			}
 		}
 
@@ -281,7 +289,7 @@ namespace renderer {
 									 size_t segments = 16,
 									 bool triangle_fan = false);
 
-		void draw_glyph(const glm::vec2& pos, std::shared_ptr<glyph> glyph, color_rgba col = COLOR_WHITE);
+		void draw_glyph(const glm::vec2& pos, const std::shared_ptr<glyph>& glyph, color_rgba col = COLOR_WHITE);
 	};
 }// namespace renderer
 

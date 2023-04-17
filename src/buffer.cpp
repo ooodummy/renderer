@@ -5,8 +5,8 @@
 #include <glm/gtx/quaternion.hpp>
 
 void renderer::buffer::clear() {
-	vertices_ = {};
-	batches_ = {};
+	vertices_.clear();
+	batches_.clear();
 
 	split_batch_ = false;
 
@@ -445,7 +445,7 @@ void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, co
 	draw_arc(pos, 3 * M_PI / 2.0f, M_PI * 2.0f, radius, col, 0.0f, segments, true);
 }
 
-void renderer::buffer::draw_glyph(const glm::vec2& pos, std::shared_ptr<glyph> glyph, color_rgba col) {
+void renderer::buffer::draw_glyph(const glm::vec2& pos, const std::shared_ptr<glyph>& glyph, color_rgba col) {
 	if (!glyph->shader_resource_view)
 		return;
 

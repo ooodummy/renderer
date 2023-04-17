@@ -54,11 +54,13 @@ bool renderer::d3d11_renderer::release() {
 	return true;
 }
 
-size_t renderer::d3d11_renderer::register_buffer(size_t priority) {
+size_t
+renderer::d3d11_renderer::register_buffer(size_t priority, size_t vertices_reserve_size, size_t batches_reserve_size) {
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	const auto id = buffers_.size();
-	buffers_.emplace_back(buffer_node{ std::make_unique<buffer>(this), std::make_unique<buffer>(this) });
+	buffers_.emplace_back(buffer_node{std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size),
+									  std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size)});
 
 	return id;
 }
@@ -291,7 +293,7 @@ void renderer::d3d11_renderer::on_device_lost() {
 		std::unique_lock lock_guard(font_list_mutex_);
 
 		for (auto& font : fonts_) {
-			font->char_set = {};
+			font->char_set.clear();
 		}
 	}
 }
@@ -438,9 +440,7 @@ renderer::font* renderer::d3d11_renderer::get_font(size_t id) {
 	return fonts_[id].get();
 }
 
-std::shared_ptr<renderer::glyph> renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
-	std::unique_lock lock_guard(font_list_mutex_);
-
+std::shared_ptr<renderer::glyph>& renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
 	auto& font = fonts_[id];
 	auto glyph = font->char_set.find(c);
 

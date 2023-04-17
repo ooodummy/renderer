@@ -65,3 +65,5 @@ target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm freetype)
 target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 dxgi dxguid)
 
 add_dependencies(${PROJECT_NAME} shaders)
+
+add_subdirectory(test renderer_test)

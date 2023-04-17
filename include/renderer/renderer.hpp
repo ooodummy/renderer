@@ -52,7 +52,7 @@ namespace renderer {
 		void render();
 
 		// TODO: Sub buffer system
-		size_t register_buffer(size_t priority = 0);
+		size_t register_buffer(size_t priority, size_t vertices_reserve_size = 0, size_t batches_reserve_size = 0);
 		buffer* get_working_buffer(size_t id);
 
 		void swap_buffers(size_t id);
@@ -60,7 +60,8 @@ namespace renderer {
 		size_t register_font(std::string family, int size, int weight, bool anti_aliased = true, size_t outline = 0);
 
 		font* get_font(size_t id);
-		std::shared_ptr<renderer::glyph> get_font_glyph(size_t id, uint32_t c);
+		std::shared_mutex& get_font_mutex() {return buffer_list_mutex_;};
+		std::shared_ptr<renderer::glyph>& get_font_glyph(size_t id, uint32_t c);
 
 		// TODO: Do any glyphs have issues when it comes to their attributes?
 		template<typename T>
@@ -68,15 +69,19 @@ namespace renderer {
 			glm::vec2 size{};
 			//size.y = get_font(font_id)->height;
 
-			for (const auto& c : text) {
-				const auto glyph = get_font_glyph(font_id, c);
+			{
+				std::shared_lock lock_guard(get_font_mutex());
 
-				size.x += static_cast<float>(glyph->advance) / 64.0f;
+				for (const auto c : text) {
+					const auto& glyph = get_font_glyph(font_id, c);
 
-				if (c == ' ')
-					continue;
+					size.x += static_cast<float>(glyph->advance) / 64.0f;
 
-				size.y = std::max(size.y, static_cast<float>(glyph->size.y));
+					if (c == ' ')
+						continue;
+
+					size.y = std::max(size.y, static_cast<float>(glyph->size.y));
+				}
 			}
 
 			return size;
