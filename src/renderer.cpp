@@ -123,17 +123,18 @@ size_t renderer::d3d11_renderer::register_font(std::string family,
 	return id;
 }
 
-size_t renderer::d3d11_renderer::register_font(std::span<FT_Byte> font_data,
-												   int size,
-												   int weight,
-												   bool anti_aliased,
-												   size_t outline) {
+size_t renderer::d3d11_renderer::register_font_memory(const uint8_t* font_data,
+											   		  size_t font_data_size,
+											   		  int size,
+											   		  int weight,
+											   		  bool anti_aliased,
+											   		  size_t outline) {
 	const auto id = fonts_.size();
 
 	fonts_.emplace_back(std::make_unique<font>(std::string{}, size, weight, anti_aliased, outline));
 	auto& font = fonts_.back();
 
-	auto error = FT_New_Memory_Face(library_, font_data.data(), font_data.size(), 0, &font->face);
+	auto error = FT_New_Memory_Face(library_, font_data, font_data_size, 0, &font->face);
 	if (error == FT_Err_Unknown_File_Format) {
 		MessageBoxA(nullptr,"The font file could be opened and read, but it appears that it's font format is "
 							 "unsupported.", "Error", MB_ICONERROR | MB_OK);
