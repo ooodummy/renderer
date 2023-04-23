@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <shared_mutex>
+#include <span>
 
 namespace renderer {
 	class buffer;
@@ -58,6 +59,7 @@ namespace renderer {
 		void swap_buffers(size_t id);
 
 		size_t register_font(std::string family, int size, int weight, bool anti_aliased = true, size_t outline = 0);
+		size_t register_font(std::span<FT_Byte> font_data, int size, int weight, bool anti_aliased = true, size_t outline = 0);
 
 		font* get_font(size_t id);
 		std::shared_mutex& get_font_mutex() {return buffer_list_mutex_;};

@@ -123,6 +123,41 @@ size_t renderer::d3d11_renderer::register_font(std::string family,
 	return id;
 }
 
+size_t renderer::d3d11_renderer::register_font(std::span<FT_Byte> font_data,
+												   int size,
+												   int weight,
+												   bool anti_aliased,
+												   size_t outline) {
+	const auto id = fonts_.size();
+
+	fonts_.emplace_back(std::make_unique<font>(std::string{}, size, weight, anti_aliased, outline));
+	auto& font = fonts_.back();
+
+	auto error = FT_New_Memory_Face(library_, font_data.data(), font_data.size(), 0, &font->face);
+	if (error == FT_Err_Unknown_File_Format) {
+		MessageBoxA(nullptr,"The font file could be opened and read, but it appears that it's font format is "
+							 "unsupported.", "Error", MB_ICONERROR | MB_OK);
+		assert(false);
+	}
+	else if (error != FT_Err_Ok) {
+		MessageBoxA(nullptr, "The font file could not be opened or read, or that it is broken.", "Error", MB_ICONERROR
+																										  | MB_OK);
+		assert(false);
+	}
+
+	const auto dpi = device_resources_->get_window()->get_dpi();
+
+	if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
+		assert(false);
+
+	if (FT_Select_Charmap(font->face, FT_ENCODING_UNICODE) != FT_Err_Ok)
+		assert(false);
+
+	font->height = (font->face->size->metrics.ascender - font->face->size->metrics.descender) >> 6;
+
+	return id;
+}
+
 void renderer::d3d11_renderer::render() {
 	backup_states();
 
