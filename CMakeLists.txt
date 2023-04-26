@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 
 project(renderer)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 if(NOT TARGET fmt)
     find_package(fmt CONFIG REQUIRED)

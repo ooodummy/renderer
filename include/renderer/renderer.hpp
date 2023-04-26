@@ -58,6 +58,9 @@ namespace renderer {
 		void swap_buffers(size_t id);
 
 		size_t register_font(std::string family, int size, int weight, bool anti_aliased = true, size_t outline = 0);
+		size_t register_font_memory(const uint8_t* font_data, size_t font_data_size, int size, int weight, bool
+																									 anti_aliased = true,
+							 size_t outline = 0);
 
 		font* get_font(size_t id);
 		std::shared_mutex& get_font_mutex() {return buffer_list_mutex_;};
