@@ -12,7 +12,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <shared_mutex>
-#include <span>
 
 namespace renderer {
 	class buffer;
