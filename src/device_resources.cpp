@@ -210,8 +210,8 @@ void renderer::device_resources::present() {
 	} else {
 		assert(SUCCEEDED(hr));
 
-		if (dxgi_factory_->IsCurrent())
-			update_color_space();
+		//if (dxgi_factory_->IsCurrent())
+		//	update_color_space();
 	}
 }
 
