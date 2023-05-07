@@ -52,7 +52,7 @@ namespace renderer {
 		void render();
 
 		// TODO: Sub buffer system
-		size_t register_buffer(size_t priority, size_t vertices_reserve_size = 0, size_t batches_reserve_size = 0);
+		size_t register_buffer(size_t priority = 0, size_t vertices_reserve_size = 0, size_t batches_reserve_size = 0);
 		buffer* get_working_buffer(size_t id);
 
 		void swap_buffers(size_t id);
