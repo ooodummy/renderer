@@ -27,69 +27,75 @@
 // Basically every color format that I found that exist is added because I wanted to add it just because I can.
 
 namespace renderer {
-	class color_rgba;
+    class color_rgba;
 
-	class color_cmyka {
-	public:
-		color_cmyka(float c = 0.0f, float m = 0.0f, float y = 0.0f, float k = 0.0f, uint8_t a = 255);
+    class color_cmyka {
+    public:
+        color_cmyka(float c = 0.0f, float m = 0.0f, float y = 0.0f, float k = 0.0f, uint8_t a = 255);
 
-		operator color_rgba() const;
+        operator color_rgba() const;
 
-		float c, m, y, k;
-		uint8_t a;
-	};
+        float c, m, y, k;
+        uint8_t a;
+    };
 
-	class color_hex {
-	public:
-		color_hex(uint32_t hex);
+    class color_hex {
+    public:
+        color_hex(uint32_t hex);
 
-		operator color_rgba() const;
+        operator color_rgba() const;
 
-		uint32_t hex;
-	};
+        uint32_t hex;
+    };
 
-	class color_hsla {
-	public:
-		color_hsla(float h = 0.0f, float s = 0.0f, float l = 0.0f, uint8_t a = 255);
+    class color_hsla {
+    public:
+        color_hsla(float h = 0.0f, float s = 0.0f, float l = 0.0f, uint8_t a = 255);
 
-		operator color_rgba() const;
+        operator color_rgba() const;
 
-		float h, s, l;
-		uint8_t a;
-	};
+        float h, s, l;
+        uint8_t a;
+    };
 
-	class color_hsva {
-	public:
-		color_hsva(float h = 0.0f, float s = 1.0f, float v = 1.0f, uint8_t a = 255);
+    class color_hsva {
+    public:
+        color_hsva(float h = 0.0f, float s = 1.0f, float v = 1.0f, uint8_t a = 255);
 
-		operator color_rgba() const;
+        operator color_rgba() const;
 
-		color_hsva ease(const color_hsva& o, float p, ease_type type = linear) const;
+        color_hsva ease(const color_hsva &o, float p, ease_type type = linear) const;
 
-		float h, s, v;
-		uint8_t a;
-	};
+        float h, s, v;
+        uint8_t a;
+    };
 
-	class color_rgba {
-	public:
-		color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);
-		color_rgba(const glm::vec4& f);
+    class color_rgba {
+    public:
+        color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);
 
-		operator color_cmyka() const;
-		operator color_hex() const;
-		operator color_hsla() const;
-		operator color_hsva() const;
-		operator glm::vec4() const;
+        color_rgba(const glm::vec4 &f);
 
-		[[nodiscard]] color_rgba alpha(uint8_t a) const;
+        operator color_cmyka() const;
 
-		bool operator==(const color_rgba& o) const;
-		bool operator!=(const color_rgba& o) const;
+        operator color_hex() const;
 
-		[[nodiscard]] color_rgba ease(const color_rgba& o, float p, ease_type type = linear) const;
+        operator color_hsla() const;
 
-		uint8_t r, g, b, a;
-	};
+        operator color_hsva() const;
+
+        operator glm::vec4() const;
+
+        [[nodiscard]] color_rgba alpha(uint8_t a) const;
+
+        bool operator==(const color_rgba &o) const;
+
+        bool operator!=(const color_rgba &o) const;
+
+        [[nodiscard]] color_rgba ease(const color_rgba &o, float p, ease_type type = linear) const;
+
+        uint8_t r, g, b, a;
+    };
 }// namespace renderer
 
 #endif

@@ -2,15 +2,15 @@
 #include "types.hlsl"
 
 cbuffer command : register(b0) {
-	bool scissor_enable;
 	float4 scissor_bounds;
-	bool scissor_in;
-	bool scissor_circle;
-	bool key_enable;
-	float4 key_color;
-	float blur_strength;
-	bool is_texture;
-	bool is_mask;
+    float4 key_color;
+    float blur_strength;
+    uint scissor_enable;
+    uint scissor_in;
+    uint scissor_circle;
+    uint key_enable;
+    uint is_texture;
+    uint is_mask;
 }
 
 Texture2D active_texture : TEXTURE : register(t0);
@@ -25,36 +25,25 @@ float4 ps_main(VS_Output input) : SV_TARGET {
 	}
 
 	if (scissor_enable) {
-		bool inside = true;
+        bool outside = input.position.x < scissor_bounds.x || input.position.y < scissor_bounds.y ||
+                        input.position.x > scissor_bounds.x + scissor_bounds.z ||
+    			        input.position.y > scissor_bounds.y + scissor_bounds.w;
 
-		if (input.position.x < scissor_bounds.x || input.position.y < scissor_bounds.y ||
-			input.position.x > scissor_bounds.x + scissor_bounds.z ||
-			input.position.y > scissor_bounds.y + scissor_bounds.w) {
-			inside = false;
-		}
-
-		if (scissor_in) {
-			if (inside) {
-				return float4(0.0f, 0.0f, 0.0f, 0.0f);
-			}
-		}
-		else if (!inside) {
-			return float4(0.0f, 0.0f, 0.0f, 0.0f);
-		}
-	}
+        if ((scissor_in && !outside) || (!scissor_in && outside)) {
+            return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
 
 	if (is_texture) {
 		float4 sampled = active_texture.Sample(samplerState, input.uv);
 
 		if (is_mask) {
-			// Set sampled hue to be input hue
-			/*float3 hsl = RGBtoHSL(sampled.xyz);
-			hsl.x = RGBtoHSL(input.color.xyz).x;
-
-			float3 rgb = HSLtoRGB(hsl);
-			return float4(rgb.xyz, sampled.w * input.color.w);*/
-
-			return float4(input.color.xyz, sampled.w * input.color.w);
+			// Adjust hue using HSL conversion
+            /*float3 hsl = RGBtoHSL(sampled.xyz);
+            hsl.x = RGBtoHSL(input.color.xyz).x;
+            float3 rgb = HSLtoRGB(hsl);
+            return float4(rgb, sampled.w * input.color.w);*/
+            return float4(input.color.xyz, sampled.w * input.color.w);
 		}
 
 		return sampled;

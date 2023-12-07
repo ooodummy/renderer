@@ -13,50 +13,53 @@
 #endif
 
 namespace renderer {
-	class sync_manager {
-	public:
-		void wait();
-		void notify();
+    class sync_manager {
+    public:
+        void wait();
 
-	private:
-		std::mutex mutex_;
-		std::condition_variable condition_;
-		bool update_;
-	};
+        void notify();
 
-	class timer {
-	public:
-		timer();
+    private:
+        std::mutex mutex_;
+        std::condition_variable condition_;
+        bool update_;
+    };
 
-		void reset();
-		std::chrono::milliseconds get_elapsed_duration();
+    class timer {
+    public:
+        timer();
 
-	private:
-		std::chrono::time_point<std::chrono::steady_clock> begin;
-	};
+        void reset();
 
-	class performance_counter {
-	public:
-		performance_counter();
+        std::chrono::milliseconds get_elapsed_duration();
 
-		void tick();
-		uint32_t get_fps() const;
+    private:
+        std::chrono::time_point<std::chrono::steady_clock> begin;
+    };
 
-		float get_dt() const;
+    class performance_counter {
+    public:
+        performance_counter();
 
-	private:
-		static constexpr uint64_t ticks_per_second_ = 10000000;
+        void tick();
 
-		LARGE_INTEGER frequency_;
-		LARGE_INTEGER last_time_;
+        uint32_t get_fps() const;
 
-		uint64_t delta_time_;
+        float get_dt() const;
 
-		uint32_t frame_count_;
-		uint32_t frames_per_second_;
-		uint32_t frames_this_second_;
-		uint64_t second_counter_;
-	};
+    private:
+        static constexpr uint64_t ticks_per_second_ = 10000000;
+
+        LARGE_INTEGER frequency_;
+        LARGE_INTEGER last_time_;
+
+        uint64_t delta_time_;
+
+        uint32_t frame_count_;
+        uint32_t frames_per_second_;
+        uint32_t frames_this_second_;
+        uint64_t second_counter_;
+    };
 }// namespace renderer
 
 #endif
