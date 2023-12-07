@@ -62,7 +62,7 @@ namespace renderer {
                 weight(weight),
                 anti_aliased(anti_aliased),
                 outline(outline) {
-            path = family;//= get_font_path(family);
+            path = family;
         }
 
         std::string family;
