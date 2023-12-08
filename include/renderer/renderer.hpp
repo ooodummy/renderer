@@ -2,11 +2,9 @@
 #define RENDERER_RENDERER_HPP
 
 #include "color.hpp"
-#include "device_resources.hpp"
 #include "font.hpp"
 #include "shapes/polyline.hpp"
 #include "texture.hpp"
-#include "util/win32_window.hpp"
 
 #include <algorithm>
 #include <glm/glm.hpp>
@@ -66,27 +64,33 @@ namespace renderer {
         font *get_font(size_t id);
 
         std::shared_mutex &get_font_mutex() { return buffer_list_mutex_; };
-        std::shared_ptr<renderer::glyph> &get_font_glyph(size_t id, uint32_t c);
 
         // TODO: Do any glyphs have issues when it comes to their attributes?
         template<typename T>
         glm::vec2 get_text_size(const T &text, size_t font_id = 0) {
+            if (text.empty())
+                return {};
+
             glm::vec2 size{};
             //size.y = get_font(font_id)->height;
 
-            {
-                std::shared_lock lock_guard(get_font_mutex());
+            std::shared_lock lock_guard(get_font_mutex());
 
-                for (const auto c: text) {
-                    const auto &glyph = get_font_glyph(font_id, c);
+            auto font = get_font(font_id);
+            if (font == nullptr)
+                return {};
 
-                    size.x += static_cast<float>(glyph->advance) / 64.0f;
+            for (const auto c: text) {
+                const auto glyph = font->get_glyph(c);
+                if (glyph == nullptr)
+                    return {};
 
-                    if (c == ' ')
-                        continue;
+                size.x += static_cast<float>(glyph->advance) / 64.0f;
 
-                    size.y = std::max(size.y, static_cast<float>(glyph->size.y));
-                }
+                if (c == ' ')
+                    continue;
+
+                size.y = std::max(size.y, static_cast<float>(glyph->size.y));
             }
 
             return size;
@@ -100,9 +104,8 @@ namespace renderer {
         std::shared_mutex buffer_list_mutex_;
         std::vector<buffer_node> buffers_;
 
-        std::unique_ptr<device_resources> device_resources_;
+        std::unique_ptr<renderer_context> context_;
 
-        // MSAA render target resources
         bool msaa_enabled_;
 
         int16_t target_sample_count_;
@@ -113,11 +116,6 @@ namespace renderer {
         ComPtr<ID3D11DepthStencilView> msaa_depth_stencil_view_;
 
         glm::vec4 clear_color_;
-
-        FT_Library library_;
-
-        // Used for glyph outlines
-        FT_Stroker stroker_ = nullptr;
 
         std::shared_mutex font_list_mutex_;
         std::vector<std::shared_ptr<font>> fonts_;

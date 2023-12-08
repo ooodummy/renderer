@@ -15,9 +15,9 @@ using Microsoft::WRL::ComPtr;
 #endif
 
 #include <d3d11.h>
-#include <freetype/freetype.h>
-#include <freetype/ftstroke.h>
 #include <glm/vec2.hpp>
+
+#include "context.hpp"
 
 // https://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1062&context=cs_etds
 
@@ -55,19 +55,21 @@ namespace renderer {
         bool colored;
     };
 
-    struct font {
-        font(const std::string &family, int size, int weight, bool anti_aliased = true, size_t outline = 0) :
-                family(family),
-                size(size),
-                weight(weight),
-                anti_aliased(anti_aliased),
-                outline(outline) {
-            path = family;
-        }
+    class font {
+    public:
+        font(int size, int weight, bool anti_aliased, size_t outline, renderer_context* context);
 
-        std::string family;
-        std::string path;
+        bool create_from_path(const std::string& path);
+        bool create_from_memory(const uint8_t* font_data, size_t font_data_size);
 
+        bool release();
+
+        glyph* get_glyph(uint32_t c);
+
+    private:
+        bool setup_face();
+
+    public:
         int size;
         int weight;
         int height;
@@ -75,9 +77,22 @@ namespace renderer {
         bool anti_aliased;
         size_t outline;
 
+    private:
+        renderer_context* context;
+
         FT_Face face;
 
-        std::map<uint32_t, std::shared_ptr<glyph>> char_set;
+    public:
+        std::unordered_map<uint32_t, std::unique_ptr<glyph>> char_set;
+
+        glyph* create_glyph(uint32_t c);
+
+    private:
+        FT_Int32 get_load_flags();
+
+        bool prepare_bitmap(glyph* glyph, FT_Bitmap* bitmap);
+        bool set_glyph_properties(glyph* glyph, FT_Bitmap* src_bitmap);
+        bool create_texture(glyph* glyph, FT_Bitmap* src_bitmap);
     };
 }// namespace renderer
 

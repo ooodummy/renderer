@@ -171,10 +171,13 @@ namespace renderer {
         void draw_text(
                 glm::vec2 pos, const T &text, size_t font_id, color_rgba col = COLOR_WHITE,
                 uint32_t flags = align_top_left) {
+            std::shared_lock lock_guard(dx11_->get_font_mutex());
             //draw_rect_filled({pos.x, pos.y, 1.0f, 1.0f}, COLOR_RED);
 
             const auto size = dx11_->get_text_size(text, font_id);
             const auto font = dx11_->get_font(font_id);
+            if (font == nullptr)
+                return;
 
             // Should text height instead be the maximum height of the given text or the fonts height?
             if (flags & align_top)
@@ -190,15 +193,14 @@ namespace renderer {
             pos.x = std::floor(pos.x);
             pos.y = std::floor(pos.y);
 
-            {
-                std::shared_lock lock_guard(dx11_->get_font_mutex());
+            for (const auto c: text) {
+                const auto glyph = font->get_glyph(c);
+                if (glyph == nullptr)
+                    continue;
 
-                for (const auto c: text) {
-                    const auto &glyph = dx11_->get_font_glyph(font_id, c);
-                    draw_glyph(pos, glyph, col);
+                draw_glyph(pos, glyph, col);
 
-                    pos.x += static_cast<float>(glyph->advance) / 64.0f;
-                }
+                pos.x += static_cast<float>(glyph->advance) / 64.0f;
             }
         }
 
@@ -315,7 +317,7 @@ namespace renderer {
                                      size_t segments = 16,
                                      bool triangle_fan = false);
 
-        void draw_glyph(const glm::vec2 &pos, const std::shared_ptr<glyph> &glyph, color_rgba col = COLOR_WHITE);
+        void draw_glyph(const glm::vec2 &pos, glyph* glyph, color_rgba col = COLOR_WHITE);
     };
 }// namespace renderer
 

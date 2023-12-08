@@ -11,30 +11,32 @@
 renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	msaa_enabled_(true),
 	target_sample_count_(8) {
-	device_resources_ = std::make_unique<device_resources>();
-	device_resources_->set_window(window);
-	device_resources_->register_device_notify(this);
+    context_ = std::make_unique<renderer_context>();
+    context_->device_resources_ = std::make_unique<device_resources>();
+    context_->device_resources_->set_window(window);
+    context_->device_resources_->register_device_notify(this);
 }
 
 renderer::d3d11_renderer::d3d11_renderer(IDXGISwapChain* swap_chain) :
 	msaa_enabled_(false),
 	target_sample_count_(8) {
-	device_resources_ = std::make_unique<device_resources>();
-	device_resources_->set_swap_chain(swap_chain);
-	device_resources_->register_device_notify(this);
+    context_ = std::make_unique<renderer_context>();
+    context_->device_resources_ = std::make_unique<device_resources>();
+    context_->device_resources_->set_swap_chain(swap_chain);
+    context_->device_resources_->register_device_notify(this);
 }
 
 bool renderer::d3d11_renderer::initialize() {
-	device_resources_->create_device_resources();
+    context_->device_resources_->create_device_resources();
 	create_device_dependent_resources();
 
-	device_resources_->create_window_size_dependent_resources();
+    context_->device_resources_->create_window_size_dependent_resources();
 	create_window_size_dependent_resources();
 
-	if (FT_Init_FreeType(&library_) != FT_Err_Ok)
+	if (FT_Init_FreeType(&context_->library_) != FT_Err_Ok)
 		return false;
 
-	if (FT_Stroker_New(library_, &stroker_) != FT_Err_Ok)
+	if (FT_Stroker_New(context_->library_, &context_->stroker_) != FT_Err_Ok)
 		return false;
 
 	return true;
@@ -42,13 +44,13 @@ bool renderer::d3d11_renderer::initialize() {
 
 bool renderer::d3d11_renderer::release() {
 	for (auto& font : fonts_) {
-		if (FT_Done_Face(font->face) != FT_Err_Ok)
-			return false;
+		if (!font->release())
+            return false;
 	}
 
-	FT_Stroker_Done(stroker_);
+	FT_Stroker_Done(context_->stroker_);
 
-	if (FT_Done_FreeType(library_) != FT_Err_Ok)
+	if (FT_Done_FreeType(context_->library_) != FT_Err_Ok)
 		return false;
 
 	return true;
@@ -95,30 +97,9 @@ size_t renderer::d3d11_renderer::register_font(std::string family,
 											   size_t outline) {
 	const auto id = fonts_.size();
 
-	fonts_.emplace_back(std::make_unique<font>(family, size, weight, anti_aliased, outline));
-	auto& font = fonts_.back();
-
-	auto error = FT_New_Face(library_, font->path.c_str(), 0, &font->face);
-	if (error == FT_Err_Unknown_File_Format) {
-		MessageBoxA(nullptr,"The font file could be opened and read, but it appears that it's font format is "
-							 "unsupported.", "Error", MB_ICONERROR | MB_OK);
-		assert(false);
-	}
-	else if (error != FT_Err_Ok) {
-		MessageBoxA(nullptr, "The font file could not be opened or read, or that it is broken.", "Error", MB_ICONERROR
-																										  | MB_OK);
-		assert(false);
-	}
-
-	const auto dpi = device_resources_->get_window()->get_dpi();
-
-	if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
-		assert(false);
-
-	if (FT_Select_Charmap(font->face, FT_ENCODING_UNICODE) != FT_Err_Ok)
-		assert(false);
-
-	font->height = (font->face->size->metrics.ascender - font->face->size->metrics.descender) >> 6;
+	fonts_.emplace_back(std::make_unique<font>(size, weight, anti_aliased, outline, context_.get()));
+    auto& font = fonts_.back();
+    font->create_from_path(family);
 
 	return id;
 }
@@ -131,30 +112,9 @@ size_t renderer::d3d11_renderer::register_font_memory(const uint8_t* font_data,
 											   		  size_t outline) {
 	const auto id = fonts_.size();
 
-	fonts_.emplace_back(std::make_unique<font>(std::string{}, size, weight, anti_aliased, outline));
+	fonts_.emplace_back(std::make_unique<font>(size, weight, anti_aliased, outline, context_.get()));
 	auto& font = fonts_.back();
-
-	auto error = FT_New_Memory_Face(library_, font_data, font_data_size, 0, &font->face);
-	if (error == FT_Err_Unknown_File_Format) {
-		MessageBoxA(nullptr,"The font file could be opened and read, but it appears that it's font format is "
-							 "unsupported.", "Error", MB_ICONERROR | MB_OK);
-		assert(false);
-	}
-	else if (error != FT_Err_Ok) {
-		MessageBoxA(nullptr, "The font file could not be opened or read, or that it is broken.", "Error", MB_ICONERROR
-																										  | MB_OK);
-		assert(false);
-	}
-
-	const auto dpi = device_resources_->get_window()->get_dpi();
-
-	if (FT_Set_Char_Size(font->face, font->size * 64, 0, dpi, 0) != FT_Err_Ok)
-		assert(false);
-
-	if (FT_Select_Charmap(font->face, FT_ENCODING_UNICODE) != FT_Err_Ok)
-		assert(false);
-
-	font->height = (font->face->size->metrics.ascender - font->face->size->metrics.descender) >> 6;
+    font->create_from_memory(font_data, font_data_size);
 
 	return id;
 }
@@ -167,41 +127,41 @@ void renderer::d3d11_renderer::render() {
 
 	resize_buffers();
 
-	const auto context = device_resources_->get_device_context();
+	const auto context = context_->device_resources_->get_device_context();
 
 	draw_batches();
 
 	// Resolve MSAA render target
 	if (msaa_enabled_) {
-		const auto render_target_view = device_resources_->get_render_target_view();
-		const auto render_target = device_resources_->get_render_target();
-		const auto back_buffer_format = device_resources_->get_back_buffer_format();
+		const auto render_target_view = context_->device_resources_->get_render_target_view();
+		const auto render_target = context_->device_resources_->get_render_target();
+		const auto back_buffer_format = context_->device_resources_->get_back_buffer_format();
 
 		context->ResolveSubresource(render_target, 0, msaa_render_target_.Get(), 0, back_buffer_format);
 
 		//context->OMSetRenderTargets(1, &render_target_view, nullptr);
 	}
 
-	device_resources_->present();
+    context_->device_resources_->present();
 
 	restore_states();
 }
 
 void renderer::d3d11_renderer::clear() {
-	auto context = device_resources_->get_device_context();
+	auto context = context_->device_resources_->get_device_context();
 
 	if (msaa_enabled_) {
-		if (!device_resources_->within_present_hook)
+		if (!context_->device_resources_->within_present_hook)
 			context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(msaa_depth_stencil_view_.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		context->OMSetRenderTargets(1, msaa_render_target_view_.GetAddressOf(), msaa_depth_stencil_view_.Get());
 	}
 	else {
-		const auto render_target = device_resources_->get_render_target_view();
-		const auto depth_stencil = device_resources_->get_depth_stencil_view();
+		const auto render_target = context_->device_resources_->get_render_target_view();
+		const auto depth_stencil = context_->device_resources_->get_depth_stencil_view();
 
-		if (!device_resources_->within_present_hook)
+		if (!context_->device_resources_->within_present_hook)
 			context->ClearRenderTargetView(render_target, (FLOAT*)&clear_color_);
 		context->ClearDepthStencilView(depth_stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -210,8 +170,8 @@ void renderer::d3d11_renderer::clear() {
 }
 
 void renderer::d3d11_renderer::draw_batches() {
-	const auto context = device_resources_->get_device_context();
-	const auto command_buffer = device_resources_->get_command_buffer();
+	const auto context = context_->device_resources_->get_device_context();
+	const auto command_buffer = context_->device_resources_->get_command_buffer();
 
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
@@ -223,12 +183,12 @@ void renderer::d3d11_renderer::draw_batches() {
 		auto& batches = active->get_batches();
 
 		for (const auto& batch : batches) {
-			device_resources_->set_command_buffer(batch.command);
+            context_->device_resources_->set_command_buffer(batch.command);
 
 			if (batch.projection == glm::mat4x4{})
-				device_resources_->set_orthographic_projection();
+                context_->device_resources_->set_orthographic_projection();
 			else
-				device_resources_->set_projection(batch.projection);
+                context_->device_resources_->set_projection(batch.projection);
 
 			context->PSSetConstantBuffers(0, 1, &command_buffer);
 			context->PSSetShaderResources(0, 1, &batch.srv);
@@ -242,28 +202,28 @@ void renderer::d3d11_renderer::draw_batches() {
 }
 
 void renderer::d3d11_renderer::on_window_moved() {
-	auto back_buffer_size = device_resources_->get_back_buffer_size();
-	device_resources_->window_size_changed(back_buffer_size);
+	auto back_buffer_size = context_->device_resources_->get_back_buffer_size();
+    context_->device_resources_->window_size_changed(back_buffer_size);
 }
 
 void renderer::d3d11_renderer::on_display_change() {
-	device_resources_->update_color_space();
+    context_->device_resources_->update_color_space();
 }
 
 void renderer::d3d11_renderer::on_window_size_change(glm::i16vec2 size) {
-	if (!device_resources_->window_size_changed(size))
+	if (!context_->device_resources_->window_size_changed(size))
 		return;
 
 	create_window_size_dependent_resources();
 }
 
 void renderer::d3d11_renderer::create_device_dependent_resources() {
-	const auto device = device_resources_->get_device();
+	const auto device = context_->device_resources_->get_device();
 
 	// Check for MSAA support
 	for (sample_count_ = target_sample_count_; sample_count_ > 1; sample_count_--) {
 		UINT levels = 0;
-		if (FAILED(device->CheckMultisampleQualityLevels(device_resources_->get_back_buffer_format(), sample_count_, &levels)))
+		if (FAILED(device->CheckMultisampleQualityLevels(context_->device_resources_->get_back_buffer_format(), sample_count_, &levels)))
 			continue;
 
 		if (levels > 0)
@@ -276,10 +236,10 @@ void renderer::d3d11_renderer::create_device_dependent_resources() {
 }
 
 void renderer::d3d11_renderer::create_window_size_dependent_resources() {
-	const auto device = device_resources_->get_device();
-	const auto back_buffer_format = device_resources_->get_back_buffer_format();
-	const auto depth_buffer_format = device_resources_->get_depth_buffer_format();
-	const auto back_buffer_size = device_resources_->get_back_buffer_size();
+	const auto device = context_->device_resources_->get_device();
+	const auto back_buffer_format = context_->device_resources_->get_back_buffer_format();
+	const auto depth_buffer_format = context_->device_resources_->get_depth_buffer_format();
+	const auto back_buffer_size = context_->device_resources_->get_back_buffer_size();
 
 	CD3D11_TEXTURE2D_DESC render_target_desc(back_buffer_format,
 											 back_buffer_size.x,
@@ -341,9 +301,9 @@ void renderer::d3d11_renderer::on_device_restored() {
 }
 
 void renderer::d3d11_renderer::resize_buffers() {
-	const auto context = device_resources_->get_device_context();
-	auto vertex_buffer = device_resources_->get_vertex_buffer();
-	const auto buffer_size = device_resources_->get_buffer_size();
+	const auto context = context_->device_resources_->get_device_context();
+	auto vertex_buffer = context_->device_resources_->get_vertex_buffer();
+	const auto buffer_size = context_->device_resources_->get_buffer_size();
 
 	std::shared_lock lock_guard(buffer_list_mutex_);
 
@@ -355,8 +315,8 @@ void renderer::d3d11_renderer::resize_buffers() {
 
 	if (vertex_count > 0) {
 		if (!vertex_buffer || buffer_size <= vertex_count) {
-			device_resources_->resize_buffers(vertex_count + 250);
-			vertex_buffer = device_resources_->get_vertex_buffer();
+            context_->device_resources_->resize_buffers(vertex_count + 250);
+			vertex_buffer = context_->device_resources_->get_vertex_buffer();
 		}
 
 		if (vertex_buffer) {
@@ -383,117 +343,17 @@ void renderer::d3d11_renderer::resize_buffers() {
 
 // https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
 // TODO: Font texture atlas
-bool renderer::d3d11_renderer::create_font_glyph(size_t id, uint32_t c) {
-	auto& font = fonts_[id];
-	assert(font->face);
-
-	FT_Int32 load_flags = FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT;
-
-	if (FT_HAS_COLOR(font->face))
-		load_flags |= FT_LOAD_COLOR;
-
-	load_flags |= font->anti_aliased ? FT_LOAD_TARGET_NORMAL : FT_LOAD_TARGET_MONO;
-
-	if (FT_Load_Char(font->face, c, load_flags) != FT_Err_Ok)
-		return false;
-
-	auto glyph = std::make_shared<renderer::glyph>();
-	font->char_set[c] = glyph;
-
-	glyph->colored = font->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA;
-
-	FT_Bitmap* src_bitmap = &font->face->glyph->bitmap;
-
-	if (!glyph->colored && font->anti_aliased) {
-		FT_Bitmap bitmap;
-		FT_Bitmap_Init(&bitmap);
-
-		// Convert a bitmap object with depth of 4bpp making the number of used
-		// bytes per line (aka the pitch) a multiple of alignment
-		if (FT_Bitmap_Convert(library_, &font->face->glyph->bitmap, &bitmap, 4) != FT_Err_Ok)
-			return false;
-
-		src_bitmap = &bitmap;
-	}
-
-	if (font->outline > 0) {
-		FT_Stroker_Set(stroker_, font->outline * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
-
-		// TODO: Stroke outline then maybe apply it onto the glyphs bitmap or draw it in a separate render pass above
-	}
-
-	glyph->size = { src_bitmap->width ? src_bitmap->width : 16,
-				   src_bitmap->rows ? src_bitmap->rows : 16 };
-	glyph->bearing = { font->face->glyph->bitmap_left, font->face->glyph->bitmap_top };
-	glyph->advance = font->face->glyph->advance.x;
-
-	if (!src_bitmap->buffer)
-		return true;
-
-	D3D11_SUBRESOURCE_DATA texture_data;
-	texture_data.pSysMem = src_bitmap->buffer;
-	texture_data.SysMemPitch = src_bitmap->pitch;
-	texture_data.SysMemSlicePitch = 0;
-
-	D3D11_TEXTURE2D_DESC texture_desc{};
-	texture_desc.Width = src_bitmap->width;
-	texture_desc.Height = src_bitmap->rows;
-	texture_desc.MipLevels = texture_desc.ArraySize = 1;
-	texture_desc.Format = glyph->colored ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_A8_UNORM;
-	texture_desc.SampleDesc.Count = 1;
-	texture_desc.SampleDesc.Quality = 0;
-	texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
-	texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texture_desc.CPUAccessFlags = 0;
-	texture_desc.MiscFlags = 0;
-
-	auto device = device_resources_->get_device();
-
-	ComPtr<ID3D11Texture2D> texture;
-	auto hr = device->CreateTexture2D(&texture_desc, &texture_data, texture.GetAddressOf());
-	assert(SUCCEEDED(hr));
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC shader_resource_view_desc;
-	shader_resource_view_desc.Format = texture_desc.Format;
-	shader_resource_view_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	shader_resource_view_desc.Texture2D.MostDetailedMip = 0;
-	shader_resource_view_desc.Texture2D.MipLevels = 1;
-
-	hr = device->CreateShaderResourceView(texture.Get(),
-										  &shader_resource_view_desc,
-										  glyph->shader_resource_view.ReleaseAndGetAddressOf());
-	assert(SUCCEEDED(hr));
-
-	if (!glyph->colored) {
-		if (FT_Bitmap_Done(library_, &*src_bitmap) != FT_Err_Ok)
-			return false;
-	}
-
-	return true;
-}
-
 renderer::font* renderer::d3d11_renderer::get_font(size_t id) {
-	return fonts_[id].get();
-}
-
-std::shared_ptr<renderer::glyph>& renderer::d3d11_renderer::get_font_glyph(size_t id, uint32_t c) {
-	auto& font = fonts_[id];
-	auto glyph = font->char_set.find(c);
-
-	if (glyph == font->char_set.end()) {
-		auto res = create_font_glyph(id, c);
-		assert(res);
-
-		glyph = font->char_set.find(c);
-	}
-
-	return glyph->second;
+    const auto font = fonts_.at(id);
+    if (font == nullptr)
+        return nullptr;
+	return font.get();
 }
 
 glm::vec2 renderer::d3d11_renderer::get_render_target_size() {
 	//return { backup_viewport_.Width, backup_viewport_.Height };
 
-	const auto render_target = device_resources_->get_render_target();
+	const auto render_target = context_->device_resources_->get_render_target();
 
 	if (!render_target)
 		return {};
@@ -505,45 +365,45 @@ glm::vec2 renderer::d3d11_renderer::get_render_target_size() {
 }
 
 void renderer::d3d11_renderer::setup_states() {
-	auto context = device_resources_->get_device_context();
+	auto context = context_->device_resources_->get_device_context();
 
 	// Set shaders
-	const auto vertex_shader = device_resources_->get_vertex_shader();
-	const auto pixel_shader = device_resources_->get_pixel_shader();
+	const auto vertex_shader = context_->device_resources_->get_vertex_shader();
+	const auto pixel_shader = context_->device_resources_->get_pixel_shader();
 
 	context->VSSetShader(vertex_shader, nullptr, 0);
 	context->PSSetShader(pixel_shader, nullptr, 0);
 
 	// Set constant buffers
-	const auto projection_buffer = device_resources_->get_projection_buffer();
+	const auto projection_buffer = context_->device_resources_->get_projection_buffer();
 
 	context->VSSetConstantBuffers(0, 1, &projection_buffer);
 
 	// Set viewport
-	const auto viewport = device_resources_->get_screen_viewport();
+	const auto viewport = context_->device_resources_->get_screen_viewport();
 
 	context->RSSetViewports(1, &viewport);
 
 	// Set states
-	const auto blend_state = device_resources_->get_blend_state();
-	const auto depth_state = device_resources_->get_depth_stencil_state();
-	const auto rasterizer_state = device_resources_->get_rasterizer_state();
-	const auto sampler_state = device_resources_->get_sampler_state();
+	const auto blend_state = context_->device_resources_->get_blend_state();
+	const auto depth_state = context_->device_resources_->get_depth_stencil_state();
+	const auto rasterizer_state = context_->device_resources_->get_rasterizer_state();
+	const auto sampler_state = context_->device_resources_->get_sampler_state();
 
 	context->OMSetBlendState(blend_state, nullptr, 0xffffffff);
 	context->OMSetDepthStencilState(depth_state, NULL);
 	context->RSSetState(rasterizer_state);
 
-	// For some reason this is now needed after improving the device resource manager
+	// For some reason, this is now needed after improving the device resource manager
 	context->PSSetSamplers(0, 1, &sampler_state);
 
-	const auto input_layout = device_resources_->get_input_layout();
+	const auto input_layout = context_->device_resources_->get_input_layout();
 
 	context->IASetInputLayout(input_layout);
 }
 
 void renderer::d3d11_renderer::backup_states() {
-	const auto context = device_resources_->get_device_context();
+	const auto context = context_->device_resources_->get_device_context();
 
 	state_ = {};
 
@@ -574,7 +434,7 @@ void renderer::d3d11_renderer::backup_states() {
 }
 
 void renderer::d3d11_renderer::restore_states() {
-	const auto context = device_resources_->get_device_context();
+	const auto context = context_->device_resources_->get_device_context();
 
 	context->RSSetScissorRects(state_.scissor_rects_count, state_.scissor_rects);
 	context->RSSetViewports(state_.viewports_count, state_.viewports);
