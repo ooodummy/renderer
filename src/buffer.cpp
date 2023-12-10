@@ -82,14 +82,6 @@ void renderer::buffer::add_vertices(vertex* vertices, size_t N, D3D_PRIMITIVE_TO
 	add_vertices(vertices, N);
 }
 
-template<size_t N>
-void renderer::buffer::add_vertices(vertex (&vertices)[N],
-									D3D_PRIMITIVE_TOPOLOGY type,
-									ID3D11ShaderResourceView* srv,
-									color_rgba col) {
-	add_vertices(vertices, N, type, srv, col);
-}
-
 void renderer::buffer::add_shape(shape& shape) {
 	shape.check_recalculation();
 	add_vertices(shape.vertices_, shape.vertex_count_, shape.type_, shape.srv_, shape.col_);

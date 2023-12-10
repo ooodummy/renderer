@@ -67,9 +67,11 @@ namespace renderer {
 
         template<size_t N>
         void add_vertices(vertex (&vertices)[N],
-                          D3D_PRIMITIVE_TOPOLOGY type,
-                          ID3D11ShaderResourceView *srv = nullptr,
-                          color_rgba col = {255, 255, 255, 255});
+                                            D3D_PRIMITIVE_TOPOLOGY type,
+                                            ID3D11ShaderResourceView *srv = nullptr,
+                                            color_rgba col = {255, 255, 255, 255}) {
+            add_vertices(vertices, N, type, srv, col);
+        }
 
     public:
         void add_shape(shape &shape);
