@@ -132,9 +132,9 @@ void renderer::buffer::draw_line(glm::vec2 start, glm::vec2 end, color_rgba col,
 	const auto normal = segment.normal() * (thickness / 2.0f);
 
 	vertex vertices[] = {
-		{start.x + normal.x,  start.y + normal.y, col},
-		{ end.x + normal.x,	end.y + normal.y,	  col},
+		{ start.x + normal.x,  start.y + normal.y, col},
 		{ start.x - normal.x, start.y - normal.y, col},
+        { end.x + normal.x,	end.y + normal.y,	  col},
 		{ end.x - normal.x,	end.y - normal.y,	  col}
 	};
 
@@ -217,7 +217,7 @@ void renderer::buffer::draw_arc(const glm::vec2& pos,
 								float thickness,
 								size_t segments,
 								bool triangle_fan) {
-	draw_arc(pos, start, length, radius, col, col, thickness, segments, triangle_fan);
+	draw_arc(pos, start + length, -length, radius, col, col, thickness, segments, triangle_fan);
 }
 
 void renderer::buffer::draw_rect(glm::vec4 rect, color_rgba col, float thickness) {
@@ -438,11 +438,11 @@ void renderer::buffer::draw_textured_quad(const glm::vec4& rect, ID3D11ShaderRes
 // 2 * M_PI * radius / max_distance = segment count
 void renderer::buffer::draw_circle(
 const glm::vec2& pos, float radius, color_rgba col, float thickness, size_t segments) {
-	draw_arc(pos, 3 * M_PI / 2.0f, M_PI * 2.0f, radius, col, thickness, segments);
+	draw_arc(pos, 0.0f, M_PI * 2.0f, radius, col, thickness, segments);
 }
 
 void renderer::buffer::draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col, size_t segments) {
-	draw_arc(pos, 3 * M_PI / 2.0f, M_PI * 2.0f, radius, col, 0.0f, segments, true);
+	draw_arc(pos, 0.0f, M_PI * 2.0f, radius, col, 0.0f, segments, true);
 }
 
 void renderer::buffer::draw_glyph(const glm::vec2& pos, glyph* glyph, color_rgba col) {

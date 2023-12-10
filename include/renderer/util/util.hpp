@@ -31,7 +31,10 @@ namespace renderer {
 
         void reset();
 
-        std::chrono::milliseconds get_elapsed_duration();
+        template <typename Duration = std::chrono::milliseconds>
+        Duration get_elapsed_duration() const {
+            return std::chrono::duration_cast<Duration>(std::chrono::high_resolution_clock::now() - begin);
+        }
 
     private:
         std::chrono::time_point<std::chrono::steady_clock> begin;
@@ -50,8 +53,8 @@ namespace renderer {
     private:
         static constexpr uint64_t ticks_per_second_ = 10000000;
 
-        LARGE_INTEGER frequency_;
-        LARGE_INTEGER last_time_;
+        LARGE_INTEGER frequency_{};
+        LARGE_INTEGER last_time_{};
 
         uint64_t delta_time_;
 

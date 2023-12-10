@@ -20,13 +20,9 @@ void renderer::timer::reset() {
 	begin = std::chrono::high_resolution_clock::now();
 }
 
-std::chrono::milliseconds renderer::timer::get_elapsed_duration() {
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begin);
-}
-
-renderer::performance_counter::performance_counter() {
-	QueryPerformanceFrequency(&frequency_);
-	QueryPerformanceCounter(&last_time_);
+renderer::performance_counter::performance_counter() : delta_time_(0), frame_count_(0), frames_per_second_(0), frames_this_second_(0), second_counter_(0) {
+    QueryPerformanceFrequency(&frequency_);
+    QueryPerformanceCounter(&last_time_);
 }
 
 void renderer::performance_counter::tick() {

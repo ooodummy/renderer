@@ -56,7 +56,7 @@ namespace renderer {
 
         void clear();
 
-    private:
+    //private:
         void add_vertices(vertex *vertices, size_t N);
 
         void add_vertices(vertex *vertices,
@@ -210,49 +210,38 @@ namespace renderer {
         }
 
         void draw_line(const glm::vec3 &start, const glm::vec3 &end, color_rgba col = COLOR_WHITE);
-
         void draw_line_strip(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
-
         void draw_line_list(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
 
         void draw_bounds(const glm::vec3 &center, const glm::vec3 &extents, color_rgba col = COLOR_WHITE);
-
         void draw_bounds_filled(const glm::vec3 &center, const glm::vec3 &extents, color_rgba col = COLOR_WHITE);
 
         void draw_sphere(const glm::vec3 &pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
-
         void draw_circle(const glm::vec3 &pos,
                          float radius,
                          color_rgba col = COLOR_WHITE,
                          size_t segments = 24,
                          glm::vec2 rotation = {0.0f, 0.0f});
-
         void draw_cylinder(
                 const glm::vec3 &start, const glm::vec3 &end, float radius, color_rgba col = COLOR_WHITE,
                 size_t segments = 24);
 
         void push_scissor(const glm::vec4 &bounds, bool in = false, bool circle = false);
-
         void pop_scissor();
 
         void push_key(color_rgba color);
-
         void pop_key();
 
         void push_blur(float strength);
-
         void pop_blur();
 
         void push_font(size_t font_id);
-
         void pop_font();
 
         void push_projection(const glm::mat4x4 &projection);
-
         void pop_projection();
 
         const std::vector<vertex> &get_vertices();
-
         const std::vector<batch> &get_batches();
 
     private:
