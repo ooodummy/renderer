@@ -75,8 +75,9 @@ namespace renderer {
         if (!set_glyph_properties(glyph, src_bitmap))
             return nullptr;
 
+        // Spaces don't have textures but still have glyph sizes
         if (!create_texture(glyph, src_bitmap))
-            return nullptr;
+            return glyph;
 
         return glyph;
     }
