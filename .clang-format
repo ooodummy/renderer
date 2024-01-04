@@ -52,7 +52,6 @@ BreakInheritanceList: AfterColon
 BreakStringLiterals: true
 ColumnLimit: 120
 CompactNamespaces: false
-ConstructorInitializerIndentWidth: 0
 ContinuationIndentWidth: 0
 Cpp11BracedListStyle: false
 DeriveLineEnding: true

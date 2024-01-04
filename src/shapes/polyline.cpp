@@ -2,8 +2,8 @@
 
 #include <cmath>
 #include <glm/glm.hpp>
-#include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 static constexpr float miter_min_angle = 0.349066;// ~20 degrees
 static constexpr float round_min_angle = 0.174533;// ~10 degrees

@@ -20,9 +20,14 @@ void renderer::timer::reset() {
 	begin = std::chrono::high_resolution_clock::now();
 }
 
-renderer::performance_counter::performance_counter() : delta_time_(0), frame_count_(0), frames_per_second_(0), frames_this_second_(0), second_counter_(0) {
-    QueryPerformanceFrequency(&frequency_);
-    QueryPerformanceCounter(&last_time_);
+renderer::performance_counter::performance_counter() :
+	delta_time_(0),
+	frame_count_(0),
+	frames_per_second_(0),
+	frames_this_second_(0),
+	second_counter_(0) {
+	QueryPerformanceFrequency(&frequency_);
+	QueryPerformanceCounter(&last_time_);
 }
 
 void renderer::performance_counter::tick() {
