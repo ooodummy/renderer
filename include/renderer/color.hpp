@@ -94,7 +94,12 @@ namespace renderer {
 
         [[nodiscard]] color_rgba ease(const color_rgba &o, float p, ease_type type = linear) const;
 
-        uint8_t r, g, b, a;
+        union {
+            struct {
+                uint8_t r, g, b, a;
+            };
+            uint32_t rgba;
+        };
     };
 }// namespace renderer
 
