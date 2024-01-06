@@ -211,6 +211,21 @@ namespace renderer {
             draw_text(pos, text, active_font, col, flags);
         }
 
+        template<typename T>
+        void draw_text_outline(glm::vec2 pos, const T &text, color_rgba col = COLOR_WHITE, uint32_t flags = align_top_left) {
+            draw_text({ pos.x + 1, pos.y + 1 }, text, active_font, COLOR_BLACK, flags);
+            draw_text({ pos.x - 1, pos.y - 1 }, text, active_font, COLOR_BLACK, flags);
+            draw_text({ pos.x + 1, pos.y - 1 }, text, active_font, COLOR_BLACK, flags);
+            draw_text({ pos.x - 1, pos.y + 1 }, text, active_font, COLOR_BLACK, flags);
+
+            draw_text({ pos.x + 1, pos.y }, text, active_font, COLOR_BLACK, flags);
+            draw_text({ pos.x - 1, pos.y }, text, active_font, COLOR_BLACK, flags);
+            draw_text({ pos.x, pos.y - 1 }, text, active_font, COLOR_BLACK, flags);
+            draw_text({ pos.x, pos.y + 1 }, text, active_font, COLOR_BLACK, flags);
+
+            draw_text(pos, text, active_font, col, flags);
+        }
+
         void draw_line(const glm::vec3 &start, const glm::vec3 &end, color_rgba col = COLOR_WHITE);
         void draw_line_strip(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
         void draw_line_list(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
