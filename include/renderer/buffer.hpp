@@ -296,6 +296,25 @@ namespace renderer {
 
 			delete[] vertices;
 		}
+    
+    template<typename T>
+    void draw_text_outline(std::basic_string_view<char_t> text,
+					   glm::vec2 pos,
+					   color_rgba col = color_rgba(255, 255, 255),
+					   text_font* font = get_default_font(),
+					   text_align align = none) {
+            draw_text(text, { pos.x + 1, pos.y + 1 }, font, COLOR_BLACK, align);
+            draw_text(text, { pos.x - 1, pos.y - 1 }, font, COLOR_BLACK, align);
+            draw_text(text, { pos.x + 1, pos.y - 1 }, font, COLOR_BLACK, align);
+            draw_text(text, { pos.x - 1, pos.y + 1 }, font, COLOR_BLACK, align);
+
+            draw_text(text, { pos.x + 1, pos.y }, font, COLOR_BLACK, align);
+            draw_text(text, { pos.x - 1, pos.y }, font, COLOR_BLACK, align);
+            draw_text(text, { pos.x, pos.y - 1 }, font, COLOR_BLACK, align);
+            draw_text(text, { pos.x, pos.y + 1 }, font, COLOR_BLACK, align);
+
+            draw_text(text, pos, col, font, align);
+    }
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();
