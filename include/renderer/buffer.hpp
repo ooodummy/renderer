@@ -45,7 +45,10 @@ namespace renderer {
 	// https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {
 	public:
-		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {}
+		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {
+			vertices_.reserve(5000);
+			indices_.reserve(10000);
+		}
 
 		explicit buffer(d3d11_renderer* dx11, size_t vertices_reserve_size, size_t batches_reserve_size) : dx11_(dx11) {
 			vertices_.reserve(vertices_reserve_size);
@@ -235,6 +238,7 @@ namespace renderer {
 			size_t vertices_counter = 0;
 
 			const float size_reciprocal = 1.f / size;
+			const float scaled_font_size = (size / font->size);
 			for (auto iter = text.begin(); iter != text.end();) {
 				auto symbol = (uint32_t)*iter;
 				iter += impl::char_converters::converter<char_t>::convert(symbol, iter, text.end());
@@ -255,8 +259,8 @@ namespace renderer {
 				if (!glyph)
 					continue;
 
-				[[likely]] if (glyph->visible) {
-					glm::vec4 corners = glm::vec4(pos.x, pos.y, pos.x, pos.y) + glyph->corners * (size / font->size);
+				if (glyph->visible) {
+					glm::vec4 corners = glm::vec4(pos.x, pos.y, pos.x, pos.y) + glyph->corners * scaled_font_size;
 					glm::vec4 uvs = glyph->texture_coordinates;
 
 					vertex glyph_vertices[] = {
@@ -268,8 +272,8 @@ namespace renderer {
 						 { corners.x, corners.w, col, uvs.x, uvs.w },
 					};
 
-					// insert glyph vertices into vertices vector with std::copy_n
-					std::copy_n(glyph_vertices, 6, vertices + vertices_counter);
+					// insert glyph vertices into vertices vector with memmove
+					memmove(vertices + vertices_counter, glyph_vertices, sizeof(glyph_vertices));
 					vertices_counter += 6;
 				}
 
