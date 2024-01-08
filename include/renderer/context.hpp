@@ -8,12 +8,12 @@
 #include <freetype/ftstroke.h>
 
 namespace renderer {
-    struct renderer_context {
-        std::unique_ptr<device_resources> device_resources_;
+	struct renderer_context {
+		std::unique_ptr<device_resources> device_resources_;
 
-        FT_Library library_;
-        FT_Stroker stroker_ = nullptr;
-    };
-}
+		FT_Library library_;
+		FT_Stroker stroker_ = nullptr;
+	};
+}// namespace renderer
 
 #endif

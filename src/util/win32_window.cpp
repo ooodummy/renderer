@@ -1,13 +1,14 @@
 #include "renderer/util/win32_window.hpp"
 
-renderer::win32_window::win32_window(const std::string& title, const glm::i32vec2 size, WNDPROC wnd_proc) : wnd_proc_(wnd_proc) {
+renderer::win32_window::win32_window(const std::string& title, const glm::i32vec2 size, WNDPROC wnd_proc) :
+	wnd_proc_(wnd_proc) {
 	title_ = title;
 	size_ = size;
 
 	// Center window on desktop
 	RECT client;
 	if (GetClientRect(GetDesktopWindow(), &client)) {
-		pos_ = {client.right / 2 - size_.x / 2, client.bottom / 2 - size_.y / 2};
+		pos_ = { client.right / 2 - size_.x / 2, client.bottom / 2 - size_.y / 2 };
 	}
 }
 
@@ -57,7 +58,7 @@ std::string renderer::win32_window::get_title() const {
 
 void renderer::win32_window::set_pos(const glm::i16vec2 pos) {
 	pos_ = pos;
-	//update_window_pos();
+	// update_window_pos();
 }
 
 glm::i16vec2 renderer::win32_window::get_pos() const {
@@ -67,15 +68,12 @@ glm::i16vec2 renderer::win32_window::get_pos() const {
 	RECT rect;
 	::GetWindowRect(hwnd_, &rect);
 
-	return {
-		static_cast<int16_t>(rect.left),
-		static_cast<int16_t>(rect.top)
-	};
+	return { static_cast<int16_t>(rect.left), static_cast<int16_t>(rect.top) };
 }
 
 void renderer::win32_window::set_size(const glm::i16vec2 size) {
 	size_ = size;
-	//update_window_pos();
+	// update_window_pos();
 }
 
 glm::i16vec2 renderer::win32_window::get_size() const {
@@ -85,10 +83,8 @@ glm::i16vec2 renderer::win32_window::get_size() const {
 	RECT rect;
 	::GetClientRect(hwnd_, &rect);
 
-	const glm::i16vec2 size = {
-		static_cast<int16_t>(rect.right - rect.left),
-		static_cast<int16_t>(rect.bottom - rect.top)
-	};
+	const glm::i16vec2 size = { static_cast<int16_t>(rect.right - rect.left),
+								static_cast<int16_t>(rect.bottom - rect.top) };
 
 	return size;
 }

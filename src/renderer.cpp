@@ -4,55 +4,35 @@
 #include "renderer/util/win32_window.hpp"
 
 #include <d3d11.h>
-#include <freetype/ftbitmap.h>
-#include <freetype/ftstroke.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	msaa_enabled_(true),
 	target_sample_count_(8) {
-    context_ = std::make_unique<renderer_context>();
-    context_->device_resources_ = std::make_unique<device_resources>();
-    context_->device_resources_->set_window(window);
-    context_->device_resources_->register_device_notify(this);
+	context_ = std::make_unique<renderer_context>();
+	context_->device_resources_ = std::make_unique<device_resources>();
+	context_->device_resources_->set_window(window);
+	context_->device_resources_->register_device_notify(this);
 }
 
-renderer::d3d11_renderer::d3d11_renderer(IDXGISwapChain* swap_chain) :
-	msaa_enabled_(false),
-	target_sample_count_(8) {
-    context_ = std::make_unique<renderer_context>();
-    context_->device_resources_ = std::make_unique<device_resources>();
-    context_->device_resources_->set_swap_chain(swap_chain);
-    context_->device_resources_->register_device_notify(this);
+renderer::d3d11_renderer::d3d11_renderer(IDXGISwapChain* swap_chain) : msaa_enabled_(false), target_sample_count_(8) {
+	context_ = std::make_unique<renderer_context>();
+	context_->device_resources_ = std::make_unique<device_resources>();
+	context_->device_resources_->set_swap_chain(swap_chain);
+	context_->device_resources_->register_device_notify(this);
 }
 
 bool renderer::d3d11_renderer::initialize() {
-    context_->device_resources_->create_device_resources();
+	context_->device_resources_->create_device_resources();
 	create_device_dependent_resources();
 
-    context_->device_resources_->create_window_size_dependent_resources();
+	context_->device_resources_->create_window_size_dependent_resources();
 	create_window_size_dependent_resources();
-
-	if (FT_Init_FreeType(&context_->library_) != FT_Err_Ok)
-		return false;
-
-	if (FT_Stroker_New(context_->library_, &context_->stroker_) != FT_Err_Ok)
-		return false;
 
 	return true;
 }
 
 bool renderer::d3d11_renderer::release() {
-	for (auto& font : fonts_) {
-		if (!font->release())
-            return false;
-	}
-
-	FT_Stroker_Done(context_->stroker_);
-
-	if (FT_Done_FreeType(context_->library_) != FT_Err_Ok)
-		return false;
-
 	return true;
 }
 
@@ -61,8 +41,8 @@ renderer::d3d11_renderer::register_buffer(size_t priority, size_t vertices_reser
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	const auto id = buffers_.size();
-	buffers_.emplace_back(buffer_node{std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size),
-									  std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size)});
+	buffers_.emplace_back(buffer_node{ std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size),
+									   std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size) });
 
 	return id;
 }
@@ -86,37 +66,84 @@ void renderer::d3d11_renderer::swap_buffers(size_t id) {
 	buf.working->clear();
 }
 
+void renderer::d3d11_renderer::create_atlases() {
+	if (!atlases_handler.changed)
+		return;
+
+	for (auto&& atlas : atlases_handler.atlases) {
+		if (atlas->texture.data) {
+			atlas->texture.data->Release();
+			atlas->texture.data = nullptr;
+		}
+
+		if (atlas->texture.pixels_alpha8.empty()) {
+			if (atlas->configs.empty())
+				atlas->add_font_default();
+
+			atlas->build();
+		}
+
+		atlas->texture.get_data_as_rgba32();
+
+		D3D11_TEXTURE2D_DESC texture_desc{ .Width{ (std::uint32_t)atlas->texture.size.x },
+										   .Height{ (std::uint32_t)atlas->texture.size.y },
+										   .MipLevels{ 1 },
+										   .ArraySize{ 1 },
+										   .Format{ DXGI_FORMAT_R8G8B8A8_UNORM },
+										   .SampleDesc{ .Count{ 1 } },
+										   .Usage{ D3D11_USAGE_DEFAULT },
+										   .BindFlags{ D3D11_BIND_SHADER_RESOURCE },
+										   .CPUAccessFlags{ 0 } };
+
+		ID3D11Texture2D* texture = nullptr;
+		D3D11_SUBRESOURCE_DATA subresource{ .pSysMem{ (void*)atlas->texture.pixels_rgba32.data() },
+											.SysMemPitch{ texture_desc.Width * 4 },
+											.SysMemSlicePitch{ 0 } };
+
+		auto device = context_->device_resources_->get_device();
+		if (auto result = device->CreateTexture2D(&texture_desc, &subresource, &texture); FAILED(result)) {
+			// TODO: Assert
+		}
+
+		ID3D11ShaderResourceView* texture_view = nullptr;
+		D3D11_SHADER_RESOURCE_VIEW_DESC shader_resource_view_desc{
+			.Format{ DXGI_FORMAT_R8G8B8A8_UNORM },
+			.ViewDimension{ D3D11_SRV_DIMENSION_TEXTURE2D },
+			.Texture2D{ .MostDetailedMip{ 0 }, .MipLevels{ texture_desc.MipLevels } }
+		};
+
+		if (auto result = device->CreateShaderResourceView(texture, &shader_resource_view_desc, &texture_view);
+			FAILED(result)) {
+			// TODO: Assert
+		}
+
+		if (auto result = texture->Release(); FAILED(result)) {
+			// TODO: Assert
+		}
+
+		atlas->texture.data = texture_view;
+	}
+
+	atlases_handler.changed = false;
+}
+
+void renderer::d3d11_renderer::destroy_atlases() {
+	for (auto&& atlas : atlases_handler.atlases) {
+		if (atlas->texture.data) {
+			if (auto result = atlas->texture.data->Release(); FAILED(result)) {
+				// TODO: Assert
+			}
+
+			atlas->texture.data = nullptr;
+		}
+	}
+
+	atlases_handler.changed = true;
+}
+
+
 void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color) {
 	clear_color_ = glm::vec4(color);
-}
-
-size_t renderer::d3d11_renderer::register_font(std::string family,
-											   int size,
-											   int weight,
-											   bool anti_aliased,
-											   size_t outline) {
-	const auto id = fonts_.size();
-
-	fonts_.emplace_back(std::make_unique<font>(size, weight, anti_aliased, outline, context_.get()));
-    auto& font = fonts_.back();
-    font->create_from_path(family);
-
-	return id;
-}
-
-size_t renderer::d3d11_renderer::register_font_memory(const uint8_t* font_data,
-											   		  size_t font_data_size,
-											   		  int size,
-											   		  int weight,
-											   		  bool anti_aliased,
-											   		  size_t outline) {
-	const auto id = fonts_.size();
-
-	fonts_.emplace_back(std::make_unique<font>(size, weight, anti_aliased, outline, context_.get()));
-	auto& font = fonts_.back();
-    font->create_from_memory(font_data, font_data_size);
-
-	return id;
 }
 
 void renderer::d3d11_renderer::render() {
@@ -139,10 +166,10 @@ void renderer::d3d11_renderer::render() {
 
 		context->ResolveSubresource(render_target, 0, msaa_render_target_.Get(), 0, back_buffer_format);
 
-		//context->OMSetRenderTargets(1, &render_target_view, nullptr);
+		// context->OMSetRenderTargets(1, &render_target_view, nullptr);
 	}
 
-    context_->device_resources_->present();
+	context_->device_resources_->present();
 
 	restore_states();
 }
@@ -153,7 +180,10 @@ void renderer::d3d11_renderer::clear() {
 	if (msaa_enabled_) {
 		if (!context_->device_resources_->within_present_hook)
 			context->ClearRenderTargetView(msaa_render_target_view_.Get(), (FLOAT*)&clear_color_);
-		context->ClearDepthStencilView(msaa_depth_stencil_view_.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		context->ClearDepthStencilView(msaa_depth_stencil_view_.Get(),
+									   D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+									   1.0f,
+									   0);
 
 		context->OMSetRenderTargets(1, msaa_render_target_view_.GetAddressOf(), msaa_depth_stencil_view_.Get());
 	}
@@ -183,12 +213,12 @@ void renderer::d3d11_renderer::draw_batches() {
 		auto& batches = active->get_batches();
 
 		for (const auto& batch : batches) {
-            context_->device_resources_->set_command_buffer(batch.command);
+			context_->device_resources_->set_command_buffer(batch.command);
 
 			if (batch.projection == glm::mat4x4{})
-                context_->device_resources_->set_orthographic_projection();
+				context_->device_resources_->set_orthographic_projection();
 			else
-                context_->device_resources_->set_projection(batch.projection);
+				context_->device_resources_->set_projection(batch.projection);
 
 			context->PSSetConstantBuffers(0, 1, &command_buffer);
 			context->PSSetShaderResources(0, 1, &batch.srv);
@@ -203,11 +233,11 @@ void renderer::d3d11_renderer::draw_batches() {
 
 void renderer::d3d11_renderer::on_window_moved() {
 	auto back_buffer_size = context_->device_resources_->get_back_buffer_size();
-    context_->device_resources_->window_size_changed(back_buffer_size);
+	context_->device_resources_->window_size_changed(back_buffer_size);
 }
 
 void renderer::d3d11_renderer::on_display_change() {
-    context_->device_resources_->update_color_space();
+	context_->device_resources_->update_color_space();
 }
 
 void renderer::d3d11_renderer::on_window_size_change(glm::i16vec2 size) {
@@ -223,7 +253,9 @@ void renderer::d3d11_renderer::create_device_dependent_resources() {
 	// Check for MSAA support
 	for (sample_count_ = target_sample_count_; sample_count_ > 1; sample_count_--) {
 		UINT levels = 0;
-		if (FAILED(device->CheckMultisampleQualityLevels(context_->device_resources_->get_back_buffer_format(), sample_count_, &levels)))
+		if (FAILED(device->CheckMultisampleQualityLevels(context_->device_resources_->get_back_buffer_format(),
+														 sample_count_,
+														 &levels)))
 			continue;
 
 		if (levels > 0)
@@ -254,7 +286,9 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 	assert(SUCCEEDED(hr));
 
 	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2DMS, back_buffer_format);
-	hr = device->CreateRenderTargetView(msaa_render_target_.Get(), &render_target_view_desc, msaa_render_target_view_.ReleaseAndGetAddressOf());
+	hr = device->CreateRenderTargetView(msaa_render_target_.Get(),
+										&render_target_view_desc,
+										msaa_render_target_view_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
 	CD3D11_TEXTURE2D_DESC depth_stencil_desc(depth_buffer_format,
@@ -270,7 +304,8 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 	hr = device->CreateTexture2D(&depth_stencil_desc, nullptr, depth_stencil.GetAddressOf());
 	assert(SUCCEEDED(hr));
 
-	hr = device->CreateDepthStencilView(depth_stencil.Get(), nullptr, msaa_depth_stencil_view_.ReleaseAndGetAddressOf());
+	hr =
+	device->CreateDepthStencilView(depth_stencil.Get(), nullptr, msaa_depth_stencil_view_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 }
 
@@ -280,16 +315,6 @@ void renderer::d3d11_renderer::on_device_lost() {
 
 		for (const auto& [active, working] : buffers_) {
 			active->clear();
-		}
-	}
-
-	{
-		DPRINTF("[+] Releasing font glyph resources\n");
-
-		std::unique_lock lock_guard(font_list_mutex_);
-
-		for (auto& font : fonts_) {
-			font->char_set.clear();
 		}
 	}
 }
@@ -315,7 +340,7 @@ void renderer::d3d11_renderer::resize_buffers() {
 
 	if (vertex_count > 0) {
 		if (!vertex_buffer || buffer_size <= vertex_count) {
-            context_->device_resources_->resize_buffers(vertex_count + 250);
+			context_->device_resources_->resize_buffers(vertex_count + 250);
 			vertex_buffer = context_->device_resources_->get_vertex_buffer();
 		}
 
@@ -328,7 +353,7 @@ void renderer::d3d11_renderer::resize_buffers() {
 			for (const auto& [active, working] : buffers_) {
 				const auto& vertices = active->get_vertices();
 
-				memcpy(write_ptr, vertices.data(), vertices.size() * sizeof(vertex));
+				std::copy_n(vertices.data(), vertices.size(), reinterpret_cast<vertex*>(write_ptr));
 				write_ptr += vertices.size();
 			}
 
@@ -341,17 +366,8 @@ void renderer::d3d11_renderer::resize_buffers() {
 	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
 }
 
-// https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
-// TODO: Font texture atlas
-renderer::font* renderer::d3d11_renderer::get_font(size_t id) {
-    const auto font = fonts_.at(id);
-    if (font == nullptr)
-        return nullptr;
-	return font.get();
-}
-
 glm::vec2 renderer::d3d11_renderer::get_render_target_size() {
-	//return { backup_viewport_.Width, backup_viewport_.Height };
+	// return { backup_viewport_.Width, backup_viewport_.Height };
 
 	const auto render_target = context_->device_resources_->get_render_target();
 
@@ -415,7 +431,8 @@ void renderer::d3d11_renderer::backup_states() {
 	context->OMGetBlendState(&state_.blend_state, state_.blend_factor, &state_.sample_mask);
 	context->OMGetDepthStencilState(&state_.depth_stencil_state, &state_.stencil_ref);
 
-	state_.pixel_shader_instances_count = state_.vertex_shader_instances_count = state_.geometry_shader_instances_count = 256;
+	state_.pixel_shader_instances_count = state_.vertex_shader_instances_count =
+	state_.geometry_shader_instances_count = 256;
 
 	context->PSGetShaderResources(0, 1, &state_.pixel_shader_shader_resource);
 	context->PSGetSamplers(0, 1, &state_.pixel_shader_sampler);
@@ -425,11 +442,17 @@ void renderer::d3d11_renderer::backup_states() {
 	context->VSGetShader(&state_.vertex_shader, state_.vertex_shader_instances, &state_.vertex_shader_instances_count);
 	context->VSGetConstantBuffers(0, 1, &state_.vertex_shader_constant_buffer);
 
-	context->GSGetShader(&state_.geometry_shader, state_.geometry_shader_instances, &state_.geometry_shader_instances_count);
+	context->GSGetShader(&state_.geometry_shader,
+						 state_.geometry_shader_instances,
+						 &state_.geometry_shader_instances_count);
 
 	context->IAGetPrimitiveTopology(&state_.primitive_topology);
 	context->IAGetIndexBuffer(&state_.index_buffer, &state_.index_buffer_format, &state_.index_buffer_offset);
-	context->IAGetVertexBuffers(0, 1, &state_.vertex_buffer, &state_.vertex_buffer_stride, &state_.vertex_buffer_offset);
+	context->IAGetVertexBuffers(0,
+								1,
+								&state_.vertex_buffer,
+								&state_.vertex_buffer_stride,
+								&state_.vertex_buffer_offset);
 	context->IAGetInputLayout(&state_.input_layout);
 }
 
@@ -439,43 +462,62 @@ void renderer::d3d11_renderer::restore_states() {
 	context->RSSetScissorRects(state_.scissor_rects_count, state_.scissor_rects);
 	context->RSSetViewports(state_.viewports_count, state_.viewports);
 	context->RSSetState(state_.rasterizer_state);
-	if (state_.rasterizer_state) state_.rasterizer_state->Release();
+	if (state_.rasterizer_state)
+		state_.rasterizer_state->Release();
 
 	context->OMSetBlendState(state_.blend_state, state_.blend_factor, state_.sample_mask);
-	if (state_.blend_state) state_.blend_state->Release();
+	if (state_.blend_state)
+		state_.blend_state->Release();
 	context->OMSetDepthStencilState(state_.depth_stencil_state, state_.stencil_ref);
-	if (state_.depth_stencil_state) state_.depth_stencil_state->Release();
+	if (state_.depth_stencil_state)
+		state_.depth_stencil_state->Release();
 
 	context->PSSetShaderResources(0, 1, &state_.pixel_shader_shader_resource);
-	if (state_.pixel_shader_shader_resource) state_.pixel_shader_shader_resource->Release();
+	if (state_.pixel_shader_shader_resource)
+		state_.pixel_shader_shader_resource->Release();
 	context->PSSetSamplers(0, 1, &state_.pixel_shader_sampler);
-	if (state_.pixel_shader_sampler) state_.pixel_shader_sampler->Release();
+	if (state_.pixel_shader_sampler)
+		state_.pixel_shader_sampler->Release();
 	context->PSSetShader(state_.pixel_shader, state_.pixel_shader_instances, state_.pixel_shader_instances_count);
-	if (state_.pixel_shader) state_.pixel_shader->Release();
+	if (state_.pixel_shader)
+		state_.pixel_shader->Release();
 	context->PSSetConstantBuffers(0, 1, &state_.pixel_shader_constant_buffer);
-	if (state_.pixel_shader_constant_buffer) state_.pixel_shader_constant_buffer->Release();
+	if (state_.pixel_shader_constant_buffer)
+		state_.pixel_shader_constant_buffer->Release();
 
 	for (UINT i = 0; i < state_.pixel_shader_instances_count; i++)
 		if (state_.pixel_shader_instances[i])
 			state_.pixel_shader_instances[i]->Release();
 
 	context->VSSetShader(state_.vertex_shader, state_.vertex_shader_instances, state_.vertex_shader_instances_count);
-	if (state_.vertex_shader) state_.vertex_shader->Release();
+	if (state_.vertex_shader)
+		state_.vertex_shader->Release();
 	context->VSSetConstantBuffers(0, 1, &state_.vertex_shader_constant_buffer);
-	if (state_.vertex_shader_constant_buffer) state_.vertex_shader_constant_buffer->Release();
+	if (state_.vertex_shader_constant_buffer)
+		state_.vertex_shader_constant_buffer->Release();
 
 	for (UINT i = 0; i < state_.vertex_shader_instances_count; i++)
 		if (state_.vertex_shader_instances[i])
 			state_.vertex_shader_instances[i]->Release();
 
-	context->GSSetShader(state_.geometry_shader, state_.geometry_shader_instances, state_.geometry_shader_instances_count);
-	if (state_.geometry_shader) state_.geometry_shader->Release();
+	context->GSSetShader(state_.geometry_shader,
+						 state_.geometry_shader_instances,
+						 state_.geometry_shader_instances_count);
+	if (state_.geometry_shader)
+		state_.geometry_shader->Release();
 
 	context->IASetPrimitiveTopology(state_.primitive_topology);
 	context->IASetIndexBuffer(state_.index_buffer, state_.index_buffer_format, state_.index_buffer_offset);
-	if (state_.index_buffer) state_.index_buffer->Release();
-	context->IASetVertexBuffers(0, 1, &state_.vertex_buffer, &state_.vertex_buffer_stride, &state_.vertex_buffer_offset);
-	if (state_.vertex_buffer) state_.vertex_buffer->Release();
+	if (state_.index_buffer)
+		state_.index_buffer->Release();
+	context->IASetVertexBuffers(0,
+								1,
+								&state_.vertex_buffer,
+								&state_.vertex_buffer_stride,
+								&state_.vertex_buffer_offset);
+	if (state_.vertex_buffer)
+		state_.vertex_buffer->Release();
 	context->IASetInputLayout(state_.input_layout);
-	if (state_.input_layout) state_.input_layout->Release();
+	if (state_.input_layout)
+		state_.input_layout->Release();
 }
