@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 
 project(renderer)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 add_definitions(-DFMT_HEADER_ONLY)
 set(FT_DISABLE_HARFBUZZ ON)
@@ -31,16 +31,10 @@ if (NOT TARGET glm)
     message("Fetching glm")
     FetchContent_Declare(glm
             GIT_REPOSITORY https://github.com/g-truc/glm.git
-            GIT_TAG        0.9.9.8
+            GIT_TAG        master
     )
     FetchContent_MakeAvailable(glm)
 endif()
-
-#FetchContent_Declare(stb
-#        GIT_REPOSITORY https://github.com/nothings/stb.git
-#        GIT_TAG        master
-#)
-#FetchContent_MakeAvailable(stb)
 
 file(MAKE_DIRECTORY include/renderer/shaders/compiled)
 

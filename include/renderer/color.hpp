@@ -27,75 +27,150 @@
 // Basically every color format that I found that exist is added because I wanted to add it just because I can.
 
 namespace renderer {
-    class color_rgba;
+	class color_rgba;
 
-    class color_cmyka {
-    public:
-        color_cmyka(float c = 0.0f, float m = 0.0f, float y = 0.0f, float k = 0.0f, uint8_t a = 255);
+	class color_cmyka {
+	public:
+		constexpr color_cmyka(float c = 0.0f, float m = 0.0f, float y = 0.0f, float k = 0.0f, uint8_t a = 255);
 
-        operator color_rgba() const;
+		constexpr operator color_rgba() const;
 
-        float c, m, y, k;
-        uint8_t a;
-    };
+		float c, m, y, k;
+		uint8_t a;
+	};
 
-    class color_hex {
-    public:
-        color_hex(uint32_t hex);
+	class color_hex {
+	public:
+		constexpr color_hex(uint32_t hex);
 
-        operator color_rgba() const;
+		constexpr operator color_rgba() const;
 
-        uint32_t hex;
-    };
+		uint32_t hex;
+	};
 
-    class color_hsla {
-    public:
-        color_hsla(float h = 0.0f, float s = 0.0f, float l = 0.0f, uint8_t a = 255);
+	class color_hsla {
+	public:
+		constexpr color_hsla(float h = 0.0f, float s = 0.0f, float l = 0.0f, uint8_t a = 255);
 
-        operator color_rgba() const;
+		operator color_rgba() const;
 
-        float h, s, l;
-        uint8_t a;
-    };
+		float h, s, l;
+		uint8_t a;
+	};
 
-    class color_hsva {
-    public:
-        color_hsva(float h = 0.0f, float s = 1.0f, float v = 1.0f, uint8_t a = 255);
+	class color_hsva {
+	public:
+		constexpr color_hsva(float h = 0.0f, float s = 1.0f, float v = 1.0f, uint8_t a = 255) :
+			h(h),
+			s(s),
+			v(v),
+			a(a) {}
 
-        operator color_rgba() const;
+		operator color_rgba() const;
 
-        color_hsva ease(const color_hsva &o, float p, ease_type type = linear) const;
+		constexpr color_hsva ease(const color_hsva& o, float p, ease_type type = linear) const {
+			if (p > 1.0f)
+				p = 1.0f;
 
-        float h, s, v;
-        uint8_t a;
-    };
+			return { renderer::ease(h, o.h, p, 1.0f, type), renderer::ease(s, o.s, p, 1.0f, type),
+					 renderer::ease(v, o.v, p, 1.0f, type),
+					 static_cast<uint8_t>(
+					 renderer::ease(static_cast<float>(a), static_cast<float>(o.a), p, 1.0f, type)) };
+		}
 
-    class color_rgba {
-    public:
-        color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255);
+		float h, s, v;
+		uint8_t a;
+	};
 
-        color_rgba(const glm::vec4 &f);
+	class color_rgba {
+	public:
+		constexpr color_rgba(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255) : r(r), g(g), b(b), a(a) {}
 
-        operator color_cmyka() const;
+	    constexpr color_rgba(const glm::vec4& f) {
+		    r = static_cast<uint8_t>(static_cast<uint32_t>(f.r * 255.0f));
+		    g = static_cast<uint8_t>(static_cast<uint32_t>(f.g * 255.0f));
+		    b = static_cast<uint8_t>(static_cast<uint32_t>(f.b * 255.0f));
+		    a = static_cast<uint8_t>(static_cast<uint32_t>(f.a * 255.0f));
+		}
 
-        operator color_hex() const;
+	    constexpr color_rgba::operator color_cmyka() const {
+		    const auto fr = static_cast<float>(r) / 255.0f;
+		    const auto fg = static_cast<float>(g) / 255.0f;
+		    const auto fb = static_cast<float>(b) / 255.0f;
 
-        operator color_hsla() const;
+		    const auto k = 1.0f - std::max(std::max(fr, fg), fb);
 
-        operator color_hsva() const;
+		    return { (1.0f - fr - k) / (1.0f - k), (1.0f - fg - k) / (1.0f - k), (1.0f - fb - k) / (1.0f - k), k };
+		}
 
-        operator glm::vec4() const;
+	    constexpr color_rgba::operator color_hex() const {
+		    return { static_cast<uint32_t>(
+            ((((a) & 0xff) << 24) | (((b) & 0xff) << 16) | (((g) & 0xff) << 8) | ((r) & 0xff))) };
+		}
 
-        [[nodiscard]] color_rgba alpha(uint8_t a) const;
+	    constexpr color_rgba::operator color_hsla() const {
+		    auto hsv = color_hsva(*this);
 
-        bool operator==(const color_rgba &o) const;
+		    const auto max = static_cast<float>(std::max(std::max(r, g), b)) / 255.0f;
+		    const auto min = static_cast<float>(std::min(std::min(r, g), b)) / 255.0f;
 
-        bool operator!=(const color_rgba &o) const;
+		    return { hsv.h, hsv.s, (max + min) / 2.0f, a };
+		}
 
-        [[nodiscard]] color_rgba ease(const color_rgba &o, float p, ease_type type = linear) const;
+	    constexpr color_rgba::operator color_hsva() const {
+		    const auto fr = static_cast<float>(r) / 255.0f;
+		    const auto fg = static_cast<float>(g) / 255.0f;
+		    const auto fb = static_cast<float>(b) / 255.0f;
 
-        uint8_t r, g, b, a;
-    };
+		    const auto max = std::max(std::max(fr, fg), fb);
+		    const auto min = std::min(std::min(fr, fg), fb);
+		    const auto delta = max - min;
+
+		    auto hue = 0.0f;
+
+		    if (delta != 0.0f) {
+		        if (max == fr)
+		            hue = fmodf(((fg - fb) / delta), 6.0f);
+		        else if (max == fg)
+		            hue = ((fb - fr) / delta) + 2.0f;
+		        else
+		            hue = ((fr - fg) / delta) + 4.0f;
+		        hue *= 60.0f;
+		    }
+
+		    return { hue, max == 0.0f ? 0.0f : delta / max, max, a };
+		}
+
+		constexpr operator glm::vec4() const {
+			float s = 1.f / 255.f;
+			return { r * s, g * s, b * s, a * s };
+		}
+
+		[[nodiscard]] constexpr color_rgba alpha(uint8_t _a) const {
+			return { r, g, b, _a };
+		}
+
+		constexpr bool operator==(const color_rgba& o) const {
+			return rgba == o.rgba;
+		}
+
+		constexpr bool operator!=(const color_rgba& o) const {
+			return rgba != o.rgba;
+		}
+
+		[[nodiscard]] color_rgba ease(const color_rgba& o, float p, ease_type type = linear) const {
+			if (p > 1.0f)
+				p = 1.0f;
+
+			return color_rgba(color_hsva(*this).ease(color_hsva(o), p, type));
+		}
+		union {
+			struct {
+				uint8_t r, g, b, a;
+			};
+			uint32_t rgba;
+		};
+	};
 }// namespace renderer
 
 #endif

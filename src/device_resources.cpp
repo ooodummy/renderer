@@ -1,25 +1,23 @@
 #include "renderer/device_resources.hpp"
 
-#include "renderer/vertex.hpp"
-
 #include "renderer/shaders/compiled/pixel.h"
 #include "renderer/shaders/compiled/vertex.h"
-
 #include "renderer/util/win32_window.hpp"
+#include "renderer/vertex.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
 renderer::device_resources::device_resources(DXGI_FORMAT back_buffer_format,
-														 DXGI_FORMAT depth_buffer_format,
-														 UINT back_buffer_count,
-														 D3D_FEATURE_LEVEL min_feature_level,
-														 UINT options) :
+											 DXGI_FORMAT depth_buffer_format,
+											 UINT back_buffer_count,
+											 D3D_FEATURE_LEVEL min_feature_level,
+											 UINT options) :
 	back_buffer_format_(back_buffer_format),
 	depth_buffer_format_(depth_buffer_format),
 	back_buffer_count_(back_buffer_count),
 	min_feature_level_(min_feature_level),
 	feature_level_(D3D_FEATURE_LEVEL_9_1),
-	output_size_({0, 0, 1, 1}),
+	output_size_({ 0, 0, 1, 1 }),
 	color_space_(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
 	options_(options) {}
 
@@ -120,11 +118,12 @@ void renderer::device_resources::create_window_size_dependent_resources() {
 	create_render_target_view();
 	create_depth_stencil_view();
 
-	screen_viewport_ = {
-		0.0f, 0.0f,
-		static_cast<float>(back_buffer_size_.x), static_cast<float>(back_buffer_size_.y),
-		D3D11_MIN_DEPTH, D3D11_MAX_DEPTH
-	};
+	screen_viewport_ = { 0.0f,
+						 0.0f,
+						 static_cast<float>(back_buffer_size_.x),
+						 static_cast<float>(back_buffer_size_.y),
+						 D3D11_MIN_DEPTH,
+						 D3D11_MAX_DEPTH };
 
 	set_orthographic_projection();
 
@@ -207,10 +206,11 @@ void renderer::device_resources::present() {
 			hr = device_->GetDeviceRemovedReason();
 		DPRINTF("[!] Device lost on Present, reason: {0:#x}\n", hr);
 		handle_device_lost();
-	} else {
+	}
+	else {
 		assert(SUCCEEDED(hr));
 
-		//if (dxgi_factory_->IsCurrent())
+		// if (dxgi_factory_->IsCurrent())
 		//	update_color_space();
 	}
 }
@@ -335,7 +335,8 @@ void renderer::device_resources::check_feature_support() {
 		ComPtr<IDXGIFactory5> factory5;
 		auto hr = dxgi_factory_.As(&factory5);
 		if (SUCCEEDED(hr))
-			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allow_tearing, sizeof(allow_tearing));
+			hr =
+			factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allow_tearing, sizeof(allow_tearing));
 
 		if (FAILED(hr) || !allow_tearing) {
 			options_ &= ~device_options::allow_tearing;
@@ -378,10 +379,9 @@ void renderer::device_resources::get_hardware_adapter(IDXGIAdapter1** pp_adapter
 	ComPtr<IDXGIFactory6> factory6;
 	if (SUCCEEDED(dxgi_factory_.As(&factory6))) {
 		for (UINT adapter_index = 0;
-			 SUCCEEDED(factory6->EnumAdapterByGpuPreference(
-			    adapter_index,
-			    DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-			    IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf())));
+			 SUCCEEDED(factory6->EnumAdapterByGpuPreference(adapter_index,
+															DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+															IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf())));
 			 adapter_index++) {
 			DXGI_ADAPTER_DESC1 desc;
 			auto hr = adapter->GetDesc1(&desc);
@@ -397,9 +397,7 @@ void renderer::device_resources::get_hardware_adapter(IDXGIAdapter1** pp_adapter
 	// Default to the first adapter
 	if (!adapter) {
 		for (UINT adapter_index = 0;
-			 SUCCEEDED(dxgi_factory_->EnumAdapters1(
-			    adapter_index,
-			    adapter.ReleaseAndGetAddressOf()));
+			 SUCCEEDED(dxgi_factory_->EnumAdapters1(adapter_index, adapter.ReleaseAndGetAddressOf()));
 			 adapter_index++) {
 			DXGI_ADAPTER_DESC1 desc;
 			auto hr = adapter->GetDesc1(&desc);
@@ -441,13 +439,8 @@ void renderer::device_resources::create_device() {
 #endif
 
 	static const D3D_FEATURE_LEVEL feature_levels[] = {
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_10_0,
-		D3D_FEATURE_LEVEL_9_3,
-		D3D_FEATURE_LEVEL_9_2,
-		D3D_FEATURE_LEVEL_9_1,
+		D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,	D3D_FEATURE_LEVEL_9_2,	D3D_FEATURE_LEVEL_9_1,
 	};
 
 	size_t feature_level_count = 0;
@@ -518,7 +511,7 @@ void renderer::device_resources::create_debug_interface() {
 		if (SUCCEEDED(debug_.As(&info_queue))) {
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
-			//info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
+			// info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
 
 			D3D11_MESSAGE_ID hide[] = {
 				D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
@@ -537,18 +530,18 @@ void renderer::device_resources::update_swap_chain() {
 	if (within_present_hook)
 		return;
 
-	const DXGI_FORMAT back_buffer_format = (options_ & (device_options::flip_present |
-														device_options::allow_tearing |
-														device_options::enable_hdr))
-										   ? no_srgb(back_buffer_format_)
-										   : back_buffer_format_;
+	const DXGI_FORMAT back_buffer_format =
+	(options_ & (device_options::flip_present | device_options::allow_tearing | device_options::enable_hdr))
+	? no_srgb(back_buffer_format_)
+	: back_buffer_format_;
 
 	if (swap_chain_) {
-		auto hr = swap_chain_->ResizeBuffers(back_buffer_count_,
-											 back_buffer_size_.x,
-											 back_buffer_size_.y,
-											 back_buffer_format,
-											 (options_ & device_options::allow_tearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u);
+		auto hr = swap_chain_->ResizeBuffers(
+		back_buffer_count_,
+		back_buffer_size_.x,
+		back_buffer_size_.y,
+		back_buffer_format,
+		(options_ & device_options::allow_tearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u);
 		assert(SUCCEEDED(hr));
 
 		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
@@ -562,10 +555,10 @@ void renderer::device_resources::update_swap_chain() {
 		return;
 	}
 
-	DXGI_SWAP_EFFECT swap_effect = (options_ & (device_options::flip_present |
-												device_options::allow_tearing |
-												device_options::enable_hdr))
-								   ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+	DXGI_SWAP_EFFECT swap_effect =
+	(options_ & (device_options::flip_present | device_options::allow_tearing | device_options::enable_hdr))
+	? DXGI_SWAP_EFFECT_FLIP_DISCARD
+	: DXGI_SWAP_EFFECT_DISCARD;
 
 	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {
 		back_buffer_size_.x,
@@ -600,8 +593,7 @@ void renderer::device_resources::create_render_target_view() {
 	auto hr = swap_chain_->GetBuffer(0, IID_PPV_ARGS(render_target_.ReleaseAndGetAddressOf()));
 	assert(SUCCEEDED(hr));
 
-	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2D,
-														   back_buffer_format_);
+	CD3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc(D3D11_RTV_DIMENSION_TEXTURE2D, back_buffer_format_);
 	hr = device_->CreateRenderTargetView(render_target_.Get(),
 										 &render_target_view_desc,
 										 render_target_view_.ReleaseAndGetAddressOf());
@@ -621,9 +613,10 @@ void renderer::device_resources::create_depth_stencil_view() {
 	HRESULT hr = device_->CreateTexture2D(&depth_stencil_desc, nullptr, depth_stencil_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
-	CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D,
-														   depth_buffer_format_);
-	hr = device_->CreateDepthStencilView(depth_stencil_.Get(), &depth_stencil_view_desc, depth_stencil_view_.ReleaseAndGetAddressOf());
+	CD3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc(D3D11_DSV_DIMENSION_TEXTURE2D, depth_buffer_format_);
+	hr = device_->CreateDepthStencilView(depth_stencil_.Get(),
+										 &depth_stencil_view_desc,
+										 depth_stencil_view_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 }
 
@@ -632,9 +625,7 @@ void renderer::device_resources::set_projection(const glm::mat4x4& projection) {
 	HRESULT hr = device_context_->Map(projection_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 	assert(SUCCEEDED(hr));
 
-	{
-		memcpy(mapped_resource.pData, &projection, sizeof(glm::mat4x4));
-	}
+	{ memcpy(mapped_resource.pData, &projection, sizeof(glm::mat4x4)); }
 
 	device_context_->Unmap(projection_buffer_.Get(), 0);
 }
@@ -651,9 +642,9 @@ void renderer::device_resources::set_orthographic_projection() {
 // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-part1
 void renderer::device_resources::create_shaders_and_layout() {
 	auto hr = device_->CreateVertexShader(vertex_shader_data,
-											 sizeof(vertex_shader_data),
-											 nullptr,
-											 vertex_shader_.ReleaseAndGetAddressOf());
+										  sizeof(vertex_shader_data),
+										  nullptr,
+										  vertex_shader_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 
 	hr = device_->CreatePixelShader(pixel_shader_data,
@@ -663,9 +654,9 @@ void renderer::device_resources::create_shaders_and_layout() {
 	assert(SUCCEEDED(hr));
 
 	D3D11_INPUT_ELEMENT_DESC input_desc[] = {
-		{"POS",	 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, 0,							   D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{ "COL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{ "UV",	0, DXGI_FORMAT_R32G32_FLOAT,		 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, (uint32_t)offsetof(vertex, pos),							   D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, (uint32_t)offsetof(vertex, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		 0, (uint32_t)offsetof(vertex, uv), D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
 	hr = device_->CreateInputLayout(input_desc,
@@ -713,8 +704,8 @@ void renderer::device_resources::create_states() {
 	assert(SUCCEEDED(hr));
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
-	rasterizer_desc.FillMode = D3D11_FILL_SOLID; // D3D11_FILL_WIREFRAME
-	rasterizer_desc.CullMode = D3D11_CULL_NONE;
+	rasterizer_desc.FillMode = D3D11_FILL_SOLID;// D3D11_FILL_WIREFRAME
+	rasterizer_desc.CullMode = D3D11_CULL_BACK;
 	rasterizer_desc.FrontCounterClockwise = FALSE;
 	rasterizer_desc.DepthBias = 0;
 	rasterizer_desc.DepthBiasClamp = 0.0f;
@@ -749,8 +740,8 @@ void renderer::device_resources::resize_buffers(size_t vertex_count) {
 	}
 
 	D3D11_BUFFER_DESC vertex_desc;
-	vertex_desc.ByteWidth = buffer_size_ * sizeof(vertex);
 	vertex_desc.Usage = D3D11_USAGE_DYNAMIC;
+	vertex_desc.ByteWidth = buffer_size_ * sizeof(vertex);
 	vertex_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	vertex_desc.MiscFlags = 0;
@@ -820,24 +811,66 @@ void renderer::device_resources::set_marker(const wchar_t* name) {
 	annotation_->SetMarker(name);
 }
 
-ID3D11Device1* renderer::device_resources::get_device() const { return device_.Get(); }
-ID3D11DeviceContext1* renderer::device_resources::get_device_context() { return device_context_.Get(); }
-ID3D11Texture2D* renderer::device_resources::get_render_target() { return render_target_.Get(); }
-ID3D11Texture2D* renderer::device_resources::get_depth_stencil() { return depth_stencil_.Get(); }
-ID3D11RenderTargetView* renderer::device_resources::get_render_target_view() { return render_target_view_.Get(); }
-ID3D11DepthStencilView* renderer::device_resources::get_depth_stencil_view() { return depth_stencil_view_.Get(); }
-D3D11_VIEWPORT renderer::device_resources::get_screen_viewport() { return screen_viewport_; }
-ID3D11SamplerState* renderer::device_resources::get_sampler_state() const { return sampler_state_.Get(); }
-ID3D11RasterizerState* renderer::device_resources::get_rasterizer_state() const { return rasterizer_state_.Get(); }
-ID3D11DepthStencilState* renderer::device_resources::get_depth_stencil_state() const { return depth_stencil_state_.Get(); }
-ID3D11BlendState* renderer::device_resources::get_blend_state() const { return blend_state_.Get(); }
-ID3D11VertexShader* renderer::device_resources::get_vertex_shader() const { return vertex_shader_.Get(); }
-ID3D11PixelShader* renderer::device_resources::get_pixel_shader() const { return pixel_shader_.Get(); }
-ID3D11InputLayout* renderer::device_resources::get_input_layout() const { return input_layout_.Get(); }
-ID3D11Buffer* renderer::device_resources::get_vertex_buffer() const { return vertex_buffer_.Get(); }
-size_t renderer::device_resources::get_buffer_size() const { return buffer_size_; }
-ID3D11Buffer* renderer::device_resources::get_projection_buffer() const { return projection_buffer_.Get(); }
-ID3D11Buffer* renderer::device_resources::get_command_buffer() const { return command_buffer_.Get(); }
-DXGI_FORMAT renderer::device_resources::get_back_buffer_format() const { return back_buffer_format_; }
-DXGI_FORMAT renderer::device_resources::get_depth_buffer_format() const { return depth_buffer_format_; }
-glm::u16vec2 renderer::device_resources::get_back_buffer_size() const { return back_buffer_size_; }
+ID3D11Device1* renderer::device_resources::get_device() const {
+	return device_.Get();
+}
+ID3D11DeviceContext1* renderer::device_resources::get_device_context() {
+	return device_context_.Get();
+}
+ID3D11Texture2D* renderer::device_resources::get_render_target() {
+	return render_target_.Get();
+}
+ID3D11Texture2D* renderer::device_resources::get_depth_stencil() {
+	return depth_stencil_.Get();
+}
+ID3D11RenderTargetView* renderer::device_resources::get_render_target_view() {
+	return render_target_view_.Get();
+}
+ID3D11DepthStencilView* renderer::device_resources::get_depth_stencil_view() {
+	return depth_stencil_view_.Get();
+}
+D3D11_VIEWPORT renderer::device_resources::get_screen_viewport() {
+	return screen_viewport_;
+}
+ID3D11SamplerState* renderer::device_resources::get_sampler_state() const {
+	return sampler_state_.Get();
+}
+ID3D11RasterizerState* renderer::device_resources::get_rasterizer_state() const {
+	return rasterizer_state_.Get();
+}
+ID3D11DepthStencilState* renderer::device_resources::get_depth_stencil_state() const {
+	return depth_stencil_state_.Get();
+}
+ID3D11BlendState* renderer::device_resources::get_blend_state() const {
+	return blend_state_.Get();
+}
+ID3D11VertexShader* renderer::device_resources::get_vertex_shader() const {
+	return vertex_shader_.Get();
+}
+ID3D11PixelShader* renderer::device_resources::get_pixel_shader() const {
+	return pixel_shader_.Get();
+}
+ID3D11InputLayout* renderer::device_resources::get_input_layout() const {
+	return input_layout_.Get();
+}
+ID3D11Buffer* renderer::device_resources::get_vertex_buffer() const {
+	return vertex_buffer_.Get();
+}
+size_t renderer::device_resources::get_buffer_size() const {
+	return buffer_size_;
+}
+ID3D11Buffer* renderer::device_resources::get_projection_buffer() const {
+	return projection_buffer_.Get();
+}
+ID3D11Buffer* renderer::device_resources::get_command_buffer() const {
+	return command_buffer_.Get();
+}
+DXGI_FORMAT renderer::device_resources::get_back_buffer_format() const {
+	return back_buffer_format_;
+}
+DXGI_FORMAT renderer::device_resources::get_depth_buffer_format() const {
+	return depth_buffer_format_;
+}
+glm::u16vec2 renderer::device_resources::get_back_buffer_size() const {
+	return back_buffer_size_;
+}

@@ -37,16 +37,16 @@ float4 ps_main(VS_Output input) : SV_TARGET {
 	if (is_texture) {
 		float4 sampled = active_texture.Sample(samplerState, input.uv);
 
-		if (is_mask) {
-			// Adjust hue using HSL conversion
-            /*float3 hsl = RGBtoHSL(sampled.xyz);
-            hsl.x = RGBtoHSL(input.color.xyz).x;
-            float3 rgb = HSLtoRGB(hsl);
-            return float4(rgb, sampled.w * input.color.w);*/
-            return float4(input.color.xyz, sampled.w * input.color.w);
-		}
+		// if (is_mask) {
+		// 	// Adjust hue using HSL conversion
+        //     /*float3 hsl = RGBtoHSL(sampled.xyz);
+        //     hsl.x = RGBtoHSL(input.color.xyz).x;
+        //     float3 rgb = HSLtoRGB(hsl);
+        //     return float4(rgb, sampled.w * input.color.w);*/
+        //     return float4(input.color.xyz, sampled.w * input.color.w);
+		// }
 
-		return sampled;
+		return input.color * sampled;
 	}
 
 	return input.color;
