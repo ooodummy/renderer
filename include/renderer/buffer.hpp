@@ -47,7 +47,6 @@ namespace renderer {
 	public:
 		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {
 			vertices_.reserve(5000);
-			indices_.reserve(10000);
 		}
 
 		explicit buffer(d3d11_renderer* dx11, size_t vertices_reserve_size, size_t batches_reserve_size) : dx11_(dx11) {
@@ -187,22 +186,13 @@ namespace renderer {
 		void draw_cylinder(
 		const glm::vec3& start, const glm::vec3& end, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
 
-		enum text_align : uint8_t {
-			none,
-			right = 1 << 0, // Will draw at pos - text_size.x
-			bottom = 1 << 1,// Will draw at pos - text_size.y
-			center_x = 1 << 2,
-			center_y = 1 << 3,
-			center = center_x | center_y
-		};
-
 		template<typename string_t>
 		void draw_text(const string_t& text,
 					   glm::vec2 pos,
 					   color_rgba col = color_rgba(255, 255, 255),
 					   text_font* font = get_default_font(),
-					   text_align align = none) {
-			draw_text(std::basic_string_view(text), pos, col, font, align);
+					   text_flags flags = align_none) {
+			draw_text(std::basic_string_view(text), pos, col, font, flags);
 		}
 
 		template<typename char_t>
@@ -210,23 +200,41 @@ namespace renderer {
 					   glm::vec2 pos,
 					   color_rgba col = color_rgba(255, 255, 255),
 					   text_font* font = get_default_font(),
-					   text_align align = none) {
+					   text_flags flags = align_none) {
+            if (flags & outline_text) {
+                auto cleaned_flags = flags & ~outline_text;
+
+                draw_text(text, { pos.x + 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+                draw_text(text, { pos.x - 1, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+                draw_text(text, { pos.x + 1, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+                draw_text(text, { pos.x - 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+
+                draw_text(text, { pos.x + 1, pos.y }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+                draw_text(text, { pos.x - 1, pos.y }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+                draw_text(text, { pos.x, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+                draw_text(text, { pos.x, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+            }
+
 			float new_line_pos = pos.x;
 			float size = font->size;
 
-			if (align != none) {
+			if (flags != align_none) {
 				glm::vec2 text_size = font->calc_text_size<char_t>(text, size);
 				if (text_size.x <= 0.f || text_size.y <= 0.f)
 					return;
 
-				if (align & right)
-					pos.x -= text_size.x;
-				if (align & bottom)
-					pos.y -= text_size.y;
-				if (align & center_x)
-					pos.x -= text_size.x / 2.f;
-				if (align & center_y)
-					pos.y -= text_size.y / 2.f;
+			    if (flags & align_top)
+			        pos.y += text_size.y;
+			    if (flags & align_left)
+			        pos.x += text_size.x;
+			    if (flags & align_vertical)
+			        pos.y -= text_size.y / 2.f;
+			    if (flags & align_right)
+			        pos.x -= text_size.x;
+			    if (flags & align_bottom)
+			        pos.y -= text_size.y;
+			    if (flags & align_horizontal)
+			        pos.x -= text_size.x / 2.f;
 
 				new_line_pos = pos.x;
 			}
@@ -296,25 +304,6 @@ namespace renderer {
 
 			delete[] vertices;
 		}
-    
-    template<typename T>
-    void draw_text_outline(std::basic_string_view<char_t> text,
-					   glm::vec2 pos,
-					   color_rgba col = color_rgba(255, 255, 255),
-					   text_font* font = get_default_font(),
-					   text_align align = none) {
-            draw_text(text, { pos.x + 1, pos.y + 1 }, font, COLOR_BLACK, align);
-            draw_text(text, { pos.x - 1, pos.y - 1 }, font, COLOR_BLACK, align);
-            draw_text(text, { pos.x + 1, pos.y - 1 }, font, COLOR_BLACK, align);
-            draw_text(text, { pos.x - 1, pos.y + 1 }, font, COLOR_BLACK, align);
-
-            draw_text(text, { pos.x + 1, pos.y }, font, COLOR_BLACK, align);
-            draw_text(text, { pos.x - 1, pos.y }, font, COLOR_BLACK, align);
-            draw_text(text, { pos.x, pos.y - 1 }, font, COLOR_BLACK, align);
-            draw_text(text, { pos.x, pos.y + 1 }, font, COLOR_BLACK, align);
-
-            draw_text(text, pos, col, font, align);
-    }
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();
