@@ -147,15 +147,36 @@ namespace renderer {
 			static const uint32_t* ranges_default() {
 				static const uint32_t ranges[] = {
 					0x0020, 0x024F, // Latin + Latin Supplement + Latin Extended-A + Latin Extended-B
+					0x0300, 0x036F, // Combining Diacritical Marks
 					0x0370, 0x03FF, // Greek + Coptic
 					0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
+					0x0590, 0x05FF, // Hebrew
+					0x0600, 0x06FF, // Arabic
+					0x0750, 0x077F, // Arabic Supplement
+					0x08A0, 0x08FF, // Arabic Extended-A
+					0x0870, 0x089F, // Arabic Extended-B
+					0x0E00, 0x0E7F, // Thai
+					0x1800, 0x18AF, // Mongolian
+					0x1950, 0x197F, // Tai Le
+					0x1A20, 0x1AAF, // Tai Tham
+					0x1E00, 0x1EFF, // Latin Extended Additional
 					0x1F00, 0x1FFF, // Greek Extended
 					0x2C60, 0x2C7F, // Latin Extended-C
 					0x2DE0, 0x2DFF, // Cyrillic Extended-A
+					0x4E00, 0x62FF, // CJK
+					0x6300, 0x77FF, // CJK
+					0x7800, 0x8CFF, // CJK
+					0x8D00, 0x9FFF, // CJK
 					0xA640, 0xA69F, // Cyrillic Extended-B
 					0xA720, 0xA7FF, // Latin Extended-D
+					0xAA80, 0xAADF, // Thai Viet
 					0xAB30, 0xAB6F, // Latin Extended-E
+					0xFB00, 0xFDFF, // Alphabetic Presentation Forms + Arabic Presentation Forms-A
+					0xFE20, 0xFE2F, // Combining Half Marks
+					0xFE70, 0xFEFF, // Arabic Presentation Forms-B
 					0x10780, 0x107BF, // Latin Extended-F
+					0x10EC0, 0x10EFF, // Arabic Extended-C
+					0x11660, 0x1167F, // Mongolian Supplement
 					0x1DF00, 0x1DFFF, // Latin Extended-G
 					0x1E030, 0x1E05F, // Cyrillic Extended-D
 					0,
