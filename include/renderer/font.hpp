@@ -98,25 +98,25 @@ namespace renderer {
 	// Texture atlas can be used for font's to reduce sizes and batch
 	// Could create a buffer and then when drawing textured quads I could just add them to the texture and draw that
 	// I don't know how ordering the z position can be handled when doing this though
-    enum text_flags : uint32_t {
-	    align_none = 0,
-        align_top = 1 << 0,
-        align_left = 1 << 1,
-        align_vertical = 1 << 2,
-        align_right = 1 << 3,
-        align_bottom = 1 << 4,
-        align_horizontal = 1 << 5,
-        outline_text = 1 << 6,
-        align_top_left = align_top | align_left,
-        align_top_right = align_top | align_right,
-        align_bottom_left = align_bottom | align_left,
-        align_bottom_right = align_bottom | align_right,
-        align_center_left = align_left | align_vertical,
-        align_center_right = align_right | align_vertical,
-        align_center_top = align_top | align_horizontal,
-        align_center_bottom = align_bottom | align_horizontal,
-        align_center = align_vertical | align_horizontal
-    };
+	enum text_flags : uint32_t {
+		align_none = 0,
+		align_top = 1 << 0,
+		align_left = 1 << 1,
+		align_vertical = 1 << 2,
+		align_right = 1 << 3,
+		align_bottom = 1 << 4,
+		align_horizontal = 1 << 5,
+		outline_text = 1 << 6,
+		align_top_left = align_top | align_left,
+		align_top_right = align_top | align_right,
+		align_bottom_left = align_bottom | align_left,
+		align_bottom_right = align_bottom | align_right,
+		align_center_left = align_left | align_vertical,
+		align_center_right = align_right | align_vertical,
+		align_center_top = align_top | align_horizontal,
+		align_center_bottom = align_bottom | align_horizontal,
+		align_center = align_vertical | align_horizontal
+	};
 
 	enum rasterizer_flags : uint32_t {
 		no_hinting = 1 << 0,
@@ -134,29 +134,31 @@ namespace renderer {
 		struct glyph {
 			struct config {
 				glm::vec2 offset{}, extra_spacing{};
-				const uint16_t* ranges = nullptr;
+				const uint32_t* ranges = nullptr;
 				float min_advance_x = 0.0f, max_advance_x = std::numeric_limits<float>::max();
 			};
 
 			uint32_t codepoint = 31;
 			bool visible = true;
 			float advance_x = 0.f;
-			glm::vec4 corners{}, texture_coordinates{}; // TODO: Ditch vec4 for these members
+			glm::vec4 corners{}, texture_coordinates{};// TODO: Ditch vec4 for these members
 			glm::vec2 offset{};
 
-			static const uint16_t* ranges_default() {
-				static const uint16_t ranges[] = {
-					0x0020,
-					0x00FF,// Basic Latin + Latin Supplement
+			static const uint32_t* ranges_default() {
+				static const uint32_t ranges[] = {
+					0x0020, 0x024F, // Latin + Latin Supplement + Latin Extended-A + Latin Extended-B
+					0x0370, 0x03FF, // Greek + Coptic
+					0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
+					0x1F00, 0x1FFF, // Greek Extended
+					0x2C60, 0x2C7F, // Latin Extended-C
+					0x2DE0, 0x2DFF, // Cyrillic Extended-A
+					0xA640, 0xA69F, // Cyrillic Extended-B
+					0xA720, 0xA7FF, // Latin Extended-D
+					0xAB30, 0xAB6F, // Latin Extended-E
+					0x10780, 0x107BF, // Latin Extended-F
+					0x1DF00, 0x1DFFF, // Latin Extended-G
+					0x1E030, 0x1E05F, // Cyrillic Extended-D
 					0,
-				};
-
-				return &ranges[0];
-			}
-
-			static const uint16_t* ranges_cyrillic() {
-				static const uint16_t ranges[] = {
-					0x0020, 0x00FF, 0x0400, 0x052F, 0x2DE0, 0x2DFF, 0xA640, 0xA69F, 0,
 				};
 
 				return &ranges[0];
@@ -178,7 +180,7 @@ namespace renderer {
 
 		struct font_lookup_table {
 			std::vector<float> advances_x{};
-			std::vector<uint16_t> indexes{};
+			std::vector<uint32_t> indexes{};
 			bool dirty = false;
 
 			void resize(size_t new_size) {
@@ -190,12 +192,12 @@ namespace renderer {
 					return;
 
 				advances_x.resize(new_size, -1.0f);
-				indexes.resize(new_size, std::numeric_limits<uint16_t>::max());
+				indexes.resize(new_size, std::numeric_limits<uint32_t>::max());
 			}
 		};
 
 		static inline text_font* default_font = nullptr;
-		uint16_t fallback_char = '?';
+		uint32_t fallback_char = '?';
 
 		font_lookup_table lookup_table{};
 		std::vector<glyph> glyphs{};
@@ -210,16 +212,16 @@ namespace renderer {
 
 		void build_lookup_table();
 
-		glyph* find_glyph(uint16_t c, bool fallback = true);
+		glyph* find_glyph(uint32_t c, bool fallback = true);
 		void add_glyph(
-		font_config* src_config, uint16_t c, glm::vec4 corners, const glm::vec4& texture_coordinates, float advance_x);
+		font_config* src_config, uint32_t c, glm::vec4 corners, const glm::vec4& texture_coordinates, float advance_x);
 
 		void set_fallback_char(const uint16_t c) {
 			fallback_char = c;
 			build_lookup_table();
 		}
 
-		void set_glyph_visible(const uint16_t c, const bool visible) {
+		void set_glyph_visible(const uint32_t c, const bool visible) {
 			if (glyph* glyph = find_glyph(c))
 				glyph->visible = visible;
 		}
@@ -228,7 +230,7 @@ namespace renderer {
 			return container_atlas;
 		}
 
-		[[nodiscard]] float get_char_advance(uint16_t c) const {
+		[[nodiscard]] float get_char_advance(uint32_t c) const {
 			return (c < lookup_table.advances_x.size()) ? lookup_table.advances_x[c] : fallback_advance_x;
 		}
 
@@ -321,16 +323,16 @@ namespace renderer {
 		text_font* add_font_from_file_ttf(std::string_view filename,
 										  float size_pixels,
 										  text_font::font_config* config = nullptr,
-										  const uint16_t* glyph_ranges = text_font::glyph::ranges_default());
+										  const uint32_t* glyph_ranges = text_font::glyph::ranges_default());
 		text_font* add_font_from_memory_ttf(const std::vector<char>& font_data,
 											float size_pixels,
 											text_font::font_config* config = nullptr,
-											const uint16_t* glyph_ranges = text_font::glyph::ranges_default());
+											const uint32_t* glyph_ranges = text_font::glyph::ranges_default());
 		text_font*
 		add_font_from_memory_compressed_ttf(const std::vector<uint8_t>& compressed_ttf,
 											float size_pixels,
 											text_font::font_config* config = nullptr,
-											const uint16_t* glyph_ranges = text_font::glyph::ranges_default());
+											const uint32_t* glyph_ranges = text_font::glyph::ranges_default());
 
 		void clear_input_data();
 		void clear() {
@@ -381,7 +383,7 @@ namespace renderer {
 
 		stbrp_rect* rects{};
 
-		const std::uint16_t* src_ranges{};
+		const std::uint32_t* src_ranges{};
 		int dst_index{};
 		std::vector<src_glyph> glyphs_list{};
 	};

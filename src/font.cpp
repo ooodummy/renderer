@@ -49,19 +49,19 @@ namespace renderer {
 				lookup_table.advances_x[i] = fallback_advance_x;
 	}
 
-	text_font::glyph* text_font::find_glyph(const uint16_t c, const bool fallback) {
+	text_font::glyph* text_font::find_glyph(const uint32_t c, const bool fallback) {
 		if (c >= lookup_table.indexes.size())
 			return fallback ? fallback_glyph : nullptr;
 
-		const uint16_t i = lookup_table.indexes[c];
-		if (i == std::numeric_limits<uint16_t>::max())
+		const uint32_t i = lookup_table.indexes[c];
+		if (i == std::numeric_limits<uint32_t>::max())
 			return fallback ? fallback_glyph : nullptr;
 
 		return &glyphs[i];
 	}
 
 	void text_font::add_glyph(
-	font_config* cfg, uint16_t codepoint, glm::vec4 corners, const glm::vec4& texture_coordinates, float advance_x) {
+	font_config* cfg, uint32_t codepoint, glm::vec4 corners, const glm::vec4& texture_coordinates, float advance_x) {
 		if (cfg) {
 			const float advance_x_original = advance_x;
 			advance_x = std::clamp(advance_x, cfg->glyph_config.min_advance_x, cfg->glyph_config.max_advance_x);
@@ -202,7 +202,7 @@ namespace renderer {
 			build_data& dst = dst_array[src.dst_index];
 			src.src_ranges =
 			config.glyph_config.ranges ? config.glyph_config.ranges : text_font::glyph::ranges_default();
-			for (const uint16_t* src_range = src.src_ranges; src_range[0] && src_range[1]; src_range += 2)
+			for (const uint32_t* src_range = src.src_ranges; src_range[0] && src_range[1]; src_range += 2)
 				src.glyphs_highest = std::max(src.glyphs_highest, (int)src_range[1]);
 			dst.glyphs_highest = std::max(dst.glyphs_highest, src.glyphs_highest);
 		}
@@ -214,7 +214,7 @@ namespace renderer {
 			if (dst.glyphs_set.empty())
 				dst.glyphs_set.resize((dst.glyphs_highest + 31) >> 5, 0);
 
-			for (const uint16_t* src_range = src.src_ranges; src_range[0] && src_range[1]; src_range += 2) {
+			for (const uint32_t* src_range = src.src_ranges; src_range[0] && src_range[1]; src_range += 2) {
 				for (const uint32_t& codepoint : std::views::iota(src_range[0], src_range[1] + (uint32_t)1)) {
 					if (dst.glyphs_set[codepoint >> 5] & (uint32_t)1 << (codepoint & 31))
 						continue;
@@ -460,7 +460,7 @@ namespace renderer {
 	text_font* font_atlas::add_font_from_file_ttf(const std::string_view filename,
 												  const float size_pixels,
 												  text_font::font_config* config,
-												  const uint16_t* glyph_ranges) {
+												  const uint32_t* glyph_ranges) {
 		if (locked) {
 			return nullptr;
 		}
@@ -481,7 +481,7 @@ namespace renderer {
 	text_font* font_atlas::add_font_from_memory_ttf(const std::vector<char>& font_file,
 													float size_pixels,
 													text_font::font_config* config,
-													const uint16_t* glyph_ranges) {
+													const uint32_t* glyph_ranges) {
 		if (locked) {
 			return nullptr;
 		}
@@ -502,7 +502,7 @@ namespace renderer {
 	text_font* font_atlas::add_font_from_memory_compressed_ttf(const std::vector<uint8_t>& compressed_ttf,
 															   float size_pixels,
 															   text_font::font_config* config,
-															   const uint16_t* glyph_ranges) {
+															   const uint32_t* glyph_ranges) {
 		// std::vector<char> buf_decompressed_data(stb::decompress_length((uint8_t*)compressed_ttf.data()));
 		// stb::decompress((uint8_t*)buf_decompressed_data.data(), compressed_ttf.data());
 		//
