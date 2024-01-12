@@ -110,7 +110,11 @@ namespace renderer {
 
 		[[nodiscard]] ID3D11Buffer* get_vertex_buffer() const;
 
-		[[nodiscard]] size_t get_buffer_size() const;
+		[[nodiscard]] size_t get_vertex_buffer_size() const;
+
+		[[nodiscard]] ID3D11Buffer* get_index_buffer() const;
+
+		[[nodiscard]] size_t get_index_buffer_size() const;
 
 		[[nodiscard]] ID3D11Buffer* get_projection_buffer() const;
 
@@ -161,7 +165,7 @@ namespace renderer {
 		void create_constant_buffers();
 
 	public:
-		void resize_buffers(size_t vertex_count);
+		void resize_buffers(size_t vertex_count, size_t index_count);
 
 		void release_resources();
 
@@ -200,7 +204,9 @@ namespace renderer {
 		// Buffers
 		ComPtr<ID3D11InputLayout> input_layout_;
 		ComPtr<ID3D11Buffer> vertex_buffer_;
-		size_t buffer_size_ = 0;
+		size_t vertex_buffer_size_ = 0;
+		ComPtr<ID3D11Buffer> index_buffer_;
+		size_t index_buffer_size_ = 0;
 
 		// Constant buffers
 		ComPtr<ID3D11Buffer> projection_buffer_;

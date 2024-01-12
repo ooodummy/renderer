@@ -15,13 +15,6 @@ constexpr renderer::color_cmyka::operator color_rgba() const {
 			 static_cast<uint8_t>(255.0f * (1.0f - y) * (1.0f - k)), a };
 }
 
-constexpr renderer::color_hex::color_hex(uint32_t hex) : hex(hex) {}
-
-constexpr renderer::color_hex::operator color_rgba() const {
-	return { static_cast<uint8_t>(hex & 0xff), static_cast<uint8_t>((hex >> 8) & 0xff),
-			 static_cast<uint8_t>((hex >> 16) & 0xff), static_cast<uint8_t>((hex >> 24) & 0xff) };
-}
-
 constexpr renderer::color_hsla::color_hsla(float h, float s, float l, uint8_t a) : h(h), s(s), l(l), a(a) {}
 
 renderer::color_hsla::operator color_rgba() const {

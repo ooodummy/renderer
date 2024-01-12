@@ -18,15 +18,6 @@ if (NOT TARGET freetype)
     FetchContent_MakeAvailable(freetype)
 endif()
 
-if (NOT TARGET fmt)
-    message("Fetching fmt")
-    FetchContent_Declare(fmt
-            GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-            GIT_TAG        9.1.0
-    )
-    FetchContent_MakeAvailable(fmt)
-endif()
-
 if (NOT TARGET glm)
     message("Fetching glm")
     FetchContent_Declare(glm
@@ -87,7 +78,7 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES} include/renderer/shaders/pixel.hls
 message("Including directories")
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 message("Linking libraries")
-target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt glm::glm freetype)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm freetype)
 target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 dxgi dxguid)
 
 add_dependencies(${PROJECT_NAME} shaders)

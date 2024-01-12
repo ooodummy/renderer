@@ -4,6 +4,9 @@
 #include <renderer/renderer.hpp>
 #include <thread>
 
+renderer::text_font* tahoma = nullptr;
+renderer::text_font* seguiemj = nullptr;
+
 extern "C" {
 	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
@@ -106,10 +109,6 @@ void draw_test_primitives(renderer::buffer* buf) {
 		{ 600.0f, 600.0f }
 	};
 
-	// TODO: Polylines are broken
-	static auto polyline = renderer::polyline_shape(points, rainbow, 20.0f, renderer::joint_miter);
-	polyline.set_color(rainbow);
-
 	const auto thickness = factor * 30.0f + 1.0f;
 	const auto rounding = factor * 60.0f;
 	const auto arc = factor * glm::two_pi<float>();
@@ -117,30 +116,30 @@ void draw_test_primitives(renderer::buffer* buf) {
 	// buf->push_key(COLOR_RED);
 
 	// Testing arc performance
-	buf->draw_line({ 200.0f, 200.0f }, { 300.0f, 300.0f }, COLOR_WHITE, thickness);
-	buf->draw_rect({ 350.0f, 200.0f, 100.0f, 100.0f }, COLOR_RED, thickness);
-	buf->draw_rect_filled({ 500.0f, 200.0f, 100.0f, 100.0f }, COLOR_ORANGE);
-	buf->draw_rect_rounded({ 650.0f, 200.0f, 100.0f, 100.0f }, rounding, COLOR_YELLOW.alpha(80), thickness);
-	buf->draw_rect_rounded_filled({ 800.0f, 200.0f, 100.0f, 100.0f }, rounding, COLOR_GREEN.alpha(80));
-	buf->draw_arc({ 250.0f, 400.0f }, arc, arc, 50.0f, COLOR_BLUE, thickness, 32, false);
-	buf->draw_arc({ 400.0f, 400.0f }, arc, arc, 50.0f, COLOR_PURPLE, 0.0f, 32, true);
-	buf->draw_circle({ 550.0f, 400.0f }, 50.0f, COLOR_WHITE, thickness, 32);
-	buf->draw_circle_filled({ 700.0f, 400.0f }, 50.0f, COLOR_RED, 32);
+	// buf->draw_line({ 200.0f, 200.0f }, { 300.0f, 300.0f }, COLOR_WHITE, thickness);
+	buf->draw_rect({ 350.0f, 200.0f } , { 450.0f, 300.0f }, COLOR_WHITE, 0, renderer::edge_none, thickness);
+	// buf->draw_rect_filled({ 500.0f, 200.0f }, { 600.0f, 300.0f }, COLOR_ORANGE);
+	// buf->draw_rect({ 650.0f, 200.0f }, { 750.0f, 300.0f }, COLOR_YELLOW.alpha(80), rounding, renderer::draw_flags::edge_all, thickness);
+	// buf->draw_rect_filled({ 800.0f, 200.0f } , { 900.0f, 300.0f }, COLOR_GREEN.alpha(80), rounding, renderer::edge_all);
+	// buf->draw_circle({ 550.0f, 400.0f }, 50.0f, COLOR_WHITE, thickness, 32);
+	// buf->draw_circle_filled({ 700.0f, 400.0f }, 50.0f, COLOR_RED, 32);
 
 	// Alpha blending
-	buf->draw_circle_filled({ 125.0f, 190.0f }, 30.0f, COLOR_RED.alpha(175), 32);
-	buf->draw_circle_filled({ 105.0f, 225.0f }, 30.0f, COLOR_BLUE.alpha(175), 32);
-	buf->draw_circle_filled({ 145.0f, 225.0f }, 30.0f, COLOR_GREEN.alpha(175), 32);
-	buf->draw_triangle_filled({ 125.0f, 190.0f }, { 105.0f, 225.0f }, { 145.0f, 225.0f }, COLOR_RED, COLOR_GREEN,
-							  COLOR_BLUE);
+	// buf->draw_circle_filled({ 125.0f, 190.0f }, 30.0f, COLOR_RED.alpha(175), 32);
+	// buf->draw_circle_filled({ 105.0f, 225.0f }, 30.0f, COLOR_BLUE.alpha(175), 32);
+	// buf->draw_circle_filled({ 145.0f, 225.0f }, 30.0f, COLOR_GREEN.alpha(175), 32);
 
-	std::string demo_string = std::format("Hello World! {}", performance.get_fps());
-	buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
-	buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
+	// std::string demo_string = std::format("Hello World! {}", performance.get_fps());
+	// buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
+	// buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
 
-	for (auto i = 0; i < 50000; i++) {
-		buf->draw_text("TEST STRING", { 25.0f, 150.f });
-	}
+	// for (auto i = 0; i < 5000; i++) {
+	// 	buf->draw_text("TEST STRING", { 25.0f, 150.f }, COLOR_WHITE, tahoma, renderer::outline_text);
+	//
+	// 	buf->draw_triangle_filled({ 125.0f, 190.0f }, { 105.0f, 225.0f }, { 145.0f, 225.0f }, COLOR_RED);
+	//
+	// 	buf->draw_text("TEXT STRING 1", { 25.0f, 150.f }, COLOR_WHITE, seguiemj, renderer::outline_text);
+	// }
 
 	// Test if the get text size result is accurate
 	// auto size = dx11->get_text_size(demo_string, segoe_font);
@@ -150,12 +149,13 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	const auto id = dx11->register_buffer(0, 1000000, 1000000);
+	const auto id = dx11->register_buffer(0, 1000000, 1000000, 8);
+	dx11->create_atlases();
+	dx11->push_font(tahoma);
 
 	while (!close_requested) {
 		updated_draw.wait();
 
-		dx11->create_atlases();
 		renderer::atlas.locked = true;
 		set_default_font(renderer::get_default_font());
 
@@ -170,25 +170,28 @@ void draw_thread() {
 		renderer::atlas.locked = false;
 		updated_buf.notify();
 	}
+
+	dx11->pop_font();
+	dx11->destroy_atlases();
 }
 
 // TODO: Mutex for texture creation and atlas
 int main() {
 #if _DEBUG
-	if (GetConsoleWindow() == nullptr) {
-		if (!AllocConsole()) {
-			MessageBoxA(nullptr, fmt::format("Unable to allocate console.\nError: {}", GetLastError()).c_str(), "Error",
-						MB_ICONERROR);
-			return 1;
-		}
-
-		ShowWindow(GetConsoleWindow(), SW_SHOW);
-
-		FILE* dummy;
-		freopen_s(&dummy, "CONIN$", "r", stdin);
-		freopen_s(&dummy, "CONOUT$", "w", stderr);
-		freopen_s(&dummy, "CONOUT$", "w", stdout);
-	}
+	// if (GetConsoleWindow() == nullptr) {
+	// 	if (!AllocConsole()) {
+	// 		MessageBoxA(nullptr, std::format("Unable to allocate console.\nError: {}", GetLastError()).c_str(), "Error",
+	// 					MB_ICONERROR);
+	// 		return 1;
+	// 	}
+//
+	// 	ShowWindow(GetConsoleWindow(), SW_SHOW);
+//
+	// 	FILE* dummy;
+	// 	freopen_s(&dummy, "CONIN$", "r", stdin);
+	// 	freopen_s(&dummy, "CONOUT$", "w", stderr);
+	// 	freopen_s(&dummy, "CONOUT$", "w", stdout);
+	// }
 #endif
 
 	application = std::make_shared<renderer::win32_window>("D3D11 Renderer", glm::i32vec2{ 960, 500 }, WndProc);
@@ -221,7 +224,9 @@ int main() {
 	// segoe_font = dx11->register_font(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 32, FW_THIN, true);
 	renderer::text_font::font_config config{ .glyph_config{ .ranges{ renderer::text_font::glyph::ranges_default() } },
 											 .size_pixels = 32.f };
-	renderer::atlas.add_font_default(&config);
+	tahoma = renderer::atlas.add_font_default(&config);
+
+	seguiemj = renderer::atlas.add_font_from_file_ttf(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 32.f, &config);
 
 	std::thread draw(draw_thread);
 

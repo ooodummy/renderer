@@ -103,9 +103,66 @@ namespace renderer {
 		font->descent = descent;
 	}
 
+	void font_atlas::build_render_default_tex_data() {
+		auto* r = &custom_rects[white_pixel_id];
+		assert(r->is_packed());
+
+		const int w = (int)texture.size.x;
+		const int offset = (int)r->size.x + (int)r->size.y * w;
+		texture.pixels_alpha8[offset] = texture.pixels_alpha8[offset + 1] = texture.pixels_alpha8[offset + w] =
+		texture.pixels_alpha8[offset + w + 1] = 0xFF;
+
+		tex_uv_white_pixel = { (r->size.x + 0.5f) / texture.size.x, (r->size.y + 0.5f) / texture.size.y };
+	}
+
+	void font_atlas::build_render_lines_tex_data() {
+		auto* r = &custom_rects[lines_id];
+		assert(r->is_packed());
+
+		for (uint32_t n = 0; n < 64; n++) {
+			// Each line consists of at least two empty pixels at the ends, with a line of solid pixels in the middle
+			unsigned int y = n;
+			unsigned int line_width = n;
+			unsigned int pad_left = (r->size.z - line_width) / 2;
+			unsigned int pad_right = r->size.z - (pad_left + line_width);
+
+			// Write each slice
+			unsigned char* write_ptr =
+			&texture.pixels_alpha8[(int)r->size.x + (((int)r->size.y + y) * (int)texture.size.x)];
+			for (unsigned int i = 0; i < pad_left; i++)
+				*(write_ptr + i) = 0x00;
+
+			for (unsigned int i = 0; i < line_width; i++)
+				*(write_ptr + pad_left + i) = 0xFF;
+
+			for (unsigned int i = 0; i < pad_right; i++)
+				*(write_ptr + pad_left + line_width + i) = 0x00;
+
+			// Calculate UVs for this line
+			glm::vec2 uv0 =
+			glm::vec2((float)(r->size.x + pad_left - 1) / texture.size.x, (float)(r->size.y + y) / texture.size.y);
+			glm::vec2 uv1 = glm::vec2((float)(r->size.x + pad_left + line_width + 1) / texture.size.x,
+									  (float)(r->size.y + y + 1) / texture.size.y);
+			float half_v =
+			(uv0.y + uv1.y) * 0.5f;// Calculate a constant V in the middle of the row to avoid sampling artifacts
+			tex_uv_lines[n] = glm::vec4(uv0.x, half_v, uv1.x, half_v);
+		}
+	}
+
+
 	void font_atlas::build_finish() {
 		if (texture.pixels_alpha8.empty()) {
 			return;
+		}
+
+		build_render_default_tex_data();
+		build_render_lines_tex_data();
+
+		for (auto&& r : custom_rects) {
+			if (r.font == nullptr || r.glyph_id == 0)
+				continue;
+
+			// Hopefully we don't hit this for now
 		}
 
 		for (const std::unique_ptr<text_font>& font : fonts) {
@@ -127,6 +184,15 @@ namespace renderer {
 		if (auto result = FT_Init_FreeType(&ft_library); result) {
 			return;
 		}
+
+		custom_rects.push_back(custom_rect{
+		.size{ 2.f, 2.f, 0.f, 0.f }
+		});
+		white_pixel_id = custom_rects.size() - 1;
+		custom_rects.push_back(custom_rect{
+		.size{ 65.f, 64.f, 0.f, 0.f  }
+		  });
+		lines_id = custom_rects.size() - 1;
 
 		texture = font_texture{};
 
@@ -325,7 +391,7 @@ namespace renderer {
 		}
 
 		int surface_sqrt = std::sqrtf(total_surface) + 1;
-		texture.size = glm::vec2((surface_sqrt >= 4096 * 0.7f)  ? 4096
+		texture.size = glm::vec2((surface_sqrt >= 4096 * 0.7f)	   ? 4096
 								 : (surface_sqrt >= 2048 * 0.7f)   ? 2048
 								   : (surface_sqrt >= 1024 * 0.7f) ? 1024
 																   : 512,
@@ -334,6 +400,7 @@ namespace renderer {
 		std::vector<stbrp_node> pack_nodes((size_t)texture.size.x - texture.glyph_padding);
 		stbrp_context pack_context{};
 		stbrp_init_target(&pack_context, texture.size.x, 1024 * 32, pack_nodes.data(), pack_nodes.size());
+		pack_custom_rects(&pack_context);
 
 		for (build_src& src : src_array) {
 			if (!src.glyphs_count)
@@ -383,7 +450,8 @@ namespace renderer {
 					std::next(texture.pixels_alpha8.begin(), (t.y * texture.size.x) + t.x + (texture.size.x * y)));
 				}
 
-				auto temp = glm::vec2(glyph.glyph.texture_coordinates.x, glyph.glyph.texture_coordinates.y) + config.glyph_config.offset + glm::vec2(0.f, round(dst_font->ascent));
+				auto temp = glm::vec2(glyph.glyph.texture_coordinates.x, glyph.glyph.texture_coordinates.y) +
+							config.glyph_config.offset + glm::vec2(0.f, round(dst_font->ascent));
 
 				dst_font->add_glyph(&config, (std::uint16_t)glyph.glyph.codepoint,
 									glm::vec4(temp.x, temp.y, temp.x, temp.y) +
@@ -405,6 +473,26 @@ namespace renderer {
 
 		if (auto result = FT_Done_FreeType(ft_library); result) {
 			// TODO: Assert
+		}
+	}
+
+	void font_atlas::pack_custom_rects(stbrp_context* context) {
+		render_vector<stbrp_rect> pack_rects;
+		pack_rects.resize(custom_rects.Size);
+		memset(pack_rects.Data, 0, (size_t)pack_rects.size_in_bytes());
+		for (int i = 0; i < custom_rects.size(); i++) {
+			pack_rects[i].w = custom_rects[i].size.x;
+			pack_rects[i].h = custom_rects[i].size.y;
+		}
+		stbrp_pack_rects(context, &pack_rects[0], pack_rects.Size);
+		for (size_t i = 0; i < pack_rects.Size; i++) {
+			if (pack_rects[i].was_packed) {
+				custom_rects[i].size.x = pack_rects[i].x;
+				custom_rects[i].size.y = pack_rects[i].y;
+				custom_rects[i].size.z = pack_rects[i].w;
+				custom_rects[i].size.w = pack_rects[i].h;
+				texture.size.y = std::max(texture.size.y, (float)(pack_rects[i].y + pack_rects[i].h));
+			}
 		}
 	}
 

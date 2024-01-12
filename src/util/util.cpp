@@ -1,13 +1,13 @@
 #include "renderer/util/util.hpp"
 
 void renderer::sync_manager::wait() {
-	std::unique_lock<std::mutex> lock_guard(mutex_);
+	std::unique_lock lock_guard(mutex_);
 	condition_.wait(lock_guard, [this] { return update_; });
 	update_ = false;
 }
 
 void renderer::sync_manager::notify() {
-	std::unique_lock<std::mutex> lock_guard(mutex_);
+	std::unique_lock lock_guard(mutex_);
 	condition_.notify_one();
 	update_ = true;
 }

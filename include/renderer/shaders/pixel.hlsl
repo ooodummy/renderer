@@ -18,36 +18,6 @@ SamplerState samplerState : SAMPLER : register(s0);
 
 // How can I stack color keys?
 float4 ps_main(VS_Output input) : SV_TARGET {
-	if (key_enable) {
-		if (input.color.x == key_color.x && input.color.y == key_color.y && input.color.z == key_color.z) {
-			return float4(0.0f, 0.0f, 0.0f, 0.0f);
-		}
-	}
-
-	if (scissor_enable) {
-        bool outside = input.position.x < scissor_bounds.x || input.position.y < scissor_bounds.y ||
-                        input.position.x > scissor_bounds.x + scissor_bounds.z ||
-    			        input.position.y > scissor_bounds.y + scissor_bounds.w;
-
-        if ((scissor_in && !outside) || (!scissor_in && outside)) {
-            return float4(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-    }
-
-	if (is_texture) {
-		float4 sampled = active_texture.Sample(samplerState, input.uv);
-
-		// if (is_mask) {
-		// 	// Adjust hue using HSL conversion
-        //     /*float3 hsl = RGBtoHSL(sampled.xyz);
-        //     hsl.x = RGBtoHSL(input.color.xyz).x;
-        //     float3 rgb = HSLtoRGB(hsl);
-        //     return float4(rgb, sampled.w * input.color.w);*/
-        //     return float4(input.color.xyz, sampled.w * input.color.w);
-		// }
-
-		return input.color * sampled;
-	}
-
-	return input.color;
+	float4 out_col = input.color * active_texture.Sample(samplerState, input.uv);
+	return out_col;
 }

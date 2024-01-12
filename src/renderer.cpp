@@ -10,6 +10,8 @@ renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	msaa_enabled_(true),
 	target_sample_count_(8) {
 	context_ = std::make_unique<renderer_context>();
+	shared_data_ = std::make_unique<shared_data>();
+	shared_data_->set_circle_segment_max_error(.3f);
 	context_->device_resources_ = std::make_unique<device_resources>();
 	context_->device_resources_->set_window(window);
 	context_->device_resources_->register_device_notify(this);
@@ -17,6 +19,8 @@ renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 
 renderer::d3d11_renderer::d3d11_renderer(IDXGISwapChain* swap_chain) : msaa_enabled_(false), target_sample_count_(8) {
 	context_ = std::make_unique<renderer_context>();
+	shared_data_ = std::make_unique<shared_data>();
+	shared_data_->set_circle_segment_max_error(.3f);
 	context_->device_resources_ = std::make_unique<device_resources>();
 	context_->device_resources_->set_swap_chain(swap_chain);
 	context_->device_resources_->register_device_notify(this);
@@ -36,13 +40,23 @@ bool renderer::d3d11_renderer::release() {
 	return true;
 }
 
-size_t
-renderer::d3d11_renderer::register_buffer(size_t priority, size_t vertices_reserve_size, size_t batches_reserve_size) {
+size_t renderer::d3d11_renderer::register_buffer(size_t priority,
+												 size_t vertices_reserve_size,
+												 size_t indices_reserve_size,
+												 size_t batches_reserve_size) {
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	const auto id = buffers_.size();
-	buffers_.emplace_back(buffer_node{ std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size),
-									   std::make_unique<buffer>(this, vertices_reserve_size, batches_reserve_size) });
+	buffers_.emplace_back(std::make_unique<buffer>(this,
+												   shared_data_.get(),
+												   vertices_reserve_size,
+												   indices_reserve_size,
+												   batches_reserve_size),
+						  std::make_unique<buffer>(this,
+												   shared_data_.get(),
+												   vertices_reserve_size,
+												   indices_reserve_size,
+												   batches_reserve_size));
 
 	return id;
 }
@@ -141,6 +155,16 @@ void renderer::d3d11_renderer::destroy_atlases() {
 	atlases_handler.changed = true;
 }
 
+void renderer::d3d11_renderer::push_font(text_font* font) {
+	fonts_.push(font);
+
+	shared_data_->tex_uv_white_pixel = font->container_atlas->tex_uv_white_pixel;
+	shared_data_->tex_uv_lines = font->container_atlas->tex_uv_lines;
+}
+
+void renderer::d3d11_renderer::pop_font() {
+	fonts_.pop();
+}
 
 void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color) {
 	clear_color_ = glm::vec4(color);
@@ -205,29 +229,31 @@ void renderer::d3d11_renderer::draw_batches() {
 
 	std::unique_lock lock_guard(buffer_list_mutex_);
 
-	size_t offset = 0;
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// TODO: Buffer priority
-	// God bless http://www.rastertek.com/dx11tut11.html
+	size_t global_idx_offset = 0;
+	size_t global_vtx_offset = 0;
 	for (const auto& [active, working] : buffers_) {
-		auto& batches = active->get_batches();
+		auto& draw_commands = active->get_draw_cmds();
 
-		for (const auto& batch : batches) {
-			context_->device_resources_->set_command_buffer(batch.command);
+		context_->device_resources_->set_command_buffer(active->get_active_command());
 
-			if (batch.projection == glm::mat4x4{})
+		for (const auto& draw_command : draw_commands) {
+			if (draw_command.projection == glm::mat4x4{})
 				context_->device_resources_->set_orthographic_projection();
 			else
-				context_->device_resources_->set_projection(batch.projection);
+				context_->device_resources_->set_projection(draw_command.projection);
 
 			context->PSSetConstantBuffers(0, 1, &command_buffer);
-			context->PSSetShaderResources(0, 1, &batch.srv);
-			context->IASetPrimitiveTopology(batch.type);
+			context->PSSetShaderResources(0, 1, &fonts_.top()->container_atlas->texture.data);
 
-			context->Draw(static_cast<UINT>(batch.size), static_cast<UINT>(offset));
-
-			offset += batch.size;
+			context->DrawIndexed(draw_command.elem_count,
+								 draw_command.idx_offset + global_idx_offset,
+								 draw_command.vtx_offset + global_vtx_offset);
 		}
+
+		global_idx_offset += active->get_indices().Size;
+		global_vtx_offset += active->get_vertices().Size;
 	}
 }
 
@@ -328,42 +354,55 @@ void renderer::d3d11_renderer::on_device_restored() {
 void renderer::d3d11_renderer::resize_buffers() {
 	const auto context = context_->device_resources_->get_device_context();
 	auto vertex_buffer = context_->device_resources_->get_vertex_buffer();
-	const auto buffer_size = context_->device_resources_->get_buffer_size();
+	const auto vertex_buffer_size = context_->device_resources_->get_vertex_buffer_size();
+	auto index_buffer = context_->device_resources_->get_index_buffer();
+	const auto index_buffer_size = context_->device_resources_->get_index_buffer_size();
 
 	std::shared_lock lock_guard(buffer_list_mutex_);
 
 	size_t vertex_count = 0;
+	size_t index_count = 0;
 
 	for (const auto& [active, working] : buffers_) {
 		vertex_count += active->get_vertices().size();
+		index_count += active->get_indices().size();
 	}
 
 	if (vertex_count > 0) {
-		if (!vertex_buffer || buffer_size <= vertex_count) {
-			context_->device_resources_->resize_buffers(vertex_count + 250);
+		if (!vertex_buffer || vertex_buffer_size <= vertex_count || !index_buffer || index_buffer_size <= index_count) {
+			context_->device_resources_->resize_buffers(vertex_count, index_count);
 			vertex_buffer = context_->device_resources_->get_vertex_buffer();
+			index_buffer = context_->device_resources_->get_index_buffer();
 		}
 
 		if (vertex_buffer) {
-			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+			D3D11_MAPPED_SUBRESOURCE vtx_resource;
+			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vtx_resource);
 			assert(SUCCEEDED(hr));
 
-			char* write_ptr = static_cast<char*>(mapped_subresource.pData);
-			for (const auto& [active, working] : buffers_) {
-				const auto& vertices = active->get_vertices();
+			D3D11_MAPPED_SUBRESOURCE idx_resource;
+			hr = context->Map(index_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &idx_resource);
+			assert(SUCCEEDED(hr));
 
-				std::copy_n(vertices.data(), vertices.size(), reinterpret_cast<vertex*>(write_ptr));
-				write_ptr += vertices.size();
+			vertex* vtx_dst = (vertex*)vtx_resource.pData;
+			uint32_t* idx_dst = (uint32_t*)idx_resource.pData;
+			for (auto&& [active, working] : buffers_) {
+				memcpy(vtx_dst, active->get_vertices().Data, active->get_vertices().size() * sizeof(vertex));
+				memcpy(idx_dst, active->get_indices().Data, active->get_indices().size() * sizeof(uint32_t));
+
+				vtx_dst += active->get_vertices().size();
+				idx_dst += active->get_indices().size();
 			}
 
 			context->Unmap(vertex_buffer, 0);
+			context->Unmap(index_buffer, 0);
 		}
 	}
 
 	UINT stride = sizeof(vertex);
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
+	context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 }
 
 glm::vec2 renderer::d3d11_renderer::get_render_target_size() {

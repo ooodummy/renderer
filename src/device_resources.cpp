@@ -81,7 +81,7 @@ int32_t renderer::device_resources::compute_intersection_area(const RECT& a, con
 }
 
 void renderer::device_resources::create_device_resources() {
-	DPRINTF("[+] Creating device resources\n");
+	DPRINTF("[+] Creating device resources");
 
 	create_factory();
 	check_feature_support();
@@ -654,9 +654,10 @@ void renderer::device_resources::create_shaders_and_layout() {
 	assert(SUCCEEDED(hr));
 
 	D3D11_INPUT_ELEMENT_DESC input_desc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, (uint32_t)offsetof(vertex, pos),							   D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, (uint32_t)offsetof(vertex, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		 0, (uint32_t)offsetof(vertex, uv), D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (uint32_t)offsetof(vertex, pos), D3D11_INPUT_PER_VERTEX_DATA,
+		  0																											   },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,	   0, (uint32_t)offsetof(vertex, uv),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR",	   0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, (uint32_t)offsetof(vertex, col), D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
 	hr = device_->CreateInputLayout(input_desc,
@@ -734,20 +735,30 @@ void renderer::device_resources::create_constant_buffers() {
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-buffers-vertex-how-to
-void renderer::device_resources::resize_buffers(size_t vertex_count) {
-	if (vertex_count > buffer_size_) {
-		buffer_size_ = vertex_count;
-	}
+void renderer::device_resources::resize_buffers(size_t vertex_count, size_t index_count) {
+	vertex_buffer_size_ = std::max(vertex_buffer_size_, vertex_count) + 5000;
+	index_buffer_size_ = std::max(index_buffer_size_, index_count) + 10000;
 
 	D3D11_BUFFER_DESC vertex_desc;
 	vertex_desc.Usage = D3D11_USAGE_DYNAMIC;
-	vertex_desc.ByteWidth = buffer_size_ * sizeof(vertex);
+	vertex_desc.ByteWidth = vertex_buffer_size_ * sizeof(vertex);
 	vertex_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertex_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	vertex_desc.MiscFlags = 0;
 	vertex_desc.StructureByteStride = 0;
 
 	auto hr = device_->CreateBuffer(&vertex_desc, nullptr, vertex_buffer_.ReleaseAndGetAddressOf());
+	assert(SUCCEEDED(hr));
+
+	D3D11_BUFFER_DESC index_desc;
+	index_desc.Usage = D3D11_USAGE_DYNAMIC;
+	index_desc.ByteWidth = index_buffer_size_ * sizeof(uint32_t);
+	index_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	index_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	index_desc.MiscFlags = 0;
+	index_desc.StructureByteStride = 0;
+
+	hr = device_->CreateBuffer(&index_desc, nullptr, index_buffer_.ReleaseAndGetAddressOf());
 	assert(SUCCEEDED(hr));
 }
 
@@ -785,7 +796,7 @@ void renderer::device_resources::release_resources() {
 	dxgi_factory_.Reset();
 }
 
-void renderer::device_resources::set_command_buffer(const renderer::command_buffer& buffer) {
+void renderer::device_resources::set_command_buffer(const command_buffer& buffer) {
 	D3D11_MAPPED_SUBRESOURCE mapped_resource;
 	HRESULT hr = device_context_->Map(command_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 	assert(SUCCEEDED(hr));
@@ -856,8 +867,14 @@ ID3D11InputLayout* renderer::device_resources::get_input_layout() const {
 ID3D11Buffer* renderer::device_resources::get_vertex_buffer() const {
 	return vertex_buffer_.Get();
 }
-size_t renderer::device_resources::get_buffer_size() const {
-	return buffer_size_;
+size_t renderer::device_resources::get_vertex_buffer_size() const {
+	return vertex_buffer_size_;
+}
+ID3D11Buffer* renderer::device_resources::get_index_buffer() const {
+	return index_buffer_.Get();
+}
+size_t renderer::device_resources::get_index_buffer_size() const {
+	return index_buffer_size_;
 }
 ID3D11Buffer* renderer::device_resources::get_projection_buffer() const {
 	return projection_buffer_.Get();

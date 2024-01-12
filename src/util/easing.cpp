@@ -1,6 +1,8 @@
 #include "renderer/util/easing.hpp"
 
-float renderer::ease(float a, float b, float t, float d, renderer::ease_type type) {
+#include <corecrt_math_defines.h>
+
+float renderer::ease(float a, float b, float t, float d, ease_type type) {
 	b -= a;
 
 	switch (type) {
@@ -65,12 +67,11 @@ float renderer::ease(float a, float b, float t, float d, renderer::ease_type typ
 		case out_bounce:
 			if ((t /= d) < (1.0f / 2.75f))
 				return b * (7.5625f * t * t) + a;
-			else if (t < (2.0f / 2.75f))
+			if (t < (2.0f / 2.75f))
 				return b * (7.5625f * (t -= (1.5f / 2.75f)) * t + 0.75f) + a;
-			else if (t < (2.5f / 2.75f))
+			if (t < (2.5f / 2.75f))
 				return b * (7.5625f * (t -= (2.25f / 2.75f)) * t + 0.9375f) + a;
-			else
-				return b * (7.5625f * (t -= (2.625f / 2.75f)) * t + 0.984375f) + a;
+			return b * (7.5625f * (t -= (2.625f / 2.75f)) * t + 0.984375f) + a;
 		case in_out_bounce:
 			if (t < d / 2.0f)
 				return ease(0, b, t * 2.0f, d, in_bounce) * 0.5f + a;
@@ -81,10 +82,10 @@ float renderer::ease(float a, float b, float t, float d, renderer::ease_type typ
 	}
 }
 
-glm::vec2 renderer::ease(glm::vec2 a, glm::vec2 b, float t, float d, renderer::ease_type type) {
+glm::vec2 renderer::ease(glm::vec2 a, glm::vec2 b, float t, float d, ease_type type) {
 	return { ease(a.x, b.x, t, d, type), ease(a.y, b.y, t, d, type) };
 }
 
-glm::vec3 renderer::ease(glm::vec3 a, glm::vec3 b, float t, float d, renderer::ease_type type) {
+glm::vec3 renderer::ease(glm::vec3 a, glm::vec3 b, float t, float d, ease_type type) {
 	return { ease(a.x, b.x, t, d, type), ease(a.y, b.y, t, d, type), ease(a.z, b.z, t, d, type) };
 }

@@ -3,188 +3,192 @@
 
 #include "renderer/renderer.hpp"
 #include "renderer/shaders/constant_buffers.hpp"
-#include "renderer/shapes/bezier.hpp"
-#include "renderer/shapes/polyline.hpp"
+#include "renderer/util/render_vector.hpp"
+#include "renderer/vertex.hpp"
 
 #include <glm/gtx/rotate_vector.hpp>
 #include <stack>
 
 namespace renderer {
-	enum rect_edges {
-		edge_top_left = 1 << 0,
-		edge_top_right = 1 << 1,
-		edge_bottom_left = 1 << 2,
-		edge_bottom_right = 1 << 3,
+	enum draw_flags : uint32_t {
+		none = 0,
+		closed = 1 << 0,
+		anti_aliased_lines = 1 << 0,
+		anti_aliased_lines_use_tex = 1 << 1,
+		anti_aliased_fill = 1 << 2,
+		allow_vtx_offset = 1 << 3,
+		edge_top_left = 1 << 4,
+		edge_top_right = 1 << 5,
+		edge_bottom_left = 1 << 6,
+		edge_bottom_right = 1 << 7,
+		edge_none = 1 << 8,
 		edge_left = edge_top_left | edge_bottom_left,
 		edge_right = edge_top_right | edge_bottom_right,
 		edge_top = edge_top_left | edge_top_right,
 		edge_bottom = edge_bottom_left | edge_bottom_right,
-		edge_all = edge_top | edge_bottom
+		edge_all = edge_top | edge_bottom,
+		edge_default = edge_all,
+		edge_mask = edge_all | edge_none
 	};
 
-	class batch {
-	public:
-		batch(size_t size, D3D_PRIMITIVE_TOPOLOGY type) : size(size), type(type) {}
+	struct shared_data {
+		glm::vec2 tex_uv_white_pixel;
+		float curve_tesselation_tol;
+		float circle_segment_max_error;
 
-		// Basic geometry
-		size_t size;
-		D3D_PRIMITIVE_TOPOLOGY type;
+		render_vector<glm::vec2> temp_buffer;
 
-		// Textured quads
-		ID3D11ShaderResourceView* srv = nullptr;
+		constexpr static size_t arc_fast_vtx_size = 48;
+		glm::vec2 arc_fast_vtx[arc_fast_vtx_size];
+		float arc_fast_radius_cutoff;
 
-		// Override color for grayscale textures
-		color_rgba color;
+		constexpr static size_t circle_segment_counts_size = 64;
+		uint8_t circle_segment_counts[circle_segment_counts_size];
 
-		// Used to set shader options
-		command_buffer command{};
-		glm::mat4x4 projection{};
+		glm::vec4* tex_uv_lines;
+
+		shared_data();
+		void set_circle_segment_max_error(float max_error);
+	};
+
+	struct draw_command {
+		glm::vec4 clip_rect;
+		// ID3D11ShaderResourceView* texture;
+		glm::mat4x4 projection;
+		uint32_t vtx_offset;
+		uint32_t idx_offset;
+		uint32_t elem_count;
+
+		draw_command() {
+			memset(this, 0, sizeof(*this));
+		}
 	};
 
 	// Buffer system from
 	// https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {
 	public:
-		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {
-			vertices_.reserve(5000);
+		explicit buffer(d3d11_renderer* dx11, shared_data* shared_data) : dx11_(dx11), shared_data_(shared_data) {
+			vertices_.reserve(4096);
+			indices_.reserve(4096);
+			draw_cmds_.reserve(32);
+
+			vertex_current_ptr = vertices_.Data;
+			index_current_ptr = indices_.Data;
 		}
 
-		explicit buffer(d3d11_renderer* dx11, size_t vertices_reserve_size, size_t batches_reserve_size) : dx11_(dx11) {
+		explicit buffer(d3d11_renderer* dx11, shared_data* shared_data,
+						size_t vertices_reserve_size,
+						size_t indices_reserve_size,
+						size_t batches_reserve_size) :
+			dx11_(dx11), shared_data_(shared_data) {
 			vertices_.reserve(vertices_reserve_size);
-			batches_.reserve(batches_reserve_size);
+			indices_.reserve(indices_reserve_size);
+			draw_cmds_.reserve(batches_reserve_size);
+
+			vertex_current_ptr = vertices_.Data;
+			index_current_ptr = indices_.Data;
 		}
 
 		~buffer() = default;
 
+		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
+		void pop_scissor();
+
+		void push_texture(ID3D11ShaderResourceView* srv);
+		void pop_texture();
+
+		void push_projection(const glm::mat4x4& projection);
+		void pop_projection();
+
+		void add_draw_cmd(const draw_command& cmd);
+
 		void clear();
 
-		// private:
-		void add_vertices(vertex* vertices, size_t N);
-
-		void add_vertices(vertex* vertices,
-						  size_t N,
-						  D3D_PRIMITIVE_TOPOLOGY type,
-						  ID3D11ShaderResourceView* srv = nullptr,
-						  color_rgba col = { 255, 255, 255, 255 });
-
-		template<size_t N>
-		void add_vertices(vertex (&vertices)[N],
-						  D3D_PRIMITIVE_TOPOLOGY type,
-						  ID3D11ShaderResourceView* srv = nullptr,
-						  color_rgba col = { 255, 255, 255, 255 }) {
-			add_vertices(vertices, N, type, srv, col);
-		}
-
-	public:
-		void add_shape(shape& shape);
-
-		void draw_triangle_filled(const glm::vec2& pos1,
-								  const glm::vec2& pos2,
-								  const glm::vec2& pos3,
-								  color_rgba col1 = COLOR_WHITE,
-								  color_rgba col2 = COLOR_WHITE,
-								  color_rgba col3 = COLOR_WHITE);
-
-		void draw_point(const glm::vec2& pos, color_rgba col = COLOR_WHITE);
-
-		void draw_line(glm::vec2 start, glm::vec2 end, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
-
-		void draw_arc(const glm::vec2& pos,
-					  float start,
-					  float length,
-					  float radius,
-					  color_rgba col1 = COLOR_WHITE,
-					  color_rgba col2 = COLOR_WHITE,
-					  float thickness = 1.0f,
-					  size_t segments = 16,
-					  bool triangle_fan = false);
-
-		void draw_arc(const glm::vec2& pos,
-					  float start,
-					  float length,
-					  float radius,
-					  color_rgba col = COLOR_WHITE,
-					  float thickness = 1.0f,
-					  size_t segments = 16,
-					  bool triangle_fan = false);
-
-		void draw_rect(glm::vec4 rect, color_rgba col = COLOR_WHITE, float thickness = 1.0f);
-
-		void draw_rect_filled(glm::vec4 rect, color_rgba col = COLOR_WHITE);
-
-		// TODO: Experiencing crashes when using rounding on widgets in carbon no idea why since 0 or negative sizing
-		//  doesn't crash and the crash is located in renderer::resize_buffers when we memcpy the data from our vertices
-		void draw_rect_rounded(glm::vec4 rect,
-							   float rounding = 0.1f,
-							   color_rgba = COLOR_WHITE,
-							   float thickness = 1.0f,
-							   rect_edges edge = edge_all,
-							   size_t segments = 8);
-
-		void draw_rect_rounded_filled(glm::vec4 rect,
-									  float rounding = 0.1f,
-									  color_rgba = COLOR_WHITE,
-									  rect_edges edge = edge_all,
-									  size_t segments = 8);
-
-		void draw_textured_quad(const glm::vec4& rect,
-								ID3D11ShaderResourceView* srv,
-								color_rgba col = COLOR_WHITE,
-								bool is_mask = false);
-
+		// Primitive shapes
+		void draw_point(const glm::vec2& pos, const color_rgba& col);
+		void draw_line(const glm::vec2& p1, const glm::vec2& p2, const color_rgba& col, float thickness = 1.f);
+		void draw_rect(const glm::vec2& p1,
+					   const glm::vec2& p2,
+					   const color_rgba& col,
+					   float rounding = 0.f,
+					   draw_flags flags = edge_none,
+					   float thickness = 1.f);
+		void draw_rect_filled(const glm::vec2& p1,
+							  const glm::vec2& p2,
+							  const color_rgba& col,
+							  float rounding = 0.f,
+							  draw_flags flags = edge_none);
+		void draw_rect_filled_multicolor(const glm::vec2& p1,
+										 const glm::vec2& p2,
+										 const color_rgba& col_upr_left,
+										 const color_rgba& col_upr_right,
+										 const color_rgba& col_bot_right,
+										 const color_rgba& col_bot_left);
+		void draw_quad(const glm::vec2& p1,
+					   const glm::vec2& p2,
+					   const glm::vec2& p3,
+					   const glm::vec2& p4,
+					   const color_rgba& col,
+					   float thickness = 1.f);
+		void draw_quad_filled(const glm::vec2& p1,
+							  const glm::vec2& p2,
+							  const glm::vec2& p3,
+							  const glm::vec2& p4,
+							  const color_rgba& col,
+							  draw_flags flags = anti_aliased_lines);
+		void draw_triangle(
+		const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3, const color_rgba& col, float thickness = 1.f);
+		void draw_triangle_filled(const glm::vec2& p1,
+								  const glm::vec2& p2,
+								  const glm::vec2& p3,
+								  const color_rgba& col,
+								  draw_flags flags = anti_aliased_lines);
 		void draw_circle(
-		const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, float thickness = 1.0f, size_t segments = 24);
-
-		void draw_circle_filled(const glm::vec2& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
-
-		template<size_t N>
-		void draw_bezier_curve(const bezier_curve<N>& bezier,
-							   color_rgba col = COLOR_WHITE,
-							   float thickness = 1.0f,
-							   cap_type cap = cap_butt,
-							   size_t segments = 32) {
-			thickness /= 2.0f;
-
-			const auto step = 1.0f / static_cast<float>(segments);
-
-			const auto vertex_count = (segments + 1) * 2;
-			auto* vertices = new vertex[vertex_count];
-			size_t offset = 0;
-
-			for (size_t i = 0; i <= segments; i++) {
-				const auto t = static_cast<float>(i) * step;
-				const auto point = bezier.position_at(t);
-				const auto normal = bezier.normal_at(t);
-
-				const auto angle = atan2f(normal.y, normal.x);
-
-				vertices[offset] = { glm::rotate(glm::vec2(thickness, 0.0f), angle) + point, col };
-				vertices[offset + 1] = {
-					glm::rotate(glm::vec2(thickness, 0.0f), angle + static_cast<float>(M_PI)) + point, col
-				};
-
-				offset += 2;
-			}
-
-			add_vertices(vertices, vertex_count, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-			delete[] vertices;
-		}
-
-		void draw_line(const glm::vec3& start, const glm::vec3& end, color_rgba col = COLOR_WHITE);
-		void draw_line_strip(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
-		void draw_line_list(std::vector<glm::vec3> points, color_rgba col = COLOR_WHITE);
-
-		void draw_bounds(const glm::vec3& center, const glm::vec3& extents, color_rgba col = COLOR_WHITE);
-		void draw_bounds_filled(const glm::vec3& center, const glm::vec3& extents, color_rgba col = COLOR_WHITE);
-
-		void draw_sphere(const glm::vec3& pos, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
-		void draw_circle(const glm::vec3& pos,
-						 float radius,
-						 color_rgba col = COLOR_WHITE,
-						 size_t segments = 24,
-						 glm::vec2 rotation = { 0.0f, 0.0f });
-		void draw_cylinder(
-		const glm::vec3& start, const glm::vec3& end, float radius, color_rgba col = COLOR_WHITE, size_t segments = 24);
+		const glm::vec2& center, float radius, const color_rgba& col, float thickness = 1.f, size_t segments = 0);
+		void draw_circle_filled(const glm::vec2& center,
+								float radius,
+								const color_rgba& col,
+								size_t segments = 0,
+								draw_flags flags = anti_aliased_lines);
+		void
+		draw_ngon(const glm::vec2& center, float radius, const color_rgba& col, size_t segments, float thickness = 1.f);
+		void draw_ngon_filled(const glm::vec2& center,
+							  float radius,
+							  const color_rgba& col,
+							  size_t segments,
+							  draw_flags flags = anti_aliased_lines);
+		void draw_ellipse(const glm::vec2& center,
+						  float radius_x,
+						  float radius_y,
+						  const color_rgba& col,
+						  draw_flags flags = anti_aliased_lines,
+						  float rotation = 0.f,
+						  size_t segments = 0,
+						  float thickness = 1.f);
+		void draw_ellipse_filled(const glm::vec2& center,
+								 float radius_x,
+								 float radius_y,
+								 const color_rgba& col,
+								 draw_flags flags = anti_aliased_lines,
+								 float rotation = 0.f,
+								 size_t segments = 0);
+		void draw_polyline(
+		const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags, float thickness);
+		void draw_convex_poly_filled(const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags);
+		void draw_bezier_cubic(const glm::vec2& p1,
+							   const glm::vec2& p2,
+							   const glm::vec2& p3,
+							   const glm::vec2& p4,
+							   const color_rgba& col,
+							   float thickness,
+							   size_t segments = 0);
+		void draw_bezier_quadratic(const glm::vec2& p1,
+								   const glm::vec2& p2,
+								   const glm::vec2& p3,
+								   const color_rgba& col,
+								   float thickness,
+								   size_t segments = 0);
 
 		template<typename string_t>
 		void draw_text(const string_t& text,
@@ -201,19 +205,19 @@ namespace renderer {
 					   color_rgba col = color_rgba(255, 255, 255),
 					   text_font* font = get_default_font(),
 					   text_flags flags = align_none) {
-            if (flags & outline_text) {
-                auto cleaned_flags = flags & ~outline_text;
+			if (flags & outline_text) {
+				auto cleaned_flags = flags & ~outline_text;
 
-                draw_text(text, { pos.x + 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-                draw_text(text, { pos.x - 1, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-                draw_text(text, { pos.x + 1, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-                draw_text(text, { pos.x - 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x + 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x - 1, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x + 1, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x - 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
 
-                draw_text(text, { pos.x + 1, pos.y }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-                draw_text(text, { pos.x - 1, pos.y }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-                draw_text(text, { pos.x, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-                draw_text(text, { pos.x, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
-            }
+				draw_text(text, { pos.x + 1, pos.y }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x - 1, pos.y }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x, pos.y - 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+				draw_text(text, { pos.x, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+			}
 
 			float new_line_pos = pos.x;
 			float size = font->size;
@@ -223,27 +227,23 @@ namespace renderer {
 				if (text_size.x <= 0.f || text_size.y <= 0.f)
 					return;
 
-			    if (flags & align_top)
-			        pos.y += text_size.y;
-			    if (flags & align_left)
-			        pos.x += text_size.x;
-			    if (flags & align_vertical)
-			        pos.y -= text_size.y / 2.f;
-			    if (flags & align_right)
-			        pos.x -= text_size.x;
-			    if (flags & align_bottom)
-			        pos.y -= text_size.y;
-			    if (flags & align_horizontal)
-			        pos.x -= text_size.x / 2.f;
+				if (flags & align_top)
+					pos.y += text_size.y;
+				if (flags & align_left)
+					pos.x += text_size.x;
+				if (flags & align_vertical)
+					pos.y -= text_size.y / 2.f;
+				if (flags & align_right)
+					pos.x -= text_size.x;
+				if (flags & align_bottom)
+					pos.y -= text_size.y;
+				if (flags & align_horizontal)
+					pos.x -= text_size.x / 2.f;
 
 				new_line_pos = pos.x;
 			}
 
 			pos = glm::floor(pos);
-
-			size_t vertices_count = text.length() * 6;
-			auto vertices = new vertex[vertices_count];
-			size_t vertices_counter = 0;
 
 			const float size_reciprocal = 1.f / size;
 			const float scaled_font_size = (size / font->size);
@@ -271,64 +271,130 @@ namespace renderer {
 					glm::vec4 corners = glm::vec4(pos.x, pos.y, pos.x, pos.y) + glyph->corners * scaled_font_size;
 					glm::vec4 uvs = glyph->texture_coordinates;
 
-					vertex glyph_vertices[] = {
-						{ corners.x, corners.y, col, uvs.x, uvs.y },
-						 { corners.z, corners.y, col, uvs.z, uvs.y },
-						{ corners.z, corners.w, col, uvs.z, uvs.w },
-						 { corners.x, corners.y, col, uvs.x, uvs.y },
-						{ corners.z, corners.w, col, uvs.z, uvs.w },
-						 { corners.x, corners.w, col, uvs.x, uvs.w },
-					};
-
-					// insert glyph vertices into vertices vector with memmove
-					memmove(vertices + vertices_counter, glyph_vertices, sizeof(glyph_vertices));
-					vertices_counter += 6;
+					uint32_t idx = vertex_current_index;
+					index_current_ptr[0] = idx;
+					index_current_ptr[1] = idx + 1;
+					index_current_ptr[2] = idx + 2;
+					index_current_ptr[3] = idx;
+					index_current_ptr[4] = idx + 2;
+					index_current_ptr[5] = idx + 3;
+					vertex_current_ptr[0].pos = { corners.x, corners.y, 0.f };
+					vertex_current_ptr[0].uv = { uvs.x, uvs.y };
+					vertex_current_ptr[0].col = col.rgba;
+					vertex_current_ptr[1].pos = { corners.z, corners.y, 0.f };;
+					vertex_current_ptr[1].uv = { uvs.z, uvs.y };
+					vertex_current_ptr[1].col = col.rgba;
+					vertex_current_ptr[2].pos = { corners.z, corners.w, 0.f };
+					vertex_current_ptr[2].uv = { uvs.z, uvs.w };
+					vertex_current_ptr[2].col = col.rgba;
+					vertex_current_ptr[3].pos = { corners.x, corners.w, 0.f };
+					vertex_current_ptr[3].uv = { uvs.x, uvs.w };
+					vertex_current_ptr[3].col = col.rgba;
+					vertex_current_ptr += 4;
+					vertex_current_index += 4;
+					index_current_ptr += 6;
 				}
 
 				pos.x += glyph->advance_x * size * size_reciprocal;
 			}
-
-			// split_batch_ = true;
-
-			active_command.is_texture = true;
-			active_command.is_mask = true;
-
-			if (vertices_counter != 0)
-				add_vertices(vertices, vertices_counter, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-							 font->container_atlas->texture.data, col);
-
-			active_command.is_mask = false;
-			active_command.is_texture = false;
-
-			// split_batch_ = true;
-
-			delete[] vertices;
 		}
 
-		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
-		void pop_scissor();
+		// Stateful path API, add points then finish with path_fill() or path_stroke()
+		void path_clear() {
+			path_.clear();
+		}
 
-		void push_key(color_rgba color);
-		void pop_key();
+		void path_line_to(const glm::vec2& pos) {
+			path_.push_back(pos);
+		}
 
-		void push_blur(float strength);
-		void pop_blur();
+		void path_line_to_merge_duplicate(const glm::vec2& pos) {
+			if (path_.empty() || memcmp(&path_.Data[path_.Size - 1], &pos, 8) != 0)
+				path_.push_back(pos);
+		}
 
-		void push_projection(const glm::mat4x4& projection);
-		void pop_projection();
+		void path_fill_convex(const color_rgba& col, draw_flags flags) {
+			draw_convex_poly_filled(path_.Data, path_.Size, col, flags);
+			path_.Size = 0;
+		}
 
-		const std::vector<vertex>& get_vertices();
-		const std::vector<batch>& get_batches();
+		void path_stroke(const color_rgba& col, const draw_flags flags, const float thickness = 1.f) {
+			draw_polyline(path_.Data, path_.Size, col, flags, thickness);
+			path_.Size = 0;
+		}
+
+		void path_arc_to(const glm::vec2& center, float radius, float a_min, float a_max, int num_segments = 0);
+		void path_arc_to_fast(const glm::vec2& center, float radius, int a_min_of_12, int a_max_of_12);
+		void path_elliptical_arc_to(const glm::vec2& center,
+									float radius_x,
+									float radius_y,
+									float rot,
+									float a_min,
+									float a_max,
+									int num_segments = 0);// Ellipse
+		void path_bezier_cubic_curve_to(const glm::vec2& p2,
+										const glm::vec2& p3,
+										const glm::vec2& p4,
+										int num_segments = 0);// Cubic Bezier (4 control points)
+		void path_bezier_quadratic_curve_to(const glm::vec2& p2,
+											const glm::vec2& p3,
+											int num_segments = 0);// Quadratic Bezier (3 control points)
+		void path_rect(const glm::vec2& rect_min,
+					   const glm::vec2& rect_max,
+					   float rounding = 0.0f,
+					   draw_flags flags = edge_none);
+
+		void prim_reserve(size_t idx_count, size_t vtx_count);
+		void prim_unreserve(size_t idx_count, size_t vtx_count);
+		void prim_rect(const glm::vec2& a, const glm::vec2& c, const color_rgba& col);
+		void prim_rect_uv(
+		const glm::vec2& a, const glm::vec2& c, const glm::vec2& uv_a, const glm::vec2& uv_c, const color_rgba& col);
+		void prim_quad_uv(const glm::vec2& a,
+						  const glm::vec2& b,
+						  const glm::vec2& c,
+						  const glm::vec2& d,
+						  const glm::vec2& uv_a,
+						  const glm::vec2& uv_b,
+						  const glm::vec2& uv_c,
+						  const glm::vec2& uv_d,
+						  const color_rgba& col);
+		void prim_write_vtx(const glm::vec3& pos, const glm::vec2& uv, const color_rgba& col) {
+			vertex_current_ptr->pos = pos;
+			vertex_current_ptr->uv = uv;
+			vertex_current_ptr->col = col.rgba;
+
+			vertex_current_ptr++;
+			vertex_current_index++;
+		}
+
+		void prim_write_idx(uint32_t idx) {
+			*index_current_ptr = idx;
+			index_current_ptr++;
+		}
+
+		void prim_vtx(const glm::vec3& pos, const glm::vec2& uv, const color_rgba& col) {
+			prim_write_idx(vertex_current_index);
+			prim_write_vtx(pos, uv, col);
+		}
+
+		const render_vector<vertex>& get_vertices();
+		const render_vector<uint32_t>& get_indices();
+		const render_vector<draw_command>& get_draw_cmds();
+		const command_buffer& get_active_command();
 
 	private:
 		d3d11_renderer* dx11_;
+		shared_data* shared_data_;
 
-		// Should we be using vector?
-		std::vector<vertex> vertices_;
-		std::vector<batch> batches_;
+		render_vector<vertex> vertices_;
+		render_vector<uint32_t> indices_;
+		render_vector<draw_command> draw_cmds_;
 
-		// Used when active command has changed to force a new batch
-		bool split_batch_ = false;
+		render_vector<glm::vec2> path_;
+
+		uint32_t vertex_current_index = 0;
+		vertex* vertex_current_ptr = nullptr;
+		uint32_t* index_current_ptr = nullptr;
 
 		struct scissor_command {
 			scissor_command(glm::vec4 bounds, bool in, bool circle);
@@ -339,45 +405,19 @@ namespace renderer {
 		};
 
 		std::stack<scissor_command> scissor_list_;
-		std::stack<color_rgba> key_list_;
-		std::stack<float> blur_list_;
+		std::stack<ID3D11ShaderResourceView*> texture_list_;
 		std::stack<glm::mat4x4> projection_list_;
 
 		void update_scissor();
-
-		void update_key();
-
-		void update_blur();
-
+		void update_texture();
 		void update_projection();
 
-		command_buffer active_command{};
-		size_t active_font = 0;
-		glm::mat4x4 active_projection;
+		int calc_circle_auto_segment_count(float radius) const;
+		void path_arc_to_n(const glm::vec2& center, float radius, float a_min, float a_max, int num_segments);
+		void path_arc_to_fast_ex(const glm::vec2& center, float radius, int a_min_sample, int a_max_sample, int a_step);
 
-		// Can't really think of a better alternative to allow gradients
-		static void add_arc_vertices(vertex* vertices,
-									 size_t offset,
-									 const glm::vec2& pos,
-									 float start,
-									 float length,
-									 float radius,
-									 color_rgba col1,
-									 color_rgba col2,
-									 float thickness,
-									 size_t segments = 16,
-									 bool triangle_fan = false);
-
-		static void add_arc_vertices(vertex* vertices,
-									 size_t offset,
-									 const glm::vec2& pos,
-									 float start,
-									 float length,
-									 float radius,
-									 color_rgba col,
-									 float thickness,
-									 size_t segments = 16,
-									 bool triangle_fan = false);
+		command_buffer active_command_{};
+		glm::mat4x4 active_projection = glm::mat4(1.f);
 	};
 }// namespace renderer
 

@@ -3,11 +3,13 @@
 
 #include <Windows.h>
 #include <condition_variable>
-#include <fmt/core.h>
-#include <fmt/xchar.h>
+
+#include <iostream>
+#include <ostream>
+#include <format>
 
 #ifdef _DEBUG
-#define DPRINTF(text, ...) fmt::print(text, __VA_ARGS__)
+#define DPRINTF(text, ...)
 #else
 #define DPRINTF(text, ...)
 #endif

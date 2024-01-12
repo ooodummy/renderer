@@ -7,26 +7,34 @@ namespace renderer {
 	struct vertex {
 		vertex() = default;
 
-		vertex(float x, float y, color_rgba col, float u = 0.0f, float v = 0.0f) :
+		vertex(const float x, const float y, const color_rgba& col, const float u = 0.0f, const float v = 0.0f) :
 			pos(x, y, 0.0f),
-			col(col),
-			uv(u, v) {}
+			uv(u, v),
+			col(col.rgba) {}
 
-		vertex(glm::vec2 pos, color_rgba col, float u = 0.0f, float v = 0.0f) :
+		vertex(const glm::vec2& pos, const color_rgba& col, const float u = 0.0f, const float v = 0.0f) :
 			pos(pos.x, pos.y, 0.0f),
-			col(col),
-			uv(u, v) {}
+			uv(u, v),
+			col(col.rgba) {}
 
-		vertex(float x, float y, float z, color_rgba col, float u = 0.0f, float v = 0.0f) :
+		vertex(const float x,
+			   const float y,
+			   const float z,
+			   const color_rgba& col,
+			   const float u = 0.0f,
+			   const float v = 0.0f) :
 			pos(x, y, z),
-			col(col),
-			uv(u, v) {}
+			uv(u, v),
+			col(col.rgba) {}
 
-		vertex(glm::vec3 pos, color_rgba col, float u = 0.0f, float v = 0.0f) : pos(pos), col(col), uv(u, v) {}
+		vertex(const glm::vec3& pos, const color_rgba& col, const float u = 0.0f, const float v = 0.0f) :
+			pos(pos),
+			uv(u, v),
+			col(col.rgba) {}
 
 		glm::vec3 pos;
-		glm::vec4 col;// TODO: uint32_t color for less memory usage
 		glm::vec2 uv;
+		uint32_t col;
 	};
 }// namespace renderer
 

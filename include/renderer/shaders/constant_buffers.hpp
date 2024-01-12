@@ -4,21 +4,20 @@
 #include <glm/glm.hpp>
 
 namespace renderer {
-	struct global_buffer {
-		alignas(16) glm::vec2 dimensions;
+	struct alignas(16) global_buffer {
+		glm::vec2 dimensions;
 	};
 
-	struct command_buffer {
-		alignas(16) glm::vec4 scissor_bounds;
-		alignas(16) glm::vec4 key_color;
-		alignas(4) float blur_strength;
-		alignas(4) uint32_t scissor_enable;
-		alignas(4) uint32_t scissor_in;
-		alignas(4) uint32_t scissor_circle;
-		alignas(4) uint32_t key_enable;
-		alignas(4) uint32_t is_texture;
-		alignas(4) uint32_t is_mask;
-		alignas(16) char padding[12];// Adjust padding size as needed
+	struct alignas(64) command_buffer {
+		glm::vec4 scissor_bounds;
+		glm::vec4 key_color;
+		float blur_strength;
+		uint32_t scissor_enable;
+		uint32_t scissor_in;
+		uint32_t scissor_circle;
+		uint32_t key_enable;
+		uint32_t is_texture;
+		uint32_t is_mask;
 	};
 }// namespace renderer
 

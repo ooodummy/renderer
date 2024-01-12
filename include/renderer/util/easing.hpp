@@ -5,7 +5,6 @@
 #define NOMINMAX
 #endif
 
-#include <corecrt_math_defines.h>
 #include <glm/glm.hpp>
 
 namespace renderer {

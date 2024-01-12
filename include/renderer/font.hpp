@@ -1,6 +1,8 @@
 #ifndef RENDERER_FONT_HPP
 #define RENDERER_FONT_HPP
 
+#include "util/render_vector.hpp"
+
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
@@ -179,6 +181,7 @@ namespace renderer {
 					0x11660, 0x1167F, // Mongolian Supplement
 					0x1DF00, 0x1DFFF, // Latin Extended-G
 					0x1E030, 0x1E05F, // Cyrillic Extended-D
+					0x1F600, 0x1F64F, // Emoticons
 					0,
 				};
 
@@ -259,6 +262,7 @@ namespace renderer {
 		glm::vec2 calc_text_size(const string_t& text, float custom_size = 0.f) {
 			return calc_text_size(std::basic_string_view(text), custom_size);
 		}
+
 		template<typename char_t>
 		glm::vec2 calc_text_size(std::basic_string_view<char_t> text, float custom_size) {
 			glm::vec2 result{}, line_size(0.f, custom_size <= 0.f ? size : custom_size);
@@ -326,6 +330,11 @@ namespace renderer {
 		};
 
 		font_texture texture{};
+		render_vector<custom_rect> custom_rects{};
+		size_t white_pixel_id = 0;
+		glm::vec2 tex_uv_white_pixel{};
+		size_t lines_id = 0;
+		glm::vec4 tex_uv_lines[64]{};
 
 		bool locked = false;
 		std::vector<std::unique_ptr<text_font>> fonts{};
@@ -336,8 +345,12 @@ namespace renderer {
 		}
 
 		void setup_font(text_font* font, text_font::font_config* config, float ascent, float descent);
+		void build_render_default_tex_data();
+		void build_render_lines_tex_data();
 		void build_finish();
 		void build();
+
+		void pack_custom_rects(stbrp_context* context);
 
 		text_font* add_font(const text_font::font_config* config);
 		text_font* add_font_default(text_font::font_config* config = nullptr);

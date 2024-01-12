@@ -3,16 +3,15 @@
 
 #include "color.hpp"
 #include "font.hpp"
-#include "shapes/polyline.hpp"
 #include "texture.hpp"
 
-#include <algorithm>
 #include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 #include <shared_mutex>
+#include <stack>
 
 namespace renderer {
 	class buffer;
+	struct shared_data;
 
 	struct buffer_node {
 		std::unique_ptr<buffer> active;
@@ -51,13 +50,16 @@ namespace renderer {
 		void render();
 
 		// TODO: Sub buffer system
-		size_t register_buffer(size_t priority = 0, size_t vertices_reserve_size = 0, size_t batches_reserve_size = 0);
+		size_t register_buffer(size_t priority = 0, size_t vertices_reserve_size = 0, size_t indices_reserve_size = 0, size_t batches_reserve_size = 0);
 		buffer* get_working_buffer(size_t id);
 
 		void swap_buffers(size_t id);
 
 		void create_atlases();
 		void destroy_atlases();
+
+		void push_font(text_font* font);
+		void pop_font();
 
 		void set_clear_color(const color_rgba& color);
 
@@ -69,10 +71,14 @@ namespace renderer {
 
 		std::unique_ptr<renderer_context> context_;
 
+		std::stack<text_font*> fonts_;
+
 		bool msaa_enabled_;
 
 		int16_t target_sample_count_;
 		int16_t sample_count_;
+
+		std::unique_ptr<shared_data> shared_data_;
 
 		ComPtr<ID3D11Texture2D> msaa_render_target_;
 		ComPtr<ID3D11RenderTargetView> msaa_render_target_view_;
