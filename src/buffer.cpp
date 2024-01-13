@@ -625,7 +625,7 @@ void renderer::buffer::draw_ellipse_filled(const glm::vec2& center,
 
 void renderer::buffer::draw_polyline(
 const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags, float thickness) {
-	if (num_points < 2 || col.a == 0)
+	if (num_points < 2)
 		return;
 
 	const bool closed = (flags & draw_flags::closed) != 0;
@@ -635,7 +635,7 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 
 	if (flags & anti_aliased_lines) {
 		constexpr float AA_SIZE = 1.f;
-		const color_rgba col_trans = col.alpha(255); // TODO: Set back to 0
+		const color_rgba col_trans = col.alpha(0);
 
 		// Thickness < 1.0 should behave like thickness 1.0
 		thickness = std::max(thickness, 1.f);
@@ -647,7 +647,7 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 		// improved.
 		// - If AA_SIZE is not 1.0f we cannot use the texture path.
 		const bool use_texture =
-		(flags & anti_aliased_lines) && (int_thickness < 63) && (fractional_thickness <= 0.00001f) && (AA_SIZE == 1.0f);
+		(flags & anti_aliased_lines_use_tex) && (int_thickness < 63) && (fractional_thickness <= 0.00001f) && (AA_SIZE == 1.0f);
 
 		const int idx_count = use_texture ? (count * 6) : (thick_line ? count * 18 : count * 12);
 		const int vtx_count = use_texture ? (num_points * 2) : (thick_line ? num_points * 4 : num_points * 3);
