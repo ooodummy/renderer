@@ -116,29 +116,30 @@ void draw_test_primitives(renderer::buffer* buf) {
 	// buf->push_key(COLOR_RED);
 
 	// Testing arc performance
-	// buf->draw_line({ 200.0f, 200.0f }, { 300.0f, 300.0f }, COLOR_WHITE, thickness);
-	buf->draw_rect({ 350.0f, 200.0f } , { 450.0f, 300.0f }, COLOR_WHITE, 0, renderer::edge_none, thickness);
-	// buf->draw_rect_filled({ 500.0f, 200.0f }, { 600.0f, 300.0f }, COLOR_ORANGE);
-	// buf->draw_rect({ 650.0f, 200.0f }, { 750.0f, 300.0f }, COLOR_YELLOW.alpha(80), rounding, renderer::draw_flags::edge_all, thickness);
-	// buf->draw_rect_filled({ 800.0f, 200.0f } , { 900.0f, 300.0f }, COLOR_GREEN.alpha(80), rounding, renderer::edge_all);
-	// buf->draw_circle({ 550.0f, 400.0f }, 50.0f, COLOR_WHITE, thickness, 32);
-	// buf->draw_circle_filled({ 700.0f, 400.0f }, 50.0f, COLOR_RED, 32);
+	buf->draw_line({ 200.0f, 200.0f }, { 300.0f, 300.0f }, COLOR_WHITE, thickness);
+	buf->draw_rect({ 350.0f, 200.0f }, { 450.0f, 300.0f }, COLOR_WHITE, 0, renderer::edge_none, thickness);
+	buf->draw_rect_filled({ 500.0f, 200.0f }, { 600.0f, 300.0f }, COLOR_ORANGE);
+	buf->draw_rect({ 650.0f, 200.0f }, { 750.0f, 300.0f }, COLOR_YELLOW.alpha(80), rounding,
+				   renderer::draw_flags::edge_all, thickness);
+	buf->draw_rect_filled({ 800.0f, 200.0f }, { 900.0f, 300.0f }, COLOR_GREEN.alpha(80), rounding, renderer::edge_all);
+	buf->draw_circle({ 550.0f, 400.0f }, 50.0f, COLOR_WHITE, thickness, 32);
+	buf->draw_circle_filled({ 700.0f, 400.0f }, 50.0f, COLOR_RED, 32);
 
 	// Alpha blending
-	// buf->draw_circle_filled({ 125.0f, 190.0f }, 30.0f, COLOR_RED.alpha(175), 32);
-	// buf->draw_circle_filled({ 105.0f, 225.0f }, 30.0f, COLOR_BLUE.alpha(175), 32);
-	// buf->draw_circle_filled({ 145.0f, 225.0f }, 30.0f, COLOR_GREEN.alpha(175), 32);
+	buf->draw_circle_filled({ 125.0f, 190.0f }, 30.0f, COLOR_RED.alpha(175), 32);
+	buf->draw_circle_filled({ 105.0f, 225.0f }, 30.0f, COLOR_BLUE.alpha(175), 32);
+	buf->draw_circle_filled({ 145.0f, 225.0f }, 30.0f, COLOR_GREEN.alpha(175), 32);
 
-	// std::string demo_string = std::format("Hello World! {}", performance.get_fps());
-	// buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
-	// buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
+	std::string demo_string = std::format("Hello World! {}", performance.get_fps());
+	buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
+	buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
 
 	// for (auto i = 0; i < 5000; i++) {
-	// 	buf->draw_text("TEST STRING", { 25.0f, 150.f }, COLOR_WHITE, tahoma, renderer::outline_text);
+	// 	buf->draw_text("TEST STRING", { 25.0f, 150.f }, COLOR_WHITE);
 	//
 	// 	buf->draw_triangle_filled({ 125.0f, 190.0f }, { 105.0f, 225.0f }, { 145.0f, 225.0f }, COLOR_RED);
 	//
-	// 	buf->draw_text("TEXT STRING 1", { 25.0f, 150.f }, COLOR_WHITE, seguiemj, renderer::outline_text);
+	// 	buf->draw_text("TEXT STRING 1", { 25.0f, 300.f }, COLOR_WHITE);
 	// }
 
 	// Test if the get text size result is accurate
@@ -154,7 +155,7 @@ void draw_thread() {
 	dx11->push_font(tahoma);
 
 	while (!close_requested) {
-		updated_draw.wait();
+		// updated_draw.wait();
 
 		renderer::atlas.locked = true;
 		set_default_font(renderer::get_default_font());
@@ -168,7 +169,7 @@ void draw_thread() {
 		dx11->swap_buffers(id);
 
 		renderer::atlas.locked = false;
-		updated_buf.notify();
+		// updated_buf.notify();
 	}
 
 	dx11->pop_font();
@@ -184,9 +185,9 @@ int main() {
 	// 					MB_ICONERROR);
 	// 		return 1;
 	// 	}
-//
+	//
 	// 	ShowWindow(GetConsoleWindow(), SW_SHOW);
-//
+	//
 	// 	FILE* dummy;
 	// 	freopen_s(&dummy, "CONIN$", "r", stdin);
 	// 	freopen_s(&dummy, "CONOUT$", "w", stderr);
@@ -228,9 +229,11 @@ int main() {
 
 	seguiemj = renderer::atlas.add_font_from_file_ttf(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 32.f, &config);
 
-	std::thread draw(draw_thread);
-
 	application->set_visibility(true);
+
+	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
+	dx11->create_atlases();
+	dx11->push_font(tahoma);
 
 	MSG msg{};
 	while (!close_requested && msg.message != WM_QUIT) {
@@ -244,14 +247,25 @@ int main() {
 			break;
 		}
 
+		renderer::atlas.locked = true;
+		set_default_font(renderer::get_default_font());
+
+		auto buf = dx11->get_working_buffer(id);
+		buf->push_projection({});
+
+		draw_test_primitives(buf);
+
+		buf->pop_projection();
+		dx11->swap_buffers(id);
+
+		renderer::atlas.locked = false;
+
 		dx11->render();
 		performance.tick();
-
-		updated_draw.notify();
-		updated_buf.wait();
 	}
 
-	draw.join();
+	dx11->pop_font();
+	dx11->destroy_atlases();
 
 	dx11->release();
 	dx11.reset();

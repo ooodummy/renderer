@@ -375,7 +375,7 @@ void renderer::d3d11_renderer::resize_buffers() {
 			index_buffer = context_->device_resources_->get_index_buffer();
 		}
 
-		if (vertex_buffer) {
+		if (vertex_buffer && index_buffer) {
 			D3D11_MAPPED_SUBRESOURCE vtx_resource;
 			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vtx_resource);
 			assert(SUCCEEDED(hr));

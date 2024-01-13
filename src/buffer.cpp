@@ -23,6 +23,16 @@ void renderer::buffer::clear() {
 	active_command_ = {};
 }
 
+template <typename T>
+T fast_cos(T x) noexcept {
+	constexpr T tp = 1. / (2. * M_PI);
+	x *= tp;
+	x -= T(.25) + std::floor(x + T(.25));
+	x *= T(16.) * (std::abs(x) - T(.5));
+	x += T(.225) * x * (std::abs(x) - T(1.));
+	return x;
+}
+
 void renderer::buffer::path_arc_to_n(
 const glm::vec2& center, float radius, float a_min, float a_max, int num_segments) {
 	if (radius < 0.5f) {
@@ -35,10 +45,9 @@ const glm::vec2& center, float radius, float a_min, float a_max, int num_segment
 	path_.reserve(path_.Size + (num_segments + 1));
 	for (int i = 0; i <= num_segments; i++) {
 		const float a = a_min + ((float)i / (float)num_segments) * (a_max - a_min);
-		path_.push_back({ center.x + cosf(a) * radius, center.y + sinf(a) * radius });
+		path_.push_back({ center.x + fast_cos(a) * radius, center.y + sinf(a) * radius });
 	}
 }
-
 
 void renderer::buffer::path_arc_to(const glm::vec2& center, float radius, float a_min, float a_max, int num_segments) {
 	if (radius < 0.5f) {
@@ -240,14 +249,8 @@ void renderer::buffer::path_bezier_quadratic_curve_to(const glm::vec2& p2, const
 
 void renderer::buffer::path_rect(const glm::vec2& a, const glm::vec2& b, float rounding, draw_flags flags) {
 	if (rounding >= 0.5f) {
-		rounding = std::min(rounding,
-							fabsf(b.x - a.x) *
-							(((flags & edge_top) == edge_top) || ((flags & edge_bottom) == edge_bottom) ? 0.5f : 1.0f) -
-							1.0f);
-		rounding = std::min(rounding,
-							fabsf(b.y - a.y) *
-							(((flags & edge_left) == edge_left) || ((flags & edge_right) == edge_right) ? 0.5f : 1.0f) -
-							1.0f);
+		rounding = std::min(rounding, fabsf(b.x - a.x) * (((flags & edge_top) == edge_top) || ((flags & edge_bottom) == edge_bottom) ? 0.5f : 1.0f) - 1.0f);
+		rounding = std::min(rounding, fabsf(b.y - a.y) * (((flags & edge_left) == edge_left) || ((flags & edge_right) == edge_right) ? 0.5f : 1.0f) - 1.0f);
 	}
 	if (rounding < 0.5f || (flags & edge_mask) == edge_none) {
 		path_line_to(a);
@@ -721,9 +724,7 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 				float dm_y = (temp_normals[i1].y + temp_normals[i2].y) * 0.5f;
 				float d2 = dm_x * dm_x + dm_y * dm_y;
 				if (d2 > 0.000001f) {
-					float inv_len2 = 1.0f / d2;
-					if (inv_len2 > 100.f)
-						inv_len2 = 100.f;
+					float inv_len2 = std::min(1.0f / d2, 100.f);
 					dm_x *= inv_len2;
 					dm_y *= inv_len2;
 				}
@@ -845,9 +846,7 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 				float dm_y = (temp_normals[i1].y + temp_normals[i2].y) * 0.5f;
 				float d2 = dm_x * dm_x + dm_y * dm_y;
 				if (d2 > 0.000001f) {
-					float inv_len2 = 1.0f / d2;
-					if (inv_len2 > 100.f)
-						inv_len2 = 100.f;
+					float inv_len2 = std::min(1.0f / d2, 100.f);
 					dm_x *= inv_len2;
 					dm_y *= inv_len2;
 				}
@@ -1019,9 +1018,7 @@ void renderer::buffer::draw_convex_poly_filled(const glm::vec2* points,
 			float dm_y = (n0.y + n1.y) * 0.5f;
 			float d2 = dm_x * dm_x + dm_y * dm_y;
 			if (d2 > 0.000001f) {
-				float inv_len2 = 1.0f / d2;
-				if (inv_len2 > 100.f)
-					inv_len2 = 100.f;
+				float inv_len2 = std::min(1.0f / d2, 100.f);
 				dm_x *= inv_len2;
 				dm_y *= inv_len2;
 			}

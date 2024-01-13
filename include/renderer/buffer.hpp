@@ -223,8 +223,13 @@ namespace renderer {
 				draw_text(text, { pos.x, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
 			}
 
-			size_t unused_glyphs = 0;
-			prim_reserve(text.length() * 6, text.length() * 4);
+			size_t vtx_count_max = text.size() * 4;
+			size_t idx_count_max = text.size() * 6;
+			size_t idx_expected_size = indices_.Size + idx_count_max;
+			prim_reserve(idx_count_max, vtx_count_max);
+			auto* vtx_write = vertex_current_ptr;
+			auto* idx_write = index_current_ptr;
+			uint32_t vtx_idx = vertex_current_index;
 
 			float new_line_pos = pos.x;
 			float size = font->size;
@@ -257,64 +262,59 @@ namespace renderer {
 			for (auto iter = text.begin(); iter != text.end();) {
 				auto symbol = (uint32_t)*iter;
 				iter += impl::char_converters::converter<char_t>::convert(symbol, iter, text.end());
-				if (!symbol) {
-					++unused_glyphs;
+				if (!symbol)
 					break;
-				}
 
 				// Skip carriage return
-				if (symbol == '\r') {
-					++unused_glyphs;
+				if (symbol == '\r')
 					continue;
-				}
 
 				if (symbol == '\n') {
 					pos.x = new_line_pos;
 					pos.y += size;
-					++unused_glyphs;
 					continue;
 				}
 
 				const auto* glyph = font->find_glyph((uint16_t)symbol);
-				if (!glyph) {
-					++unused_glyphs;
+				if (!glyph)
 					continue;
-				}
 
 				if (glyph->visible) {
 					glm::vec4 corners = glm::vec4(pos.x, pos.y, pos.x, pos.y) + glyph->corners * scaled_font_size;
 					glm::vec4 uvs = glyph->texture_coordinates;
 
-					uint32_t idx = vertex_current_index;
-					index_current_ptr[0] = idx;
-					index_current_ptr[1] = idx + 1;
-					index_current_ptr[2] = idx + 2;
-					index_current_ptr[3] = idx;
-					index_current_ptr[4] = idx + 2;
-					index_current_ptr[5] = idx + 3;
-					vertex_current_ptr[0].pos = { corners.x, corners.y, 0.f };
-					vertex_current_ptr[0].uv = { uvs.x, uvs.y };
-					vertex_current_ptr[0].col = col.rgba;
-					vertex_current_ptr[1].pos = { corners.z, corners.y, 0.f };;
-					vertex_current_ptr[1].uv = { uvs.z, uvs.y };
-					vertex_current_ptr[1].col = col.rgba;
-					vertex_current_ptr[2].pos = { corners.z, corners.w, 0.f };
-					vertex_current_ptr[2].uv = { uvs.z, uvs.w };
-					vertex_current_ptr[2].col = col.rgba;
-					vertex_current_ptr[3].pos = { corners.x, corners.w, 0.f };
-					vertex_current_ptr[3].uv = { uvs.x, uvs.w };
-					vertex_current_ptr[3].col = col.rgba;
-					vertex_current_ptr += 4;
-					vertex_current_index += 4;
-					index_current_ptr += 6;
-				} else {
-					++unused_glyphs;
+					idx_write[0] = vtx_idx;
+					idx_write[1] = vtx_idx + 1;
+					idx_write[2] = vtx_idx + 2;
+					idx_write[3] = vtx_idx;
+					idx_write[4] = vtx_idx + 2;
+					idx_write[5] = vtx_idx + 3;
+					vtx_write[0].pos = { corners.x, corners.y, 0.f };
+					vtx_write[0].uv = { uvs.x, uvs.y };
+					vtx_write[0].col = col.rgba;
+					vtx_write[1].pos = { corners.z, corners.y, 0.f };;
+					vtx_write[1].uv = { uvs.z, uvs.y };
+					vtx_write[1].col = col.rgba;
+					vtx_write[2].pos = { corners.z, corners.w, 0.f };
+					vtx_write[2].uv = { uvs.z, uvs.w };
+					vtx_write[2].col = col.rgba;
+					vtx_write[3].pos = { corners.x, corners.w, 0.f };
+					vtx_write[3].uv = { uvs.x, uvs.w };
+					vtx_write[3].col = col.rgba;
+					vtx_write += 4;
+					vtx_idx += 4;
+					idx_write += 6;
 				}
 
 				pos.x += glyph->advance_x * size * size_reciprocal;
 			}
 
-			prim_unreserve(unused_glyphs * 6, unused_glyphs * 4);
+			vertices_.Size = (size_t)(vtx_write - vertices_.Data);
+			indices_.Size = (size_t)(idx_write - indices_.Data);
+			draw_cmds_[draw_cmds_.Size - 1].elem_count -= (idx_expected_size - indices_.Size);
+			vertex_current_ptr = vtx_write;
+			index_current_ptr = idx_write;
+			vertex_current_index = vtx_idx;
 		}
 
 		// Stateful path API, add points then finish with path_fill() or path_stroke()
