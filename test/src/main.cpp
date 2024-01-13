@@ -149,7 +149,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	const auto id = dx11->register_buffer(0, 1000000, 1000000, 8);
+	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
 	dx11->create_atlases();
 	dx11->push_font(tahoma);
 
@@ -259,10 +259,10 @@ int main() {
 	application->destroy();
 
 #if _DEBUG
-	ShowWindow(GetConsoleWindow(), SW_HIDE);
-
-	if (!FreeConsole())
-		MessageBoxA(nullptr, "Unable to free console.", "Error", MB_ICONERROR);
+	// ShowWindow(GetConsoleWindow(), SW_HIDE);
+	//
+	// if (!FreeConsole())
+	// 	MessageBoxA(nullptr, "Unable to free console.", "Error", MB_ICONERROR);
 #endif
 
 	return 0;

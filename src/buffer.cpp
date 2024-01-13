@@ -5,9 +5,9 @@
 #include <glm/gtx/quaternion.hpp>
 
 void renderer::buffer::clear() {
-	vertices_.wipe();
-	indices_.wipe();
-	draw_cmds_.wipe();
+	vertices_.Size = 0;
+	indices_.Size = 0;
+	draw_cmds_.Size = 0;
 	draw_cmds_.push_back({});
 
 	vertex_current_index = 0;

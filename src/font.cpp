@@ -49,6 +49,9 @@ namespace renderer {
 				lookup_table.advances_x[i] = fallback_advance_x;
 	}
 
+	// TODO: Investigate branchless lookup table
+	// Possible to fill every other value with fallback_glyph pointer, may increase memory size
+	// but speed up on CPU
 	text_font::glyph* text_font::find_glyph(const uint32_t c, const bool fallback) {
 		if (c >= lookup_table.indexes.size())
 			return fallback ? fallback_glyph : nullptr;

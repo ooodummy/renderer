@@ -90,7 +90,11 @@ namespace renderer {
 			index_current_ptr = indices_.Data;
 		}
 
-		~buffer() = default;
+		~buffer() {
+			vertices_.clear();
+			indices_.clear();
+			draw_cmds_.clear();
+		};
 
 		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
 		void pop_scissor();
@@ -219,6 +223,9 @@ namespace renderer {
 				draw_text(text, { pos.x, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
 			}
 
+			size_t unused_glyphs = 0;
+			prim_reserve(text.length() * 6, text.length() * 4);
+
 			float new_line_pos = pos.x;
 			float size = font->size;
 
@@ -250,22 +257,29 @@ namespace renderer {
 			for (auto iter = text.begin(); iter != text.end();) {
 				auto symbol = (uint32_t)*iter;
 				iter += impl::char_converters::converter<char_t>::convert(symbol, iter, text.end());
-				if (!symbol)
+				if (!symbol) {
+					++unused_glyphs;
 					break;
+				}
 
 				// Skip carriage return
-				if (symbol == '\r')
+				if (symbol == '\r') {
+					++unused_glyphs;
 					continue;
+				}
 
 				if (symbol == '\n') {
 					pos.x = new_line_pos;
 					pos.y += size;
+					++unused_glyphs;
 					continue;
 				}
 
 				const auto* glyph = font->find_glyph((uint16_t)symbol);
-				if (!glyph)
+				if (!glyph) {
+					++unused_glyphs;
 					continue;
+				}
 
 				if (glyph->visible) {
 					glm::vec4 corners = glm::vec4(pos.x, pos.y, pos.x, pos.y) + glyph->corners * scaled_font_size;
@@ -293,10 +307,14 @@ namespace renderer {
 					vertex_current_ptr += 4;
 					vertex_current_index += 4;
 					index_current_ptr += 6;
+				} else {
+					++unused_glyphs;
 				}
 
 				pos.x += glyph->advance_x * size * size_reciprocal;
 			}
+
+			prim_unreserve(unused_glyphs * 6, unused_glyphs * 4);
 		}
 
 		// Stateful path API, add points then finish with path_fill() or path_stroke()
