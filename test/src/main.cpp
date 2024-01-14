@@ -3,6 +3,7 @@
 #include <renderer/buffer.hpp>
 #include <renderer/renderer.hpp>
 #include <thread>
+#include <algorithm>
 
 renderer::text_font* tahoma = nullptr;
 renderer::text_font* seguiemj = nullptr;
@@ -75,29 +76,16 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(5)) {
 		animation_timer.reset();
-
-		if (reverse) {
-			factor -= 0.0025f;
-			if (factor <= 0.0f) {
-				reverse = false;
-				factor = 0.0f;
-			}
-		}
-		else {
-			factor += 0.0025f;
-			if (factor >= 1.0f) {
-				reverse = true;
-				factor = 1.0f;
-			}
-		}
+        factor += reverse ? -0.0025f : 0.0025f;
+        reverse = (factor <= 0.0f) || (factor >= 1.0f);
+        factor = std::clamp(factor, 0.0f, 1.0f);
 	}
 
 	if (rainbow_timer.get_elapsed_duration() >= std::chrono::seconds(5)) {
 		rainbow_timer.reset();
 	}
 
-	renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(
-	renderer::color_hsva(359.99f), static_cast<float>(rainbow_timer.get_elapsed_duration().count()) / 5000.0f);
+	renderer::color_rgba rainbow = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f), static_cast<float>(rainbow_timer.get_elapsed_duration().count()) / 5000.0f);
 	rainbow.a = 75;
 
 	static std::vector<glm::vec2> points = {
@@ -114,17 +102,20 @@ void draw_test_primitives(renderer::buffer* buf) {
 	const auto rounding = factor * 60.0f;
 	const auto arc = factor * glm::two_pi<float>();
 
-	// buf->push_key(COLOR_RED);
+    //for (const auto& point : points) {
+    //    buf->path_line_to(point);
+    //}
+    //
+    //buf->path_stroke(rainbow, renderer::none, thickness);
 
 	// Testing arc performance
 	buf->draw_line({ 200.0f, 200.0f }, { 300.0f, 300.0f }, COLOR_WHITE, thickness);
 	buf->draw_rect({ 350.0f, 200.0f }, { 450.0f, 300.0f }, COLOR_WHITE, 0, renderer::edge_none, thickness);
 	buf->draw_rect_filled({ 500.0f, 200.0f }, { 600.0f, 300.0f }, COLOR_ORANGE);
-	buf->draw_rect({ 650.0f, 200.0f }, { 750.0f, 300.0f }, COLOR_YELLOW.alpha(80), rounding,
-				   renderer::draw_flags::edge_all, thickness);
-	buf->draw_rect_filled({ 800.0f, 200.0f }, { 900.0f, 300.0f }, COLOR_GREEN.alpha(80), rounding, renderer::edge_all);
-	buf->draw_circle({ 550.0f, 400.0f }, 50.0f, COLOR_WHITE, thickness, 32);
-	buf->draw_circle_filled({ 700.0f, 400.0f }, 50.0f, COLOR_RED, 32);
+	buf->draw_rect({ 650.0f, 200.0f }, { 750.0f, 300.0f }, COLOR_YELLOW, rounding, renderer::draw_flags::edge_all, thickness);
+	buf->draw_rect_filled({ 800.0f, 200.0f }, { 900.0f, 300.0f }, COLOR_GREEN, rounding, renderer::edge_all);
+	buf->draw_circle({ 550.0f, 400.0f }, 50.0f, COLOR_WHITE, thickness);
+	buf->draw_circle_filled({ 700.0f, 400.0f }, 50.0f, COLOR_RED);
 
 	// Alpha blending
 	buf->draw_circle_filled({ 125.0f, 190.0f }, 30.0f, COLOR_RED.alpha(175), 32);
@@ -143,11 +134,9 @@ void draw_test_primitives(renderer::buffer* buf) {
 		buf->draw_text("TEXT STRING 1", { 25.0f, 300.f }, COLOR_WHITE, renderer::get_default_font(), renderer::outline_text);
 	}*/
 
-	// Test if the get text size result is accurate
-	// auto size = dx11->get_text_size(demo_string, segoe_font);
-	// buf->draw_rect({25.0f, 60.0f - size.y, size.x, size.y}, COLOR_RED);
-
-	// buf->pop_key();
+	// TODO: Fix calc text size
+    //const auto size = seguiemj->calc_text_size(demo_string);
+	//buf->draw_rect({25.0f, 60.0f}, {25.0f + size.x, 60.0f + size.y}, COLOR_RED);
 }
 
 void draw_thread() {
@@ -173,56 +162,17 @@ void draw_thread() {
 	}
 }
 
-size_t id1;
-size_t id2;
-size_t id3;
-size_t id4;
-
-void draw_thread1() {
+void draw_rect_thread(size_t buffer_id, glm::vec2 start, glm::vec2 end, const renderer::color_rgba& color) {
     while (!close_requested) {
         renderer::atlas.locked = true;
         set_default_font(renderer::get_default_font());
 
-        auto buf = dx11->get_working_buffer(id1);
+        auto buf = dx11->get_working_buffer(buffer_id);
         buf->set_projection({});
 
-        buf->draw_rect_filled({100.0f, 100.0f}, {200.0f, 200.0f}, COLOR_RED.alpha(150));
+        buf->draw_rect_filled(start, end, color);
 
-        dx11->swap_buffers(id1);
-        swap_counter.tick();
-
-        renderer::atlas.locked = false;
-    }
-}
-
-void draw_thread2() {
-    while (!close_requested) {
-        renderer::atlas.locked = true;
-        set_default_font(renderer::get_default_font());
-
-        auto buf = dx11->get_working_buffer(id2);
-        buf->set_projection({});
-
-        buf->draw_rect_filled({200.0f, 100.0f}, {300.0f, 200.0f}, COLOR_GREEN.alpha(150));
-
-        dx11->swap_buffers(id2);
-        swap_counter.tick();
-
-        renderer::atlas.locked = false;
-    }
-}
-
-void draw_thread3() {
-    while (!close_requested) {
-        renderer::atlas.locked = true;
-        set_default_font(renderer::get_default_font());
-
-        auto buf = dx11->get_working_buffer(id3);
-        buf->set_projection({});
-
-        buf->draw_rect_filled({300.0f, 100.0f}, {400.0f, 200.0f}, COLOR_BLUE.alpha(150));
-
-        dx11->swap_buffers(id3);
+        dx11->swap_buffers(buffer_id);
         swap_counter.tick();
 
         renderer::atlas.locked = false;
@@ -288,13 +238,16 @@ int main() {
 
 	std::thread draw(draw_thread);
 
-    id1 = dx11->register_buffer(1, 4096, 4096, 32);
-    id2 = dx11->register_buffer(0, 4096, 4096, 32);
-    id3 = dx11->register_buffer(0, 4096, 4096, 32);
-
-    std::thread draw1(draw_thread1);
-    std::thread draw2(draw_thread2);
-    std::thread draw3(draw_thread3);
+    // Testing multi threading with multiple registered buffers
+    //std::vector<std::pair<size_t, std::thread>> threads;
+    //
+    //for (int i = 0; i < 40; ++i) {
+    //    float rainbow_progress = static_cast<float>(i) / 39.0f;
+    //    const auto color = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f), rainbow_progress);
+    //
+    //    const auto id = dx11->register_buffer(0, 4096, 4096, 32);
+    //    threads.emplace_back(id, std::thread(draw_rect_thread, id, glm::vec2(0.0f + i * 20.0f, 0.0f), glm::vec2(0.0f + (i + 1) * 20.0f, 20.0f), color));
+    //}
 
 	MSG msg{};
 	while (!close_requested && msg.message != WM_QUIT) {
@@ -318,9 +271,9 @@ int main() {
 
 	draw.join();
 
-    draw1.join();
-    draw2.join();
-    draw3.join();
+    //for (auto& [id, thread] : threads) {
+    //    thread.join();
+    //}
 
     dx11->destroy_atlases();
 

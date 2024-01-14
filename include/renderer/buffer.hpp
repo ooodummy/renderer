@@ -147,22 +147,19 @@ namespace renderer {
 							  const glm::vec2& p4,
 							  const color_rgba& col,
 							  draw_flags flags = anti_aliased_lines);
-		void draw_triangle(
-		const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3, const color_rgba& col, float thickness = 1.f);
+		void draw_triangle(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3, const color_rgba& col, float thickness = 1.f);
 		void draw_triangle_filled(const glm::vec2& p1,
 								  const glm::vec2& p2,
 								  const glm::vec2& p3,
 								  const color_rgba& col,
 								  draw_flags flags = anti_aliased_lines);
-		void draw_circle(
-		const glm::vec2& center, float radius, const color_rgba& col, float thickness = 1.f, size_t segments = 0);
+		void draw_circle(const glm::vec2& center, float radius, const color_rgba& col, float thickness = 1.f, size_t segments = 0);
 		void draw_circle_filled(const glm::vec2& center,
 								float radius,
 								const color_rgba& col,
 								size_t segments = 0,
 								draw_flags flags = anti_aliased_lines);
-		void
-		draw_ngon(const glm::vec2& center, float radius, const color_rgba& col, size_t segments, float thickness = 1.f);
+		void draw_ngon(const glm::vec2& center, float radius, const color_rgba& col, size_t segments, float thickness = 1.f);
 		void draw_ngon_filled(const glm::vec2& center,
 							  float radius,
 							  const color_rgba& col,
@@ -183,8 +180,7 @@ namespace renderer {
 								 draw_flags flags = anti_aliased_lines,
 								 float rotation = 0.f,
 								 size_t segments = 0);
-		void draw_polyline(
-		const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags, float thickness);
+		void draw_polyline(const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags, float thickness);
 		void draw_convex_poly_filled(const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags);
 		void draw_bezier_cubic(const glm::vec2& p1,
 							   const glm::vec2& p2,
@@ -299,7 +295,6 @@ namespace renderer {
 					vtx_write[0].uv = { uvs.x, uvs.y };
 					vtx_write[0].col = col.rgba;
 					vtx_write[1].pos = { corners.z, corners.y, 0.f };
-					;
 					vtx_write[1].uv = { uvs.z, uvs.y };
 					vtx_write[1].col = col.rgba;
 					vtx_write[2].pos = { corners.z, corners.w, 0.f };
@@ -411,8 +406,6 @@ namespace renderer {
 
 	private:
 		d3d11_renderer* dx11_;
-
-        bool is_child_;
 
 		render_vector<vertex> vertices_;
 		render_vector<uint32_t> indices_;
