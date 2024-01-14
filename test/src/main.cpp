@@ -21,7 +21,8 @@ renderer::sync_manager updated_buf;
 bool close_requested = false;
 
 size_t segoe_font;
-renderer::performance_counter performance;
+renderer::performance_counter swap_counter;
+renderer::performance_counter present_counter;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	static bool in_size_move = false;
@@ -130,17 +131,17 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_circle_filled({ 105.0f, 225.0f }, 30.0f, COLOR_BLUE.alpha(175), 32);
 	buf->draw_circle_filled({ 145.0f, 225.0f }, 30.0f, COLOR_GREEN.alpha(175), 32);
 
-	std::string demo_string = std::format("Hello World! {}", performance.get_fps());
+	std::string demo_string = std::format("Hello World! {} {}", swap_counter.get_fps(), present_counter.get_fps());
 	buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
 	buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
 
-	for (auto i = 0; i < 5000; i++) {
+	/*for (auto i = 0; i < 5000; i++) {
 		buf->draw_text("TEST STRING", { 25.0f, 150.f }, COLOR_WHITE, renderer::get_default_font(), renderer::outline_text);
 
 		buf->draw_triangle_filled({ 125.0f, 190.0f }, { 105.0f, 225.0f }, { 145.0f, 225.0f }, COLOR_RED);
 
 		buf->draw_text("TEXT STRING 1", { 25.0f, 300.f }, COLOR_WHITE, renderer::get_default_font(), renderer::outline_text);
-	}
+	}*/
 
 	// Test if the get text size result is accurate
 	// auto size = dx11->get_text_size(demo_string, segoe_font);
@@ -151,10 +152,9 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 void draw_thread() {
 	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
-	dx11->create_atlases();
 
 	while (!close_requested) {
-		// updated_draw.wait();
+		//updated_draw.wait();
 
 		renderer::atlas.locked = true;
 		set_default_font(renderer::get_default_font());
@@ -165,12 +165,68 @@ void draw_thread() {
 		draw_test_primitives(buf);
 
 		dx11->swap_buffers(id);
+        swap_counter.tick();
 
 		renderer::atlas.locked = false;
-		// updated_buf.notify();
-	}
 
-	dx11->destroy_atlases();
+		//updated_buf.notify();
+	}
+}
+
+size_t id1;
+size_t id2;
+size_t id3;
+size_t id4;
+
+void draw_thread1() {
+    while (!close_requested) {
+        renderer::atlas.locked = true;
+        set_default_font(renderer::get_default_font());
+
+        auto buf = dx11->get_working_buffer(id1);
+        buf->set_projection({});
+
+        buf->draw_rect_filled({100.0f, 100.0f}, {200.0f, 200.0f}, COLOR_RED.alpha(150));
+
+        dx11->swap_buffers(id1);
+        swap_counter.tick();
+
+        renderer::atlas.locked = false;
+    }
+}
+
+void draw_thread2() {
+    while (!close_requested) {
+        renderer::atlas.locked = true;
+        set_default_font(renderer::get_default_font());
+
+        auto buf = dx11->get_working_buffer(id2);
+        buf->set_projection({});
+
+        buf->draw_rect_filled({200.0f, 100.0f}, {300.0f, 200.0f}, COLOR_GREEN.alpha(150));
+
+        dx11->swap_buffers(id2);
+        swap_counter.tick();
+
+        renderer::atlas.locked = false;
+    }
+}
+
+void draw_thread3() {
+    while (!close_requested) {
+        renderer::atlas.locked = true;
+        set_default_font(renderer::get_default_font());
+
+        auto buf = dx11->get_working_buffer(id3);
+        buf->set_projection({});
+
+        buf->draw_rect_filled({300.0f, 100.0f}, {400.0f, 200.0f}, COLOR_BLUE.alpha(150));
+
+        dx11->swap_buffers(id3);
+        swap_counter.tick();
+
+        renderer::atlas.locked = false;
+    }
 }
 
 // TODO: Mutex for texture creation and atlas
@@ -226,11 +282,19 @@ int main() {
 
 	seguiemj = renderer::atlas.add_font_from_file_ttf(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 32.f, &config);
 	renderer::atlas.add_font_from_file_ttf(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 64.f, &config);
+    dx11->create_atlases();
 
 	application->set_visibility(true);
 
-	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
-	dx11->create_atlases();
+	std::thread draw(draw_thread);
+
+    id1 = dx11->register_buffer(1, 4096, 4096, 32);
+    id2 = dx11->register_buffer(0, 4096, 4096, 32);
+    id3 = dx11->register_buffer(0, 4096, 4096, 32);
+
+    std::thread draw1(draw_thread1);
+    std::thread draw2(draw_thread2);
+    std::thread draw3(draw_thread3);
 
 	MSG msg{};
 	while (!close_requested && msg.message != WM_QUIT) {
@@ -244,23 +308,21 @@ int main() {
 			break;
 		}
 
-		renderer::atlas.locked = true;
-		set_default_font(renderer::get_default_font());
-
-		auto buf = dx11->get_working_buffer(id);
-		buf->set_projection({});
-
-		draw_test_primitives(buf);
-
-		dx11->swap_buffers(id);
-
-		renderer::atlas.locked = false;
-
+        dx11->create_atlases();
 		dx11->render();
-		performance.tick();
+		present_counter.tick();
+
+		//updated_draw.notify();
+		//updated_buf.wait();
 	}
 
-	dx11->destroy_atlases();
+	draw.join();
+
+    draw1.join();
+    draw2.join();
+    draw3.join();
+
+    dx11->destroy_atlases();
 
 	dx11->release();
 	dx11.reset();

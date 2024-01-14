@@ -411,8 +411,12 @@ namespace renderer {
 		const render_vector<draw_command>& get_draw_cmds();
 		const command_buffer& get_active_command();
 
+        friend class buffer_node;
+
 	private:
 		d3d11_renderer* dx11_;
+
+        bool is_child_;
 
 		render_vector<vertex> vertices_;
 		render_vector<uint32_t> indices_;
