@@ -3,8 +3,14 @@
 #include "renderer/buffer.hpp"
 #include "renderer/util/win32_window.hpp"
 
+#include <algorithm>
 #include <d3d11.h>
 #include <glm/gtc/matrix_transform.hpp>
+
+void renderer::buffer_node::set_parent(size_t index) {
+    parent = index;
+    active->is_child_ = true;
+}
 
 renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	msaa_enabled_(true),
@@ -56,7 +62,79 @@ size_t renderer::d3d11_renderer::register_buffer(size_t priority,
 												   indices_reserve_size,
 												   batches_reserve_size));
 
+    priorities_.emplace_back(priority, id);
+    std::sort(priorities_.begin(),priorities_.end(), [](auto& first, auto& sec) -> bool {
+        return first.first < sec.first;
+    });
+
 	return id;
+}
+
+size_t renderer::d3d11_renderer::register_child_buffer(size_t parent,
+                                                       size_t priority,
+                                                       size_t vertices_reserve_size,
+                                                       size_t indices_reserve_size,
+                                                       size_t batches_reserve_size) {
+    std::unique_lock lock_guard(buffer_list_mutex_);
+
+    const auto id = buffers_.size();
+    auto& child_buffer = buffers_.emplace_back(std::make_unique<buffer>(this,
+                                                   vertices_reserve_size,
+                                                   indices_reserve_size,
+                                                   batches_reserve_size),
+                          std::make_unique<buffer>(this,
+                                                   vertices_reserve_size,
+                                                   indices_reserve_size,
+                                                   batches_reserve_size));
+
+    child_buffer.set_parent(parent);
+
+    auto& parent_child_buffers = buffers_[parent].child_buffers;
+    parent_child_buffers.emplace_back(priority, id);
+
+    std::sort(parent_child_buffers.begin(), parent_child_buffers.end(), [](auto& first, auto& sec) -> bool {
+        return first.first > sec.first;
+    });
+
+    return id;
+}
+
+void renderer::d3d11_renderer::update_buffer_priority(size_t index, size_t priority) {
+    std::unique_lock lock_guard(buffer_list_mutex_);
+
+    const auto& node = buffers_[index];
+
+    const auto it = std::find_if(priorities_.begin(), priorities_.end(), [index](auto& pair) {
+        return (pair.second == index);
+    });
+
+    if (it == priorities_.end())
+        return;
+
+    it->first = priority;
+}
+
+void renderer::d3d11_renderer::update_child_buffer_priority(size_t child_index, size_t priority) {
+    std::unique_lock lock_guard(buffer_list_mutex_);
+
+    const auto& child = buffers_[child_index];
+    auto& parent = buffers_[child.parent];
+
+    const auto it = std::find_if(parent.child_buffers.begin(), parent.child_buffers.end(), [child_index](auto& pair) {
+        return (pair.second == child_index);
+    });
+
+    if (it != parent.child_buffers.end()) {
+        it->first = priority;
+        std::sort(parent.child_buffers.begin(), parent.child_buffers.end(), [](auto& first, auto& sec) -> bool {
+            return first.first > sec.first;
+        });
+    }
+}
+
+// TODO: Free buffer and then when we try to register a buffer reuse if available
+void renderer::d3d11_renderer::remove_buffer(size_t index) {
+
 }
 
 renderer::buffer* renderer::d3d11_renderer::get_working_buffer(const size_t id) {
@@ -72,10 +150,16 @@ void renderer::d3d11_renderer::swap_buffers(size_t id) {
 
 	assert(id < buffers_.size());
 
-	auto& buf = buffers_[id];
+    const auto swap_buffer = [this](const size_t id, const auto& self_ref) -> void {
+        auto& buf = buffers_[id];
+        buf.active.swap(buf.working);
+        buf.working->clear();
 
-	buf.active.swap(buf.working);
-	buf.working->clear();
+        for (auto& child : buf.child_buffers)
+            self_ref(child.second, self_ref);
+    };
+
+	swap_buffer(id, swap_buffer);
 }
 
 void renderer::d3d11_renderer::create_atlases() {
@@ -167,10 +251,9 @@ void renderer::d3d11_renderer::render() {
 	setup_states();
 
 	resize_buffers();
-
-	const auto context = context_->device_resources_->get_device_context();
-
 	draw_batches();
+
+    const auto context = context_->device_resources_->get_device_context();
 
 	// Resolve MSAA render target
 	if (msaa_enabled_) {
@@ -223,27 +306,45 @@ void renderer::d3d11_renderer::draw_batches() {
 
 	int32_t global_idx_offset = 0;
 	int32_t global_vtx_offset = 0;
-	for (const auto& [active, working] : buffers_) {
-		auto& draw_commands = active->get_draw_cmds();
 
-		context_->device_resources_->set_command_buffer(active->get_active_command());
-		if (active->get_projection() == glm::mat4x4{})
-			context_->device_resources_->set_orthographic_projection();
-		else
-			context_->device_resources_->set_projection(active->get_projection());
+    const auto draw_commands = [&](buffer* active) {
+        auto& draw_commands = active->get_draw_cmds();
 
-		for (const auto& draw_command : draw_commands) {
-			context->PSSetConstantBuffers(0, 1, &command_buffer);
-			context->PSSetShaderResources(0, 1, &draw_command.texture);
+        context_->device_resources_->set_command_buffer(active->get_active_command());
+        if (active->get_projection() == glm::mat4x4{})
+            context_->device_resources_->set_orthographic_projection();
+        else
+            context_->device_resources_->set_projection(active->get_projection());
 
-			context->DrawIndexed(draw_command.elem_count,
-								 draw_command.idx_offset + global_idx_offset,
-								 draw_command.vtx_offset + global_vtx_offset);
-		}
+        context->PSSetConstantBuffers(0, 1, &command_buffer);
 
-		global_idx_offset += active->get_indices().Size;
-		global_vtx_offset += active->get_vertices().Size;
-	}
+        for (const auto& draw_command : draw_commands) {
+            context->PSSetShaderResources(0, 1, &draw_command.texture);
+
+            context->DrawIndexed(draw_command.elem_count,
+                                 draw_command.idx_offset + global_idx_offset,
+                                 draw_command.vtx_offset + global_vtx_offset);
+        }
+
+        global_idx_offset += active->get_indices().Size;
+        global_vtx_offset += active->get_vertices().Size;
+    };
+
+    const auto draw_child_commands = [&, this](const auto& children, const auto& self_ref) -> void {
+        for (const auto& [priority, id] : children) {
+            const auto& child_buffer = buffers_[id];
+            draw_commands(child_buffer.active.get());
+            if (!child_buffer.child_buffers.empty())
+                self_ref(child_buffer.child_buffers, self_ref);
+        }
+    };
+
+    for (const auto& [priority, id] : priorities_) {
+        const auto& node = buffers_[id];
+
+        draw_commands(node.active.get());
+        draw_child_commands(node.child_buffers, draw_child_commands);
+    }
 }
 
 void renderer::d3d11_renderer::on_window_moved() {
@@ -327,13 +428,11 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 }
 
 void renderer::d3d11_renderer::on_device_lost() {
-	{
-		std::unique_lock lock_guard(buffer_list_mutex_);
+    std::unique_lock lock_guard(buffer_list_mutex_);
 
-		for (const auto& [active, working] : buffers_) {
-			active->clear();
-		}
-	}
+    for (const auto& buffer : buffers_) {
+        buffer.active->clear();
+    }
 }
 
 void renderer::d3d11_renderer::on_device_restored() {
@@ -354,7 +453,9 @@ void renderer::d3d11_renderer::resize_buffers() {
 	size_t vertex_count = 0;
 	size_t index_count = 0;
 
-	for (const auto& [active, working] : buffers_) {
+	for (const auto& buffer : buffers_) {
+        const auto& active = buffer.active;
+
 		vertex_count += active->get_vertices().size();
 		index_count += active->get_indices().size();
 	}
@@ -367,26 +468,43 @@ void renderer::d3d11_renderer::resize_buffers() {
 		}
 
 		if (vertex_buffer && index_buffer) {
-			D3D11_MAPPED_SUBRESOURCE vtx_resource;
-			HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vtx_resource);
-			assert(SUCCEEDED(hr));
+            D3D11_MAPPED_SUBRESOURCE vtx_resource;
+            HRESULT hr = context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vtx_resource);
+            assert(SUCCEEDED(hr));
 
-			D3D11_MAPPED_SUBRESOURCE idx_resource;
-			hr = context->Map(index_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &idx_resource);
-			assert(SUCCEEDED(hr));
+            D3D11_MAPPED_SUBRESOURCE idx_resource;
+            hr = context->Map(index_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &idx_resource);
+            assert(SUCCEEDED(hr));
 
-			vertex* vtx_dst = (vertex*)vtx_resource.pData;
-			uint32_t* idx_dst = (uint32_t*)idx_resource.pData;
-			for (auto&& [active, working] : buffers_) {
-				memcpy(vtx_dst, active->get_vertices().Data, active->get_vertices().size() * sizeof(vertex));
-				memcpy(idx_dst, active->get_indices().Data, active->get_indices().size() * sizeof(uint32_t));
+            auto* vtx_dst = (vertex*)vtx_resource.pData;
+            auto* idx_dst = (uint32_t*)idx_resource.pData;
 
-				vtx_dst += active->get_vertices().size();
-				idx_dst += active->get_indices().size();
-			}
+            const auto copy_active_buffer_data = [&](buffer* active) {
+                memcpy(vtx_dst, active->get_vertices().Data, active->get_vertices().size() * sizeof(vertex));
+                memcpy(idx_dst, active->get_indices().Data, active->get_indices().size() * sizeof(uint32_t));
 
-			context->Unmap(vertex_buffer, 0);
-			context->Unmap(index_buffer, 0);
+                vtx_dst += active->get_vertices().size();
+                idx_dst += active->get_indices().size();
+            };
+
+            const auto copy_child_data = [&](const auto& children, const auto& self_ref) -> void {
+                for (const auto& [priority, id] : children) {
+                    const auto& child_buffer = buffers_[id];
+                    copy_active_buffer_data(child_buffer.active.get());
+                    if (!child_buffer.child_buffers.empty())
+                        self_ref(child_buffer.child_buffers, self_ref);
+                }
+            };
+
+            for (const auto& [priority, id] : priorities_) {
+                const auto& node = buffers_[id];
+
+                copy_active_buffer_data(node.active.get());
+                copy_child_data(node.child_buffers, copy_child_data);
+            }
+
+            context->Unmap(vertex_buffer, 0);
+            context->Unmap(index_buffer, 0);
 		}
 	}
 

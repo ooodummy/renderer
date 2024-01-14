@@ -27,6 +27,7 @@ void renderer::buffer::clear() {
 	push_scissor(dx11_->get_shared_data()->full_clip_rect);
 }
 
+// https://stackoverflow.com/a/28050328
 template<std::floating_point T>
 T cos_approximation(T x) noexcept {
 	constexpr T tp = 1. / (2. * M_PI);
