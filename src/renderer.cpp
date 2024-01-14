@@ -329,10 +329,7 @@ void renderer::d3d11_renderer::draw_batches() {
         auto& draw_commands = active->get_draw_cmds();
 
         context_->device_resources_->set_command_buffer(active->get_active_command());
-        if (active->get_projection() == glm::mat4x4{})
-            context_->device_resources_->set_orthographic_projection();
-        else
-            context_->device_resources_->set_projection(active->get_projection());
+        context_->device_resources_->set_projection(active->get_projection());
 
         context->PSSetConstantBuffers(0, 1, &command_buffer);
 
@@ -406,8 +403,15 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 	const auto back_buffer_format = context_->device_resources_->get_back_buffer_format();
 	const auto depth_buffer_format = context_->device_resources_->get_depth_buffer_format();
 	const auto back_buffer_size = context_->device_resources_->get_back_buffer_size();
+    const auto viewport = context_->device_resources_->get_screen_viewport();
 
 	shared_data_->full_clip_rect = { 0, 0, back_buffer_size.x, back_buffer_size.y };
+    shared_data_->ortho_projection = glm::ortho(viewport.TopLeftX,
+                                                viewport.Width,
+                                                viewport.Height,
+                                                viewport.TopLeftY,
+                                                viewport.MinDepth,
+                                                viewport.MaxDepth);
 
 	CD3D11_TEXTURE2D_DESC render_target_desc(back_buffer_format,
 											 back_buffer_size.x,
@@ -686,4 +690,8 @@ void renderer::d3d11_renderer::restore_states() {
 	context->IASetInputLayout(state_.input_layout);
 	if (state_.input_layout)
 		state_.input_layout->Release();
+}
+
+glm::mat4x4 renderer::d3d11_renderer::get_ortho_projection() const {
+    return shared_data_->ortho_projection;
 }

@@ -76,9 +76,21 @@ void draw_test_primitives(renderer::buffer* buf) {
 
 	if (animation_timer.get_elapsed_duration() >= std::chrono::milliseconds(5)) {
 		animation_timer.reset();
-        factor += reverse ? -0.0025f : 0.0025f;
-        reverse = (factor <= 0.0f) || (factor >= 1.0f);
-        factor = std::clamp(factor, 0.0f, 1.0f);
+
+        if (reverse) {
+            factor -= 0.0025f;
+            if (factor <= 0.0f) {
+                reverse = false;
+                factor = 0.0f;
+            }
+        }
+        else {
+            factor += 0.0025f;
+            if (factor >= 1.0f) {
+                reverse = true;
+                factor = 1.0f;
+            }
+        }
 	}
 
 	if (rainbow_timer.get_elapsed_duration() >= std::chrono::seconds(5)) {
@@ -140,7 +152,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 }
 
 void draw_thread() {
-	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
+	const auto id = dx11->register_buffer(0);
+    const auto test_id = dx11->register_buffer(0);
 
 	while (!close_requested) {
 		//updated_draw.wait();
@@ -149,11 +162,13 @@ void draw_thread() {
 		set_default_font(renderer::get_default_font());
 
 		auto buf = dx11->get_working_buffer(id);
-		buf->set_projection({});
+		buf->set_projection(dx11->get_ortho_projection());
 
 		draw_test_primitives(buf);
 
 		dx11->swap_buffers(id);
+
+
         swap_counter.tick();
 
 		renderer::atlas.locked = false;
@@ -239,15 +254,15 @@ int main() {
 	std::thread draw(draw_thread);
 
     // Testing multi threading with multiple registered buffers
-    std::vector<std::pair<size_t, std::thread>> threads;
-
-    for (int i = 0; i < 40; ++i) {
-        float rainbow_progress = static_cast<float>(i) / 39.0f;
-        const auto color = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f), rainbow_progress);
-
-        const auto id = dx11->register_buffer(0, 4096, 4096, 32);
-        threads.emplace_back(id, std::thread(draw_rect_thread, id, glm::vec2(0.0f + i * 20.0f, 0.0f), glm::vec2(0.0f + (i + 1) * 20.0f, 20.0f), color));
-    }
+    //std::vector<std::pair<size_t, std::thread>> threads;
+    //
+    //for (int i = 0; i < 40; ++i) {
+    //    float rainbow_progress = static_cast<float>(i) / 39.0f;
+    //    const auto color = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f), rainbow_progress);
+    //
+    //    const auto id = dx11->register_buffer(0, 4096, 4096, 32);
+    //    threads.emplace_back(id, std::thread(draw_rect_thread, id, glm::vec2(0.0f + i * 20.0f, 0.0f), glm::vec2(0.0f + (i + 1) * 20.0f, 20.0f), color));
+    //}
 
 	MSG msg{};
 	while (!close_requested && msg.message != WM_QUIT) {
@@ -271,9 +286,9 @@ int main() {
 
 	draw.join();
 
-    for (auto& [id, thread] : threads) {
-        thread.join();
-    }
+    //for (auto& [id, thread] : threads) {
+    //    thread.join();
+    //}
 
     dx11->destroy_atlases();
 

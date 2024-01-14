@@ -47,6 +47,8 @@ namespace renderer {
 
 		glm::vec4* tex_uv_lines;
 
+        glm::mat4x4 ortho_projection;
+
 		shared_data();
 		void set_circle_segment_max_error(float max_error);
 	};

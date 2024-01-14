@@ -75,6 +75,8 @@ namespace renderer {
 			return shared_data_;
 		}
 
+        [[nodiscard]] glm::mat4x4 get_ortho_projection() const;
+
 	private:
 		std::shared_mutex buffer_list_mutex_;
 
