@@ -37,7 +37,6 @@ namespace renderer {
 		float circle_segment_max_error;
 
 		glm::vec4 full_clip_rect;
-		render_vector<glm::vec2> temp_buffer;
 
 		constexpr static size_t arc_fast_vtx_size = 48;
 		glm::vec2 arc_fast_vtx[arc_fast_vtx_size];
@@ -406,7 +405,7 @@ namespace renderer {
 		const render_vector<draw_command>& get_draw_cmds();
 		const command_buffer& get_active_command();
 
-        friend class buffer_node;
+        friend struct buffer_node;
 
 	private:
 		d3d11_renderer* dx11_;
@@ -414,6 +413,7 @@ namespace renderer {
 		render_vector<vertex> vertices_;
 		render_vector<uint32_t> indices_;
 		render_vector<draw_command> draw_cmds_;
+		render_vector<glm::vec2> temp_buffer_;
 
 		int32_t vertex_current_index = 0;
 		vertex* vertex_current_ptr = nullptr;

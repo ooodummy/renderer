@@ -8,6 +8,7 @@ void renderer::buffer::clear() {
 	vertices_.Size = 0;
 	indices_.Size = 0;
 	draw_cmds_.Size = 0;
+	temp_buffer_.Size = 0;
 	draw_cmds_.push_back({});
 
 	vertex_current_index = 0;
@@ -671,8 +672,8 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 		// Temporary buffer
 		// The first <num_points> items are normals at each line point, then after that there are either 2 or 4 temp
 		// points for each line point
-		dx11_->get_shared_data()->temp_buffer.reserve_discard(num_points * ((use_texture || !thick_line) ? 3 : 5));
-		glm::vec2* temp_normals = dx11_->get_shared_data()->temp_buffer.Data;
+		temp_buffer_.reserve_discard(num_points * ((use_texture || !thick_line) ? 3 : 5));
+		glm::vec2* temp_normals = temp_buffer_.Data;
 		glm::vec2* temp_points = temp_normals + num_points;
 
 		// Calculate normals (tangents) for each line segment
@@ -1005,8 +1006,8 @@ void renderer::buffer::draw_convex_poly_filled(const glm::vec2* points,
 		}
 
 		// Compute normals
-		dx11_->get_shared_data()->temp_buffer.reserve_discard(num_points);
-		glm::vec2* temp_normals = dx11_->get_shared_data()->temp_buffer.Data;
+		temp_buffer_.reserve_discard(num_points);
+		glm::vec2* temp_normals = temp_buffer_.Data;
 		for (int i0 = num_points - 1, i1 = 0; i1 < num_points; i0 = i1++) {
 			const glm::vec2& p0 = points[i0];
 			const glm::vec2& p1 = points[i1];

@@ -239,15 +239,15 @@ int main() {
 	std::thread draw(draw_thread);
 
     // Testing multi threading with multiple registered buffers
-    //std::vector<std::pair<size_t, std::thread>> threads;
-    //
-    //for (int i = 0; i < 40; ++i) {
-    //    float rainbow_progress = static_cast<float>(i) / 39.0f;
-    //    const auto color = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f), rainbow_progress);
-    //
-    //    const auto id = dx11->register_buffer(0, 4096, 4096, 32);
-    //    threads.emplace_back(id, std::thread(draw_rect_thread, id, glm::vec2(0.0f + i * 20.0f, 0.0f), glm::vec2(0.0f + (i + 1) * 20.0f, 20.0f), color));
-    //}
+    std::vector<std::pair<size_t, std::thread>> threads;
+
+    for (int i = 0; i < 40; ++i) {
+        float rainbow_progress = static_cast<float>(i) / 39.0f;
+        const auto color = renderer::color_hsva(0.0f).ease(renderer::color_hsva(359.99f), rainbow_progress);
+
+        const auto id = dx11->register_buffer(0, 4096, 4096, 32);
+        threads.emplace_back(id, std::thread(draw_rect_thread, id, glm::vec2(0.0f + i * 20.0f, 0.0f), glm::vec2(0.0f + (i + 1) * 20.0f, 20.0f), color));
+    }
 
 	MSG msg{};
 	while (!close_requested && msg.message != WM_QUIT) {
@@ -271,9 +271,9 @@ int main() {
 
 	draw.join();
 
-    //for (auto& [id, thread] : threads) {
-    //    thread.join();
-    //}
+    for (auto& [id, thread] : threads) {
+        thread.join();
+    }
 
     dx11->destroy_atlases();
 
