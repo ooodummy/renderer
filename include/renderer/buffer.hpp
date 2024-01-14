@@ -47,7 +47,7 @@ namespace renderer {
 
 		glm::vec4* tex_uv_lines = nullptr;
 
-        glm::mat4x4 ortho_projection;
+        glm::mat4x4 ortho_projection{};
 
 		shared_data();
 		void set_circle_segment_max_error(float max_error);
@@ -200,7 +200,10 @@ namespace renderer {
 
 		// 3D Primitives
 		void draw_line(const glm::vec3& p1, const glm::vec3& p2, const color_rgba& col);
-		void draw_extents(std::span<glm::vec3, 8> bounds, const color_rgba& col);
+		void draw_plane(std::span<glm::vec3, 4> points, const color_rgba& col);
+		void draw_filled_plane(std::span<glm::vec3, 4> points, const color_rgba& col);
+		void draw_extents(std::span<glm::vec3, 8> points, const color_rgba& col);
+		void draw_filled_extents(std::span<glm::vec3, 8> points, const color_rgba& col);
 
 		template<typename string_t>
 		void draw_text(const string_t& text,

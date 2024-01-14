@@ -1128,8 +1128,86 @@ void renderer::buffer::draw_line(const glm::vec3& p1, const glm::vec3& p2, const
 	vertex_current_index += 2;
 	index_current_ptr += 2;
 }
- 
-void renderer::buffer::draw_extents(std::span<glm::vec3, 8> data, const color_rgba& col) {
+
+void renderer::buffer::draw_plane(const std::span<glm::vec3, 4> points, const color_rgba& col) {
+	constexpr int ftl = 0;
+	constexpr int ftr = 1;
+	constexpr int fbl = 2;
+	constexpr int fbr = 3;
+
+	// Front face
+	draw_line(points[ftl], points[ftr], col);
+	draw_line(points[ftr], points[fbr], col);
+	draw_line(points[fbr], points[fbl], col);
+	draw_line(points[fbl], points[ftl], col);
+}
+
+void renderer::buffer::draw_filled_plane(const std::span<glm::vec3, 4> points, const color_rgba& col) {
+	prim_reserve(6, 4);
+
+	constexpr int ftl = 0;
+	constexpr int ftr = 1;
+	constexpr int fbl = 2;
+	constexpr int fbr = 3;
+
+	int32_t idx = vertex_current_index;
+
+	// Front face
+	index_current_ptr[0] = idx + ftl;
+	index_current_ptr[1] = idx + ftr;
+	index_current_ptr[2] = idx + fbl;
+	index_current_ptr[3] = idx + ftr;
+	index_current_ptr[4] = idx + fbr;
+	index_current_ptr[5] = idx + fbl;
+
+	vertex_current_ptr[ftl].pos = points[ftl];
+	vertex_current_ptr[ftl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[ftl].col = col.rgba;
+	vertex_current_ptr[ftr].pos = points[ftr];
+	vertex_current_ptr[ftr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[ftr].col = col.rgba;
+	vertex_current_ptr[fbl].pos = points[fbl];
+	vertex_current_ptr[fbl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[fbl].col = col.rgba;
+	vertex_current_ptr[fbr].pos = points[fbr];
+	vertex_current_ptr[fbr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[fbr].col = col.rgba;
+
+	vertex_current_ptr += 4;
+	vertex_current_index += 4;
+	index_current_ptr += 6;
+}
+
+void renderer::buffer::draw_extents(const std::span<glm::vec3, 8> points, const color_rgba& col) {
+	constexpr int ftl = 0;
+	constexpr int ftr = 1;
+	constexpr int fbl = 2;
+	constexpr int fbr = 3;
+	constexpr int btl = 4;
+	constexpr int btr = 5;
+	constexpr int bbl = 6;
+	constexpr int bbr = 7;
+
+	// Back face
+	draw_line(points[btl], points[btr], col);
+	draw_line(points[btr], points[bbr], col);
+	draw_line(points[bbr], points[bbl], col);
+	draw_line(points[bbl], points[btl], col);
+
+	// Middle lines
+	draw_line(points[ftl], points[btl], col);
+	draw_line(points[ftr], points[btr], col);
+	draw_line(points[fbl], points[bbl], col);
+	draw_line(points[fbr], points[bbr], col);
+
+	// Front face
+	draw_line(points[ftl], points[ftr], col);
+	draw_line(points[ftr], points[fbr], col);
+	draw_line(points[fbr], points[fbl], col);
+	draw_line(points[fbl], points[ftl], col);
+}
+
+void renderer::buffer::draw_filled_extents(const std::span<glm::vec3, 8> points, const color_rgba& col) {
 	prim_reserve(36, 8);
 
 	constexpr int ftl = 0;
@@ -1191,28 +1269,28 @@ void renderer::buffer::draw_extents(std::span<glm::vec3, 8> data, const color_rg
 	index_current_ptr[34] = idx + fbr;
 	index_current_ptr[35] = idx + bbr;
 
-	vertex_current_ptr[ftl].pos = data[ftl];
+	vertex_current_ptr[ftl].pos = points[ftl];
 	vertex_current_ptr[ftl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[ftl].col = col.rgba;
-	vertex_current_ptr[ftr].pos = data[ftr];
+	vertex_current_ptr[ftr].pos = points[ftr];
 	vertex_current_ptr[ftr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[ftr].col = col.rgba;
-	vertex_current_ptr[fbl].pos = data[fbl];
+	vertex_current_ptr[fbl].pos = points[fbl];
 	vertex_current_ptr[fbl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[fbl].col = col.rgba;
-	vertex_current_ptr[fbr].pos = data[fbr];
+	vertex_current_ptr[fbr].pos = points[fbr];
 	vertex_current_ptr[fbr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[fbr].col = col.rgba;
-	vertex_current_ptr[btl].pos = data[btl];
+	vertex_current_ptr[btl].pos = points[btl];
 	vertex_current_ptr[btl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[btl].col = col.rgba;
-	vertex_current_ptr[btr].pos = data[btr];
+	vertex_current_ptr[btr].pos = points[btr];
 	vertex_current_ptr[btr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[btr].col = col.rgba;
-	vertex_current_ptr[bbl].pos = data[bbl];
+	vertex_current_ptr[bbl].pos = points[bbl];
 	vertex_current_ptr[bbl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[bbl].col = col.rgba;
-	vertex_current_ptr[bbr].pos = data[bbr];
+	vertex_current_ptr[bbr].pos = points[bbr];
 	vertex_current_ptr[bbr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	vertex_current_ptr[bbr].col = col.rgba;
 	vertex_current_ptr += 8;
@@ -1237,7 +1315,7 @@ void renderer::shared_data::set_circle_segment_max_error(float max_error) {
 
 	circle_segment_max_error = max_error;
 	for (size_t i = 0; i < circle_segment_counts_size; i++) {
-		const float radius = (float)i;
+		const auto radius = (float)i;
 		circle_segment_counts[i] =
 		(uint8_t)(i > 0
 				  ? std::clamp(((int)ceilf(M_PI / acosf(1 - std::min(circle_segment_max_error, radius) / radius)) + 1) /
