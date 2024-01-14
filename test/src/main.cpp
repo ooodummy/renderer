@@ -134,13 +134,13 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
 	buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
 
-	// for (auto i = 0; i < 5000; i++) {
-	// 	buf->draw_text("TEST STRING", { 25.0f, 150.f }, COLOR_WHITE);
-	//
-	// 	buf->draw_triangle_filled({ 125.0f, 190.0f }, { 105.0f, 225.0f }, { 145.0f, 225.0f }, COLOR_RED);
-	//
-	// 	buf->draw_text("TEXT STRING 1", { 25.0f, 300.f }, COLOR_WHITE);
-	// }
+	for (auto i = 0; i < 5000; i++) {
+		buf->draw_text("TEST STRING", { 25.0f, 150.f }, COLOR_WHITE, renderer::get_default_font(), renderer::outline_text);
+
+		buf->draw_triangle_filled({ 125.0f, 190.0f }, { 105.0f, 225.0f }, { 145.0f, 225.0f }, COLOR_RED);
+
+		buf->draw_text("TEXT STRING 1", { 25.0f, 300.f }, COLOR_WHITE, renderer::get_default_font(), renderer::outline_text);
+	}
 
 	// Test if the get text size result is accurate
 	// auto size = dx11->get_text_size(demo_string, segoe_font);
@@ -152,7 +152,6 @@ void draw_test_primitives(renderer::buffer* buf) {
 void draw_thread() {
 	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
 	dx11->create_atlases();
-	dx11->push_font(tahoma);
 
 	while (!close_requested) {
 		// updated_draw.wait();
@@ -161,18 +160,16 @@ void draw_thread() {
 		set_default_font(renderer::get_default_font());
 
 		auto buf = dx11->get_working_buffer(id);
-		buf->push_projection({});
+		buf->set_projection({});
 
 		draw_test_primitives(buf);
 
-		buf->pop_projection();
 		dx11->swap_buffers(id);
 
 		renderer::atlas.locked = false;
 		// updated_buf.notify();
 	}
 
-	dx11->pop_font();
 	dx11->destroy_atlases();
 }
 
@@ -228,12 +225,12 @@ int main() {
 	tahoma = renderer::atlas.add_font_default(&config);
 
 	seguiemj = renderer::atlas.add_font_from_file_ttf(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 32.f, &config);
+	renderer::atlas.add_font_from_file_ttf(std::string(csidl_fonts) + '\\' + "seguiemj.ttf", 64.f, &config);
 
 	application->set_visibility(true);
 
 	const auto id = dx11->register_buffer(0, 4096, 4096, 32);
 	dx11->create_atlases();
-	dx11->push_font(tahoma);
 
 	MSG msg{};
 	while (!close_requested && msg.message != WM_QUIT) {
@@ -251,11 +248,10 @@ int main() {
 		set_default_font(renderer::get_default_font());
 
 		auto buf = dx11->get_working_buffer(id);
-		buf->push_projection({});
+		buf->set_projection({});
 
 		draw_test_primitives(buf);
 
-		buf->pop_projection();
 		dx11->swap_buffers(id);
 
 		renderer::atlas.locked = false;
@@ -264,7 +260,6 @@ int main() {
 		performance.tick();
 	}
 
-	dx11->pop_font();
 	dx11->destroy_atlases();
 
 	dx11->release();

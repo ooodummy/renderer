@@ -48,12 +48,10 @@ size_t renderer::d3d11_renderer::register_buffer(size_t priority,
 
 	const auto id = buffers_.size();
 	buffers_.emplace_back(std::make_unique<buffer>(this,
-												   shared_data_.get(),
 												   vertices_reserve_size,
 												   indices_reserve_size,
 												   batches_reserve_size),
 						  std::make_unique<buffer>(this,
-												   shared_data_.get(),
 												   vertices_reserve_size,
 												   indices_reserve_size,
 												   batches_reserve_size));
@@ -136,6 +134,9 @@ void renderer::d3d11_renderer::create_atlases() {
 		}
 
 		atlas->texture.data = texture_view;
+
+		shared_data_->tex_uv_white_pixel = atlas->tex_uv_white_pixel;
+		shared_data_->tex_uv_lines = atlas->tex_uv_lines;
 	}
 
 	atlases_handler.changed = false;
@@ -153,17 +154,6 @@ void renderer::d3d11_renderer::destroy_atlases() {
 	}
 
 	atlases_handler.changed = true;
-}
-
-void renderer::d3d11_renderer::push_font(text_font* font) {
-	fonts_.push(font);
-
-	shared_data_->tex_uv_white_pixel = font->container_atlas->tex_uv_white_pixel;
-	shared_data_->tex_uv_lines = font->container_atlas->tex_uv_lines;
-}
-
-void renderer::d3d11_renderer::pop_font() {
-	fonts_.pop();
 }
 
 void renderer::d3d11_renderer::set_clear_color(const renderer::color_rgba& color) {
@@ -231,21 +221,20 @@ void renderer::d3d11_renderer::draw_batches() {
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	size_t global_idx_offset = 0;
-	size_t global_vtx_offset = 0;
+	int32_t global_idx_offset = 0;
+	int32_t global_vtx_offset = 0;
 	for (const auto& [active, working] : buffers_) {
 		auto& draw_commands = active->get_draw_cmds();
 
 		context_->device_resources_->set_command_buffer(active->get_active_command());
+		if (active->get_projection() == glm::mat4x4{})
+			context_->device_resources_->set_orthographic_projection();
+		else
+			context_->device_resources_->set_projection(active->get_projection());
 
 		for (const auto& draw_command : draw_commands) {
-			if (draw_command.projection == glm::mat4x4{})
-				context_->device_resources_->set_orthographic_projection();
-			else
-				context_->device_resources_->set_projection(draw_command.projection);
-
 			context->PSSetConstantBuffers(0, 1, &command_buffer);
-			context->PSSetShaderResources(0, 1, &fonts_.top()->container_atlas->texture.data);
+			context->PSSetShaderResources(0, 1, &draw_command.texture);
 
 			context->DrawIndexed(draw_command.elem_count,
 								 draw_command.idx_offset + global_idx_offset,
@@ -298,6 +287,8 @@ void renderer::d3d11_renderer::create_window_size_dependent_resources() {
 	const auto back_buffer_format = context_->device_resources_->get_back_buffer_format();
 	const auto depth_buffer_format = context_->device_resources_->get_depth_buffer_format();
 	const auto back_buffer_size = context_->device_resources_->get_back_buffer_size();
+
+	shared_data_->full_clip_rect = { 0, 0, back_buffer_size.x, back_buffer_size.y };
 
 	CD3D11_TEXTURE2D_DESC render_target_desc(back_buffer_format,
 											 back_buffer_size.x,

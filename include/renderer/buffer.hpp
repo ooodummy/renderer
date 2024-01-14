@@ -36,6 +36,7 @@ namespace renderer {
 		float curve_tesselation_tol;
 		float circle_segment_max_error;
 
+		glm::vec4 full_clip_rect;
 		render_vector<glm::vec2> temp_buffer;
 
 		constexpr static size_t arc_fast_vtx_size = 48;
@@ -51,11 +52,16 @@ namespace renderer {
 		void set_circle_segment_max_error(float max_error);
 	};
 
+	struct draw_command_header {
+		glm::vec4 clip_rect;
+		ID3D11ShaderResourceView* texture;
+		uint32_t vtx_offset;
+	};
+
 	struct draw_command {
 		glm::vec4 clip_rect;
-		// ID3D11ShaderResourceView* texture;
-		glm::mat4x4 projection;
-		uint32_t vtx_offset;
+		ID3D11ShaderResourceView* texture;
+		int32_t vtx_offset;
 		uint32_t idx_offset;
 		uint32_t elem_count;
 
@@ -68,7 +74,7 @@ namespace renderer {
 	// https://github.com/T0b1-iOS/draw_manager/blob/4d88b2e45c9321a29150482a571d64d2116d4004/draw_manager.hpp#L76
 	class buffer {
 	public:
-		explicit buffer(d3d11_renderer* dx11, shared_data* shared_data) : dx11_(dx11), shared_data_(shared_data) {
+		explicit buffer(d3d11_renderer* dx11) : dx11_(dx11) {
 			vertices_.reserve(4096);
 			indices_.reserve(4096);
 			draw_cmds_.reserve(32);
@@ -77,11 +83,11 @@ namespace renderer {
 			index_current_ptr = indices_.Data;
 		}
 
-		explicit buffer(d3d11_renderer* dx11, shared_data* shared_data,
+		explicit buffer(d3d11_renderer* dx11,
 						size_t vertices_reserve_size,
 						size_t indices_reserve_size,
 						size_t batches_reserve_size) :
-			dx11_(dx11), shared_data_(shared_data) {
+			dx11_(dx11) {
 			vertices_.reserve(vertices_reserve_size);
 			indices_.reserve(indices_reserve_size);
 			draw_cmds_.reserve(batches_reserve_size);
@@ -96,16 +102,16 @@ namespace renderer {
 			draw_cmds_.clear();
 		};
 
-		void push_scissor(const glm::vec4& bounds, bool in = false, bool circle = false);
+		void push_scissor(const glm::vec4& bounds);
 		void pop_scissor();
 
 		void push_texture(ID3D11ShaderResourceView* srv);
 		void pop_texture();
 
-		void push_projection(const glm::mat4x4& projection);
-		void pop_projection();
+		[[nodiscard]] const glm::mat4x4& get_projection() const;
+		void set_projection(const glm::mat4x4& projection);
 
-		void add_draw_cmd(const draw_command& cmd);
+		void add_draw_cmd();
 
 		void clear();
 
@@ -292,7 +298,8 @@ namespace renderer {
 					vtx_write[0].pos = { corners.x, corners.y, 0.f };
 					vtx_write[0].uv = { uvs.x, uvs.y };
 					vtx_write[0].col = col.rgba;
-					vtx_write[1].pos = { corners.z, corners.y, 0.f };;
+					vtx_write[1].pos = { corners.z, corners.y, 0.f };
+					;
 					vtx_write[1].uv = { uvs.z, uvs.y };
 					vtx_write[1].col = col.rgba;
 					vtx_write[2].pos = { corners.z, corners.w, 0.f };
@@ -402,40 +409,31 @@ namespace renderer {
 
 	private:
 		d3d11_renderer* dx11_;
-		shared_data* shared_data_;
 
 		render_vector<vertex> vertices_;
 		render_vector<uint32_t> indices_;
 		render_vector<draw_command> draw_cmds_;
 
-		render_vector<glm::vec2> path_;
-
-		uint32_t vertex_current_index = 0;
+		int32_t vertex_current_index = 0;
 		vertex* vertex_current_ptr = nullptr;
 		uint32_t* index_current_ptr = nullptr;
 
-		struct scissor_command {
-			scissor_command(glm::vec4 bounds, bool in, bool circle);
+		render_vector<glm::vec2> path_;
 
-			glm::vec4 bounds;
-			bool in;
-			bool circle;
-		};
+		draw_command_header header_;
+		render_vector<glm::vec4> scissor_stack_;
+		render_vector<ID3D11ShaderResourceView*> texture_stack_;
 
-		std::stack<scissor_command> scissor_list_;
-		std::stack<ID3D11ShaderResourceView*> texture_list_;
-		std::stack<glm::mat4x4> projection_list_;
+		command_buffer active_command_{};
+		glm::mat4x4 active_projection_ = glm::mat4(1.f);
 
 		void update_scissor();
 		void update_texture();
-		void update_projection();
+		void update_vtx_offset();
 
-		int calc_circle_auto_segment_count(float radius) const;
+		[[nodiscard]] int calc_circle_auto_segment_count(float radius) const;
 		void path_arc_to_n(const glm::vec2& center, float radius, float a_min, float a_max, int num_segments);
 		void path_arc_to_fast_ex(const glm::vec2& center, float radius, int a_min_sample, int a_max_sample, int a_step);
-
-		command_buffer active_command_{};
-		glm::mat4x4 active_projection = glm::mat4(1.f);
 	};
 }// namespace renderer
 

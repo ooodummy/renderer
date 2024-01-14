@@ -58,20 +58,18 @@ namespace renderer {
 		void create_atlases();
 		void destroy_atlases();
 
-		void push_font(text_font* font);
-		void pop_font();
-
 		void set_clear_color(const color_rgba& color);
 
 		glm::vec2 get_render_target_size();
+		const std::unique_ptr<shared_data>& get_shared_data() const {
+			return shared_data_;
+		}
 
 	private:
 		std::shared_mutex buffer_list_mutex_;
 		std::vector<buffer_node> buffers_;
 
 		std::unique_ptr<renderer_context> context_;
-
-		std::stack<text_font*> fonts_;
 
 		bool msaa_enabled_;
 

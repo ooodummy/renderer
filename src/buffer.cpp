@@ -14,17 +14,21 @@ void renderer::buffer::clear() {
 	vertex_current_ptr = vertices_.Data;
 	index_current_ptr = indices_.Data;
 
-	scissor_list_ = {};
-	texture_list_ = {};
-	projection_list_ = {};
+	memset(&header_, 0, sizeof(header_));
+
+	scissor_stack_ = {};
+	texture_stack_ = {};
 
 	path_.resize(0);
 
 	active_command_ = {};
+
+	push_texture(get_default_font()->container_atlas->texture.data);
+	push_scissor(dx11_->get_shared_data()->full_clip_rect);
 }
 
-template <typename T>
-T fast_cos(T x) noexcept {
+template<std::floating_point T>
+T cos_approximation(T x) noexcept {
 	constexpr T tp = 1. / (2. * M_PI);
 	x *= tp;
 	x -= T(.25) + std::floor(x + T(.25));
@@ -45,7 +49,8 @@ const glm::vec2& center, float radius, float a_min, float a_max, int num_segment
 	path_.reserve(path_.Size + (num_segments + 1));
 	for (int i = 0; i <= num_segments; i++) {
 		const float a = a_min + ((float)i / (float)num_segments) * (a_max - a_min);
-		path_.push_back({ center.x + fast_cos(a) * radius, center.y + sinf(a) * radius });
+
+		path_.push_back({ center.x + cosf(a) * radius, center.y + sinf(a) * radius });
 	}
 }
 
@@ -60,21 +65,21 @@ void renderer::buffer::path_arc_to(const glm::vec2& center, float radius, float 
 		return;
 	}
 
-	if (radius <= shared_data_->arc_fast_radius_cutoff) {
+	if (radius <= dx11_->get_shared_data()->arc_fast_radius_cutoff) {
 		const bool a_is_reverse = a_max < a_min;
 
 		// We are going to use precomputed values for mid samples.
 		// Determine first and last sample in lookup table that belong to the arc.
-		const float a_min_sample_f = shared_data_->arc_fast_vtx_size * a_min / (M_PI * 2.0f);
-		const float a_max_sample_f = shared_data_->arc_fast_vtx_size * a_max / (M_PI * 2.0f);
+		const float a_min_sample_f = dx11_->get_shared_data()->arc_fast_vtx_size * a_min / (M_PI * 2.0f);
+		const float a_max_sample_f = dx11_->get_shared_data()->arc_fast_vtx_size * a_max / (M_PI * 2.0f);
 
 		const int a_min_sample = a_is_reverse ? (int)floorf(a_min_sample_f) : (int)ceilf(a_min_sample_f);
 		const int a_max_sample = a_is_reverse ? (int)ceilf(a_max_sample_f) : (int)floorf(a_max_sample_f);
 		const int a_mid_samples =
 		a_is_reverse ? std::max(a_min_sample - a_max_sample, 0) : std::max(a_max_sample - a_min_sample, 0);
 
-		const float a_min_segment_angle = a_min_sample * M_PI * 2.0f / shared_data_->arc_fast_vtx_size;
-		const float a_max_segment_angle = a_max_sample * M_PI * 2.0f / shared_data_->arc_fast_vtx_size;
+		const float a_min_segment_angle = a_min_sample * M_PI * 2.0f / dx11_->get_shared_data()->arc_fast_vtx_size;
+		const float a_max_segment_angle = a_max_sample * M_PI * 2.0f / dx11_->get_shared_data()->arc_fast_vtx_size;
 		const bool a_emit_start = fabsf(a_min_segment_angle - a_min) >= 1e-5f;
 		const bool a_emit_end = fabsf(a_max - a_max_segment_angle) >= 1e-5f;
 
@@ -103,8 +108,8 @@ void renderer::buffer::path_arc_to_fast(const glm::vec2& center, float radius, i
 
 	path_arc_to_fast_ex(center,
 						radius,
-						a_min_of_12 * shared_data_->arc_fast_vtx_size / 12,
-						a_max_of_12 * shared_data_->arc_fast_vtx_size / 12,
+						a_min_of_12 * dx11_->get_shared_data()->arc_fast_vtx_size / 12,
+						a_max_of_12 * dx11_->get_shared_data()->arc_fast_vtx_size / 12,
 						0);
 }
 
@@ -186,7 +191,7 @@ void renderer::buffer::path_bezier_cubic_curve_to(const glm::vec2& p2,
 											 p3.y,
 											 p4.x,
 											 p4.y,
-											 shared_data_->curve_tesselation_tol,
+											 dx11_->get_shared_data()->curve_tesselation_tol,
 											 0);// Auto-tessellated
 	}
 	else {
@@ -237,7 +242,7 @@ void renderer::buffer::path_bezier_quadratic_curve_to(const glm::vec2& p2, const
 												 p2.y,
 												 p3.x,
 												 p3.y,
-												 shared_data_->curve_tesselation_tol,
+												 dx11_->get_shared_data()->curve_tesselation_tol,
 												 0);// Auto-tessellated
 	}
 	else {
@@ -249,8 +254,14 @@ void renderer::buffer::path_bezier_quadratic_curve_to(const glm::vec2& p2, const
 
 void renderer::buffer::path_rect(const glm::vec2& a, const glm::vec2& b, float rounding, draw_flags flags) {
 	if (rounding >= 0.5f) {
-		rounding = std::min(rounding, fabsf(b.x - a.x) * (((flags & edge_top) == edge_top) || ((flags & edge_bottom) == edge_bottom) ? 0.5f : 1.0f) - 1.0f);
-		rounding = std::min(rounding, fabsf(b.y - a.y) * (((flags & edge_left) == edge_left) || ((flags & edge_right) == edge_right) ? 0.5f : 1.0f) - 1.0f);
+		rounding = std::min(rounding,
+							fabsf(b.x - a.x) *
+							(((flags & edge_top) == edge_top) || ((flags & edge_bottom) == edge_bottom) ? 0.5f : 1.0f) -
+							1.0f);
+		rounding = std::min(rounding,
+							fabsf(b.y - a.y) *
+							(((flags & edge_left) == edge_left) || ((flags & edge_right) == edge_right) ? 0.5f : 1.0f) -
+							1.0f);
 	}
 	if (rounding < 0.5f || (flags & edge_mask) == edge_none) {
 		path_line_to(a);
@@ -293,7 +304,7 @@ void renderer::buffer::prim_unreserve(const size_t idx_count, const size_t vtx_c
 
 void renderer::buffer::prim_rect(const glm::vec2& a, const glm::vec2& c, const color_rgba& col) {
 	const glm::vec3 a_a(a.x, a.y, 0.f), b(c.x, a.y, 0.f), c_c(c.x, c.y, 0.f), d(a.x, c.y, 0.f);
-	const glm::vec2 uv = shared_data_->tex_uv_white_pixel;
+	const glm::vec2 uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 
 	const uint32_t idx = vertex_current_index;
 	index_current_ptr[0] = idx;
@@ -452,7 +463,7 @@ void renderer::buffer::draw_rect_filled_multicolor(const glm::vec2& p1,
 	if (col_upr_left.a | col_upr_right.a | col_bot_right.a | col_bot_left.a == 0)
 		return;
 
-	const glm::vec2 uv = shared_data_->tex_uv_white_pixel;
+	const glm::vec2 uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	prim_reserve(6, 4);
 	prim_write_idx(vertex_current_index);
 	prim_write_idx(vertex_current_index + 1);
@@ -527,12 +538,12 @@ const glm::vec2& center, float radius, const color_rgba& col, float thickness, s
 		return;
 
 	if (segments == 0) {
-		path_arc_to_fast_ex(center, radius - 0.5f, 0, shared_data_->arc_fast_vtx_size, 0);
+		path_arc_to_fast_ex(center, radius - 0.5f, 0, dx11_->get_shared_data()->arc_fast_vtx_size, 0);
 		path_.resize(path_.size() - 1);
 	}
 	else {
 		// Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
-		segments = std::clamp(segments, 3ull, shared_data_->circle_segment_counts_size);
+		segments = std::clamp(segments, 3ull, dx11_->get_shared_data()->circle_segment_counts_size);
 
 		// Because we are filling a closed shape we remove 1 from the count of segments/points
 		const float a_max = (M_PI * 2.0f) * ((float)segments - 1.0f) / (float)segments;
@@ -548,12 +559,12 @@ const glm::vec2& center, float radius, const color_rgba& col, size_t segments, d
 		return;
 
 	if (segments == 0) {
-		path_arc_to_fast_ex(center, radius - 0.5f, 0, shared_data_->arc_fast_vtx_size, 0);
+		path_arc_to_fast_ex(center, radius - 0.5f, 0, dx11_->get_shared_data()->arc_fast_vtx_size, 0);
 		path_.resize(path_.size() - 1);
 	}
 	else {
 		// Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
-		segments = std::clamp(segments, 3ull, shared_data_->circle_segment_counts_size);
+		segments = std::clamp(segments, 3ull, dx11_->get_shared_data()->circle_segment_counts_size);
 
 		// Because we are filling a closed shape we remove 1 from the count of segments/points
 		const float a_max = (M_PI * 2.0f) * ((float)segments - 1.0f) / (float)segments;
@@ -632,7 +643,7 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 		return;
 
 	const bool closed = (flags & draw_flags::closed) != 0;
-	const glm::vec2 opaque_uv = shared_data_->tex_uv_white_pixel;
+	const glm::vec2 opaque_uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 	const int count = closed ? num_points : num_points - 1;// The number of line segments we need to draw
 	const bool thick_line = (thickness > 1.f);
 
@@ -649,8 +660,8 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 		// - For now, only draw integer-width lines using textures to avoid issues with the way scaling occurs, could be
 		// improved.
 		// - If AA_SIZE is not 1.0f we cannot use the texture path.
-		const bool use_texture =
-		(flags & anti_aliased_lines_use_tex) && (int_thickness < 63) && (fractional_thickness <= 0.00001f) && (AA_SIZE == 1.0f);
+		const bool use_texture = (flags & anti_aliased_lines_use_tex) && (int_thickness < 63) &&
+								 (fractional_thickness <= 0.00001f) && (AA_SIZE == 1.0f);
 
 		const int idx_count = use_texture ? (count * 6) : (thick_line ? count * 18 : count * 12);
 		const int vtx_count = use_texture ? (num_points * 2) : (thick_line ? num_points * 4 : num_points * 3);
@@ -659,8 +670,8 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 		// Temporary buffer
 		// The first <num_points> items are normals at each line point, then after that there are either 2 or 4 temp
 		// points for each line point
-		shared_data_->temp_buffer.reserve_discard(num_points * ((use_texture || !thick_line) ? 3 : 5));
-		glm::vec2* temp_normals = shared_data_->temp_buffer.Data;
+		dx11_->get_shared_data()->temp_buffer.reserve_discard(num_points * ((use_texture || !thick_line) ? 3 : 5));
+		glm::vec2* temp_normals = dx11_->get_shared_data()->temp_buffer.Data;
 		glm::vec2* temp_points = temp_normals + num_points;
 
 		// Calculate normals (tangents) for each line segment
@@ -770,7 +781,7 @@ const glm::vec2* points, int num_points, const color_rgba& col, draw_flags flags
 			// Add vertexes for each point on the line
 			if (use_texture) {
 				// If we're using textures we only need to emit the left/right edge vertices
-				glm::vec4 tex_uvs = shared_data_->tex_uv_lines[int_thickness];
+				glm::vec4 tex_uvs = dx11_->get_shared_data()->tex_uv_lines[int_thickness];
 				/*if (fractional_thickness != 0.0f) // Currently always zero when use_texture==false!
 				{
 					const ImVec4 tex_uvs_1 = _Data->TexUvLines[integer_thickness + 1];
@@ -972,7 +983,7 @@ void renderer::buffer::draw_convex_poly_filled(const glm::vec2* points,
 	if (num_points < 3 || col.a == 0)
 		return;
 
-	const glm::vec2 uv = shared_data_->tex_uv_white_pixel;
+	const glm::vec2 uv = dx11_->get_shared_data()->tex_uv_white_pixel;
 
 	if (flags & anti_aliased_fill) {
 		// Anti-aliased Fill
@@ -993,8 +1004,8 @@ void renderer::buffer::draw_convex_poly_filled(const glm::vec2* points,
 		}
 
 		// Compute normals
-		shared_data_->temp_buffer.reserve_discard(num_points);
-		glm::vec2* temp_normals = shared_data_->temp_buffer.Data;
+		dx11_->get_shared_data()->temp_buffer.reserve_discard(num_points);
+		glm::vec2* temp_normals = dx11_->get_shared_data()->temp_buffer.Data;
 		for (int i0 = num_points - 1, i1 = 0; i1 < num_points; i0 = i1++) {
 			const glm::vec2& p0 = points[i0];
 			const glm::vec2& p1 = points[i1];
@@ -1099,11 +1110,6 @@ void renderer::buffer::draw_bezier_quadratic(const glm::vec2& p1,
 	path_stroke(col, none, thickness);
 }
 
-renderer::buffer::scissor_command::scissor_command(glm::vec4 bounds, bool in, bool circle) :
-	bounds(bounds),
-	in(in),
-	circle(circle) {}
-
 renderer::shared_data::shared_data() {
 	memset(this, 0, sizeof(*this));
 
@@ -1137,64 +1143,110 @@ void renderer::shared_data::set_circle_segment_max_error(float max_error) {
 	circle_segment_max_error / (1 - cosf(M_PI / std::max((float)arc_fast_vtx_size, (float)M_PI)));
 }
 
+// Compare ClipRect, TextureId and VtxOffset with a single memcmp()
+#define DRAW_CMD_HEADER_SIZE (offsetof(draw_command, vtx_offset) + sizeof(unsigned int))
+#define DRAW_CMD_HEADER_COMPARE(CMD_LHS, CMD_RHS) \
+	(memcmp(CMD_LHS, CMD_RHS, DRAW_CMD_HEADER_SIZE))// Compare ClipRect, TextureId, VtxOffset
+#define DRAW_CMD_HEADER_COPY(CMD_DST, CMD_SRC) \
+	(memcpy(CMD_DST, CMD_SRC, DRAW_CMD_HEADER_SIZE))// Copy ClipRect, TextureId, VtxOffset
+#define DRAW_CMD_ARE_SEQUENTIAL_IDX_OFFSET(CMD_0, CMD_1) (CMD_0->idx_offset + CMD_0->elem_count == CMD_1->idx_offset)
 
-void renderer::buffer::push_scissor(const glm::vec4& bounds, bool in, bool circle) {
-	scissor_list_.emplace(bounds, in, circle);
+void renderer::buffer::push_scissor(const glm::vec4& bounds) {
+	scissor_stack_.push_back(bounds);
+	header_.clip_rect = bounds;
 	update_scissor();
 }
 
 void renderer::buffer::pop_scissor() {
-	assert(!scissor_list_.empty());
-	scissor_list_.pop();
+	scissor_stack_.pop_back();
+	header_.clip_rect =
+	(scissor_stack_.Size == 0) ? dx11_->get_shared_data()->full_clip_rect : scissor_stack_.Data[scissor_stack_.Size - 1];
 	update_scissor();
 }
 
+void renderer::buffer::push_texture(ID3D11ShaderResourceView* srv) {
+	texture_stack_.push_back(srv);
+	header_.texture = srv;
+	update_texture();
+}
+
+void renderer::buffer::pop_texture() {
+	texture_stack_.pop_back();
+	header_.texture = (texture_stack_.Size == 0) ? nullptr : texture_stack_.Data[texture_stack_.Size - 1];
+	update_texture();
+}
+
+void renderer::buffer::update_texture() {
+	auto* curr_cmd = &draw_cmds_.Data[draw_cmds_.Size - 1];
+	if (curr_cmd->elem_count != 0 && curr_cmd->texture != header_.texture) {
+		add_draw_cmd();
+		return;
+	}
+
+	auto* prev_cmd = curr_cmd - 1;
+	if (curr_cmd->elem_count == 0 && draw_cmds_.Size > 1 && DRAW_CMD_HEADER_COMPARE(&header_, prev_cmd) == 0 && DRAW_CMD_ARE_SEQUENTIAL_IDX_OFFSET(prev_cmd, curr_cmd)) {
+		draw_cmds_.pop_back();
+		return;
+	}
+
+	curr_cmd->texture = header_.texture;
+}
+
+
 void renderer::buffer::update_scissor() {
-	if (scissor_list_.empty()) {
-		active_command_.scissor_enable = false;
+	auto* curr_cmd = &draw_cmds_.Data[draw_cmds_.Size - 1];
+	if (curr_cmd->elem_count == 0 && memcmp(&curr_cmd->clip_rect, &header_.clip_rect, sizeof(glm::vec4)) != 0) {
+		add_draw_cmd();
+		return;
 	}
-	else {
-		const auto& new_command = scissor_list_.top();
 
-		// Should we respect the active scissor bounds too?
-		active_command_.scissor_enable = true;
-		active_command_.scissor_bounds = new_command.bounds;
-		active_command_.scissor_in = new_command.in;
-		active_command_.scissor_circle = new_command.circle;
+	auto* prev_cmd = curr_cmd - 1;
+	if (curr_cmd->elem_count == 0 && draw_cmds_.Size > 1 && DRAW_CMD_HEADER_COMPARE(&header_, prev_cmd) == 0 &&
+		DRAW_CMD_ARE_SEQUENTIAL_IDX_OFFSET(prev_cmd, curr_cmd)) {
+		draw_cmds_.pop_back();
+		return;
 	}
+
+	curr_cmd->clip_rect = header_.clip_rect;
 }
 
-void renderer::buffer::push_projection(const glm::mat4x4& projection) {
-	projection_list_.push(projection);
-	update_projection();
+void renderer::buffer::update_vtx_offset() {
+	vertex_current_index = 0;
+	auto* curr_cmd = &draw_cmds_.Data[draw_cmds_.Size - 1];
+	if (curr_cmd->elem_count != 0) {
+		add_draw_cmd();
+		return;
+	}
+
+	curr_cmd->vtx_offset = header_.vtx_offset;
 }
 
-void renderer::buffer::pop_projection() {
-	assert(!projection_list_.empty());
-	projection_list_.pop();
-	update_projection();
+const glm::mat4x4& renderer::buffer::get_projection() const {
+	return active_projection_;
 }
 
-void renderer::buffer::add_draw_cmd(const draw_command& cmd) {
+void renderer::buffer::set_projection(const glm::mat4x4& projection) {
+	active_projection_ = projection;
+}
+
+void renderer::buffer::add_draw_cmd() {
+	draw_command cmd;
+	cmd.clip_rect = header_.clip_rect;
+	cmd.texture = header_.texture;
+	cmd.vtx_offset = header_.vtx_offset;
+	cmd.idx_offset = indices_.Size;
+
 	draw_cmds_.push_back(cmd);
 }
 
-void renderer::buffer::update_projection() {
-	if (projection_list_.empty()) {
-		active_projection = glm::mat4(1.0f);
-	}
-	else {
-		active_projection = projection_list_.top();
-	}
-}
 int renderer::buffer::calc_circle_auto_segment_count(float radius) const {
 	// Automatic segment count
 	const int radius_idx = (int)(radius + 0.999999f);// ceil to never reduce accuracy
-	if (radius_idx >= 0 && radius_idx < shared_data_->arc_fast_vtx_size)
-		return shared_data_->circle_segment_counts[radius_idx];// use cached value
+	if (radius_idx >= 0 && radius_idx < dx11_->get_shared_data()->arc_fast_vtx_size)
+		return dx11_->get_shared_data()->circle_segment_counts[radius_idx];// use cached value
 
 	return std::clamp(
-	((int)ceilf(M_PI / acosf(1 - std::min(shared_data_->circle_segment_max_error, radius) / radius)) + 1) / 2 * 2,
+	((int)ceilf(M_PI / acosf(1 - std::min(dx11_->get_shared_data()->circle_segment_max_error, radius) / radius)) + 1) / 2 * 2,
 	4,
 	512);
 }
@@ -1208,10 +1260,10 @@ const glm::vec2& center, float radius, int a_min_sample, int a_max_sample, int a
 
 	// Calculate arc auto segment step size
 	if (a_step <= 0)
-		a_step = shared_data_->arc_fast_vtx_size / calc_circle_auto_segment_count(radius);
+		a_step = dx11_->get_shared_data()->arc_fast_vtx_size / calc_circle_auto_segment_count(radius);
 
 	// Make sure we never do steps larger than one quarter of the circle
-	a_step = std::clamp(a_step, 1, (int)shared_data_->arc_fast_vtx_size / 4);
+	a_step = std::clamp(a_step, 1, (int)dx11_->get_shared_data()->arc_fast_vtx_size / 4);
 
 	const int sample_range = abs(a_max_sample - a_min_sample);
 	const int a_next_step = a_step;
@@ -1237,20 +1289,20 @@ const glm::vec2& center, float radius, int a_min_sample, int a_max_sample, int a
 	glm::vec2* out_ptr = path_.Data + (path_.size() - samples);
 
 	int sample_index = a_min_sample;
-	if (sample_index < 0 || sample_index >= shared_data_->arc_fast_vtx_size) {
-		sample_index = sample_index % shared_data_->arc_fast_vtx_size;
+	if (sample_index < 0 || sample_index >= dx11_->get_shared_data()->arc_fast_vtx_size) {
+		sample_index = sample_index % dx11_->get_shared_data()->arc_fast_vtx_size;
 		if (sample_index < 0)
-			sample_index += shared_data_->arc_fast_vtx_size;
+			sample_index += dx11_->get_shared_data()->arc_fast_vtx_size;
 	}
 
 	if (a_max_sample >= a_min_sample) {
 		for (int a = a_min_sample; a <= a_max_sample; a += a_step, sample_index += a_step, a_step = a_next_step) {
 			// a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over
 			// range twice or more
-			if (sample_index >= shared_data_->arc_fast_vtx_size)
-				sample_index -= shared_data_->arc_fast_vtx_size;
+			if (sample_index >= dx11_->get_shared_data()->arc_fast_vtx_size)
+				sample_index -= dx11_->get_shared_data()->arc_fast_vtx_size;
 
-			const glm::vec2 s = shared_data_->arc_fast_vtx[sample_index];
+			const glm::vec2 s = dx11_->get_shared_data()->arc_fast_vtx[sample_index];
 			out_ptr->x = center.x + s.x * radius;
 			out_ptr->y = center.y + s.y * radius;
 			out_ptr++;
@@ -1261,9 +1313,9 @@ const glm::vec2& center, float radius, int a_min_sample, int a_max_sample, int a
 			// a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over
 			// range twice or more
 			if (sample_index < 0)
-				sample_index += shared_data_->arc_fast_vtx_size;
+				sample_index += dx11_->get_shared_data()->arc_fast_vtx_size;
 
-			const glm::vec2 s = shared_data_->arc_fast_vtx[sample_index];
+			const glm::vec2 s = dx11_->get_shared_data()->arc_fast_vtx[sample_index];
 			out_ptr->x = center.x + s.x * radius;
 			out_ptr->y = center.y + s.y * radius;
 			out_ptr++;
@@ -1271,11 +1323,11 @@ const glm::vec2& center, float radius, int a_min_sample, int a_max_sample, int a
 	}
 
 	if (extra_max_sample) {
-		int normalized_max_sample = a_max_sample % shared_data_->arc_fast_vtx_size;
+		int normalized_max_sample = a_max_sample % dx11_->get_shared_data()->arc_fast_vtx_size;
 		if (normalized_max_sample < 0)
-			normalized_max_sample += shared_data_->arc_fast_vtx_size;
+			normalized_max_sample += dx11_->get_shared_data()->arc_fast_vtx_size;
 
-		const glm::vec2 s = shared_data_->arc_fast_vtx[normalized_max_sample];
+		const glm::vec2 s = dx11_->get_shared_data()->arc_fast_vtx[normalized_max_sample];
 		out_ptr->x = center.x + s.x * radius;
 		out_ptr->y = center.y + s.y * radius;
 		out_ptr++;
