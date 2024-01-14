@@ -61,7 +61,7 @@ namespace renderer {
 		void set_clear_color(const color_rgba& color);
 
 		glm::vec2 get_render_target_size();
-		const std::unique_ptr<shared_data>& get_shared_data() const {
+		[[nodiscard]] const std::unique_ptr<shared_data>& get_shared_data() const {
 			return shared_data_;
 		}
 

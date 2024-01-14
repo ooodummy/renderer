@@ -1110,6 +1110,114 @@ void renderer::buffer::draw_bezier_quadratic(const glm::vec2& p1,
 	path_stroke(col, none, thickness);
 }
 
+void renderer::buffer::draw_line(const glm::vec3& p1, const glm::vec3& p2, const color_rgba& col) {
+	prim_reserve(2, 2);
+
+	uint32_t idx = vertex_current_index;
+	index_current_ptr[0] = idx;
+	index_current_ptr[1] = idx + 1;
+	vertex_current_ptr[0].pos = p1;
+	vertex_current_ptr[0].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[0].col = col.rgba;
+	vertex_current_ptr[1].pos = p2;
+	vertex_current_ptr[1].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[1].col = col.rgba;
+	vertex_current_ptr += 2;
+	vertex_current_index += 2;
+	index_current_ptr += 2;
+}
+ 
+void renderer::buffer::draw_extents(std::span<glm::vec3, 8> data, const color_rgba& col) {
+	prim_reserve(36, 8);
+
+	constexpr int ftl = 0;
+	constexpr int ftr = 1;
+	constexpr int fbl = 2;
+	constexpr int fbr = 3;
+	constexpr int btl = 4;
+	constexpr int btr = 5;
+	constexpr int bbl = 6;
+	constexpr int bbr = 7;
+
+	int32_t idx = vertex_current_index;
+
+	// Front face
+	index_current_ptr[0] = idx + ftl;
+	index_current_ptr[1] = idx + ftr;
+	index_current_ptr[2] = idx + fbl;
+	index_current_ptr[3] = idx + ftr;
+	index_current_ptr[4] = idx + fbr;
+	index_current_ptr[5] = idx + fbl;
+
+	// Right face
+	index_current_ptr[6] = idx + ftr;
+	index_current_ptr[7] = idx + btr;
+	index_current_ptr[8] = idx + fbr;
+	index_current_ptr[9] = idx + btr;
+	index_current_ptr[10] = idx + bbr;
+	index_current_ptr[11] = idx + fbr;
+
+	// Back face
+	index_current_ptr[12] = idx + btr;
+	index_current_ptr[13] = idx + btl;
+	index_current_ptr[14] = idx + bbl;
+	index_current_ptr[15] = idx + btl;
+	index_current_ptr[16] = idx + bbl;
+	index_current_ptr[17] = idx + bbr;
+
+	// Left face
+	index_current_ptr[18] = idx + btl;
+	index_current_ptr[19] = idx + ftl;
+	index_current_ptr[20] = idx + bbl;
+	index_current_ptr[21] = idx + ftl;
+	index_current_ptr[22] = idx + fbl;
+	index_current_ptr[23] = idx + bbl;
+
+	// Top face
+	index_current_ptr[24] = idx + btl;
+	index_current_ptr[25] = idx + btr;
+	index_current_ptr[26] = idx + ftl;
+	index_current_ptr[27] = idx + btr;
+	index_current_ptr[28] = idx + ftr;
+	index_current_ptr[29] = idx + ftl;
+
+	// Bottom face
+	index_current_ptr[30] = idx + bbl;
+	index_current_ptr[31] = idx + fbl;
+	index_current_ptr[32] = idx + bbr;
+	index_current_ptr[33] = idx + fbl;
+	index_current_ptr[34] = idx + fbr;
+	index_current_ptr[35] = idx + bbr;
+
+	vertex_current_ptr[ftl].pos = data[ftl];
+	vertex_current_ptr[ftl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[ftl].col = col.rgba;
+	vertex_current_ptr[ftr].pos = data[ftr];
+	vertex_current_ptr[ftr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[ftr].col = col.rgba;
+	vertex_current_ptr[fbl].pos = data[fbl];
+	vertex_current_ptr[fbl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[fbl].col = col.rgba;
+	vertex_current_ptr[fbr].pos = data[fbr];
+	vertex_current_ptr[fbr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[fbr].col = col.rgba;
+	vertex_current_ptr[btl].pos = data[btl];
+	vertex_current_ptr[btl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[btl].col = col.rgba;
+	vertex_current_ptr[btr].pos = data[btr];
+	vertex_current_ptr[btr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[btr].col = col.rgba;
+	vertex_current_ptr[bbl].pos = data[bbl];
+	vertex_current_ptr[bbl].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[bbl].col = col.rgba;
+	vertex_current_ptr[bbr].pos = data[bbr];
+	vertex_current_ptr[bbr].uv = dx11_->get_shared_data()->tex_uv_white_pixel;
+	vertex_current_ptr[bbr].col = col.rgba;
+	vertex_current_ptr += 8;
+	vertex_current_index += 8;
+	index_current_ptr += 32;
+}
+
 renderer::shared_data::shared_data() {
 	memset(this, 0, sizeof(*this));
 

@@ -200,6 +200,10 @@ namespace renderer {
 								   float thickness,
 								   size_t segments = 0);
 
+		// 3D Primitives
+		void draw_line(const glm::vec3& p1, const glm::vec3& p2, const color_rgba& col);
+		void draw_extents(std::span<glm::vec3, 8> bounds, const color_rgba& col);
+
 		template<typename string_t>
 		void draw_text(const string_t& text,
 					   glm::vec2 pos,

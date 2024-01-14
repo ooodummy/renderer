@@ -202,10 +202,7 @@ namespace renderer {
 		std::vector<build_src> src_array(configs.size());
 		std::vector<build_data> dst_array(fonts.size());
 
-		for (const auto& pair : std::views::zip(src_array, configs)) {
-			build_src& src = std::get<0>(pair);
-			text_font::font_config& config = std::get<1>(pair);
-
+		for (const auto&& [src, config] : std::views::zip(src_array, configs)) {
 			if (!config.font) {
 				continue;
 			}
@@ -318,9 +315,7 @@ namespace renderer {
 
 		int total_surface{}, buf_rects_out_n{}, buf_packedchars_out_n{};
 		std::vector<stbrp_rect> buf_rects((size_t)total_glyphs_count);
-		for (const auto& pair : std::views::zip(src_array, configs)) {
-			build_src& src = std::get<0>(pair);
-			text_font::font_config& config = std::get<1>(pair);
+		for (const auto&& [src, config] : std::views::zip(src_array, configs)) {
 			src.rects = &buf_rects[buf_rects_out_n];
 			buf_rects_out_n += src.glyphs_count;
 
