@@ -5,10 +5,10 @@
 #include <glm/gtx/quaternion.hpp>
 
 void renderer::buffer::clear() {
-	vertices_.Size = 0;
-	indices_.Size = 0;
-	draw_cmds_.Size = 0;
-	temp_buffer_.Size = 0;
+	vertices_.resize(0);
+	indices_.resize(0);
+	draw_cmds_.resize(0);
+	temp_buffer_.resize(0);
 	draw_cmds_.push_back({});
 
 	vertex_current_index = 0;
@@ -1221,8 +1221,6 @@ void renderer::buffer::draw_extents(std::span<glm::vec3, 8> data, const color_rg
 }
 
 renderer::shared_data::shared_data() {
-	memset(this, 0, sizeof(*this));
-
 	constexpr float pi_2_f = M_PI * 2.0;
 	for (size_t i = 0; i < arc_fast_vtx_size; i++) {
 		const float a = ((float)i * pi_2_f) / (float)arc_fast_vtx_size;
@@ -1301,7 +1299,6 @@ void renderer::buffer::update_texture() {
 
 	curr_cmd->texture = header_.texture;
 }
-
 
 void renderer::buffer::update_scissor() {
 	auto* curr_cmd = &draw_cmds_.Data[draw_cmds_.Size - 1];

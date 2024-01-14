@@ -267,6 +267,7 @@ namespace renderer {
 		glm::vec2 calc_text_size(std::basic_string_view<char_t> text, float custom_size) {
 			glm::vec2 result{}, line_size(0.f, custom_size <= 0.f ? size : custom_size);
 
+			const float size_reciprocal = 1.f / (custom_size <= 0.f ? size : custom_size);
 			for (auto iterator = text.begin(); iterator != text.end();) {
 				auto symbol = (uint32_t)*iterator;
 				iterator += impl::char_converters::converter<char_t>::convert(symbol, iterator, text.end());
@@ -283,7 +284,11 @@ namespace renderer {
 					continue;
 				}
 
-				line_size.x += get_char_advance(symbol) * (custom_size / size);
+				const auto* glyph = find_glyph(symbol);
+				if (!glyph)
+					continue;
+
+				line_size.x += glyph->advance_x * size * size_reciprocal;
 			}
 
 			result.x = std::max(result.x, line_size.x);

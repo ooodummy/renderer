@@ -13,7 +13,7 @@ if (NOT TARGET freetype)
     message("Fetching freetype")
     FetchContent_Declare(freetype
             GIT_REPOSITORY https://github.com/freetype/freetype.git
-            GIT_TAG        VER-2-13-2
+            GIT_TAG        master
     )
     FetchContent_MakeAvailable(freetype)
 endif()

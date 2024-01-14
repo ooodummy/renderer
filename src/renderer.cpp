@@ -326,14 +326,14 @@ void renderer::d3d11_renderer::draw_batches() {
 	int32_t global_vtx_offset = 0;
 
     const auto draw_commands = [&](buffer* active) {
-        auto& draw_commands = active->get_draw_cmds();
+        const auto& draw_cmds = active->get_draw_cmds();
 
         context_->device_resources_->set_command_buffer(active->get_active_command());
         context_->device_resources_->set_projection(active->get_projection());
 
         context->PSSetConstantBuffers(0, 1, &command_buffer);
 
-        for (const auto& draw_command : draw_commands) {
+        for (const auto& draw_command : draw_cmds) {
             context->PSSetShaderResources(0, 1, &draw_command.texture);
 
             context->DrawIndexed(draw_command.elem_count,

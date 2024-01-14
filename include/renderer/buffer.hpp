@@ -32,20 +32,20 @@ namespace renderer {
 	};
 
 	struct shared_data {
-		glm::vec2 tex_uv_white_pixel;
-		float curve_tesselation_tol;
-		float circle_segment_max_error;
+		glm::vec2 tex_uv_white_pixel{};
+		float curve_tesselation_tol = 0.f;
+		float circle_segment_max_error = 0.f;
 
-		glm::vec4 full_clip_rect;
+		glm::vec4 full_clip_rect{};
 
 		constexpr static size_t arc_fast_vtx_size = 48;
-		glm::vec2 arc_fast_vtx[arc_fast_vtx_size];
-		float arc_fast_radius_cutoff;
+		glm::vec2 arc_fast_vtx[arc_fast_vtx_size]{};
+		float arc_fast_radius_cutoff = 0.f;
 
 		constexpr static size_t circle_segment_counts_size = 64;
-		uint8_t circle_segment_counts[circle_segment_counts_size];
+		uint8_t circle_segment_counts[circle_segment_counts_size]{};
 
-		glm::vec4* tex_uv_lines;
+		glm::vec4* tex_uv_lines = nullptr;
 
         glm::mat4x4 ortho_projection;
 
@@ -54,21 +54,17 @@ namespace renderer {
 	};
 
 	struct draw_command_header {
-		glm::vec4 clip_rect;
-		ID3D11ShaderResourceView* texture;
-		uint32_t vtx_offset;
+		glm::vec4 clip_rect{};
+		ID3D11ShaderResourceView* texture = nullptr;
+		int32_t vtx_offset = 0;
 	};
 
 	struct draw_command {
-		glm::vec4 clip_rect;
-		ID3D11ShaderResourceView* texture;
-		int32_t vtx_offset;
-		uint32_t idx_offset;
-		uint32_t elem_count;
-
-		draw_command() {
-			memset(this, 0, sizeof(*this));
-		}
+		glm::vec4 clip_rect{};
+		ID3D11ShaderResourceView* texture = nullptr;
+		int32_t vtx_offset = 0;
+		uint32_t idx_offset = 0;
+		uint32_t elem_count = 0;
 	};
 
 	// Buffer system from
@@ -80,8 +76,7 @@ namespace renderer {
 			indices_.reserve(4096);
 			draw_cmds_.reserve(32);
 
-			vertex_current_ptr = vertices_.Data;
-			index_current_ptr = indices_.Data;
+			clear();
 		}
 
 		explicit buffer(d3d11_renderer* dx11,
@@ -93,15 +88,21 @@ namespace renderer {
 			indices_.reserve(indices_reserve_size);
 			draw_cmds_.reserve(batches_reserve_size);
 
-			vertex_current_ptr = vertices_.Data;
-			index_current_ptr = indices_.Data;
+			clear();
 		}
 
 		~buffer() {
+			vertex_current_index = 0;
+			vertex_current_ptr = nullptr;
+			index_current_ptr = nullptr;
+
 			vertices_.clear();
 			indices_.clear();
 			draw_cmds_.clear();
-		};
+			temp_buffer_.clear();
+			scissor_stack_.clear();
+			texture_stack_.clear();
+		}
 
 		void push_scissor(const glm::vec4& bounds);
 		void pop_scissor();
@@ -282,7 +283,7 @@ namespace renderer {
 					continue;
 				}
 
-				const auto* glyph = font->find_glyph((uint16_t)symbol);
+				const auto* glyph = font->find_glyph(symbol);
 				if (!glyph)
 					continue;
 
@@ -318,7 +319,7 @@ namespace renderer {
 
 			vertices_.Size = (size_t)(vtx_write - vertices_.Data);
 			indices_.Size = (size_t)(idx_write - indices_.Data);
-			draw_cmds_[draw_cmds_.Size - 1].elem_count -= (idx_expected_size - indices_.Size);
+			draw_cmds_[draw_cmds_.size() - 1].elem_count -= (idx_expected_size - indices_.Size);
 			vertex_current_ptr = vtx_write;
 			index_current_ptr = idx_write;
 			vertex_current_index = vtx_idx;
