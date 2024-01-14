@@ -268,8 +268,12 @@ void renderer::d3d11_renderer::render() {
 	clear();
 	setup_states();
 
-	resize_buffers();
-	draw_batches();
+    {
+        std::unique_lock lock_guard(buffer_list_mutex_);
+
+        resize_buffers();
+        draw_batches();
+    }
 
     const auto context = context_->device_resources_->get_device_context();
 
@@ -317,8 +321,6 @@ void renderer::d3d11_renderer::clear() {
 void renderer::d3d11_renderer::draw_batches() {
 	const auto context = context_->device_resources_->get_device_context();
 	const auto command_buffer = context_->device_resources_->get_command_buffer();
-
-	std::unique_lock lock_guard(buffer_list_mutex_);
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -469,8 +471,6 @@ void renderer::d3d11_renderer::resize_buffers() {
 	const auto vertex_buffer_size = context_->device_resources_->get_vertex_buffer_size();
 	auto index_buffer = context_->device_resources_->get_index_buffer();
 	const auto index_buffer_size = context_->device_resources_->get_index_buffer_size();
-
-	std::shared_lock lock_guard(buffer_list_mutex_);
 
 	size_t vertex_count = 0;
 	size_t index_count = 0;
