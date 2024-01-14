@@ -7,11 +7,6 @@
 #include <d3d11.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-void renderer::buffer_node::set_parent(size_t index) {
-    parent = index;
-    active->is_child_ = true;
-}
-
 renderer::d3d11_renderer::d3d11_renderer(std::shared_ptr<win32_window> window) :
 	msaa_enabled_(true),
 	target_sample_count_(8) {
@@ -87,7 +82,7 @@ size_t renderer::d3d11_renderer::register_child_buffer(size_t parent,
                                                    indices_reserve_size,
                                                    batches_reserve_size));
 
-    child_buffer.set_parent(parent);
+    child_buffer.parent = parent;
 
     auto& parent_child_buffers = buffers_[parent].child_buffers;
     parent_child_buffers.emplace_back(priority, id);
@@ -99,13 +94,11 @@ size_t renderer::d3d11_renderer::register_child_buffer(size_t parent,
     return id;
 }
 
-void renderer::d3d11_renderer::update_buffer_priority(size_t index, size_t priority) {
+void renderer::d3d11_renderer::update_buffer_priority(size_t id, size_t priority) {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
-    const auto& node = buffers_[index];
-
-    const auto it = std::find_if(priorities_.begin(), priorities_.end(), [index](auto& pair) {
-        return (pair.second == index);
+    const auto it = std::find_if(priorities_.begin(), priorities_.end(), [id](auto& pair) {
+        return (pair.second == id);
     });
 
     if (it == priorities_.end())
@@ -114,14 +107,13 @@ void renderer::d3d11_renderer::update_buffer_priority(size_t index, size_t prior
     it->first = priority;
 }
 
-void renderer::d3d11_renderer::update_child_buffer_priority(size_t child_index, size_t priority) {
+void renderer::d3d11_renderer::update_child_buffer_priority(size_t id, size_t priority) {
     std::unique_lock lock_guard(buffer_list_mutex_);
 
-    const auto& child = buffers_[child_index];
-    auto& parent = buffers_[child.parent];
+    auto& parent = buffers_[buffers_[id].parent];
 
-    const auto it = std::find_if(parent.child_buffers.begin(), parent.child_buffers.end(), [child_index](auto& pair) {
-        return (pair.second == child_index);
+    const auto it = std::find_if(parent.child_buffers.begin(), parent.child_buffers.end(), [id](auto& pair) {
+        return (pair.second == id);
     });
 
     if (it != parent.child_buffers.end()) {
@@ -132,9 +124,35 @@ void renderer::d3d11_renderer::update_child_buffer_priority(size_t child_index, 
     }
 }
 
-// TODO: Free buffer and then when we try to register a buffer reuse if available
-void renderer::d3d11_renderer::remove_buffer(size_t index) {
+void renderer::d3d11_renderer::remove_buffer(size_t id) {
+    std::unique_lock lock_guard(buffer_list_mutex_);
 
+    const auto free_buffer = [this](const size_t id, auto& self_ref) -> void {
+        auto& buf = buffers_[id];
+
+        buf.free = true;
+        buf.active->clear();
+        buf.working->clear();
+
+        if (buf.parent != std::numeric_limits<size_t>::max()) {
+            auto& parent = buffers_[buf.parent];
+
+            const auto it = std::find_if(parent.child_buffers.begin(), parent.child_buffers.end(), [id](auto& pair){
+                return pair.second == id;
+            });
+
+            if (it != parent.child_buffers.end())
+                parent.child_buffers.erase(it);
+        }
+
+        for (auto& child : buf.child_buffers) {
+            self_ref(child.second, self_ref);
+        }
+
+        free_buffers_.emplace_back(id);
+    };
+
+    free_buffer(id, free_buffer);
 }
 
 renderer::buffer* renderer::d3d11_renderer::get_working_buffer(const size_t id) {

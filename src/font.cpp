@@ -337,7 +337,7 @@ namespace renderer {
 
 				if (auto result = FT_Render_Glyph(src.freetype.face->glyph, src.freetype.render_mode); result) {
 					return;
-				}
+                }
 
 				glyph.glyph.corners.x = src.freetype.face->glyph->bitmap.width;
 				glyph.glyph.corners.y = src.freetype.face->glyph->bitmap.rows;

@@ -13,16 +13,13 @@ namespace renderer {
 	class buffer;
 	struct shared_data;
 
-	class buffer_node {
-    public:
+	struct buffer_node {
 		std::unique_ptr<buffer> active;
 		std::unique_ptr<buffer> working;
 
 		std::vector<std::pair<size_t, size_t>> child_buffers;
-		bool is_free = false;
+		bool free = false;
 		size_t parent = std::numeric_limits<size_t>::max();
-
-        void set_parent(size_t index);
 	};
 
 	// TODO: Most of the abstraction has been removed since I just want a functional D3D11 renderer currently and I
@@ -59,10 +56,10 @@ namespace renderer {
 		size_t register_buffer(size_t priority = 0, size_t vertices_reserve_size = 0, size_t indices_reserve_size = 0, size_t batches_reserve_size = 0);
 		size_t register_child_buffer(size_t parent, size_t priority = 0, size_t vertices_reserve_size = 0, size_t indices_reserve_size = 0, size_t batches_reserve_size = 0);
 
-		void update_buffer_priority(size_t index, size_t priority = 0);
-		void update_child_buffer_priority(size_t child_index, size_t priority = 0);
+		void update_buffer_priority(size_t id, size_t priority = 0);
+		void update_child_buffer_priority(size_t id, size_t priority = 0);
 
-		void remove_buffer(size_t index);
+		void remove_buffer(size_t id);
 
 		buffer* get_working_buffer(size_t id);
 
@@ -80,8 +77,12 @@ namespace renderer {
 
 	private:
 		std::shared_mutex buffer_list_mutex_;
+
+        // TODO: Store buffers in a map so if we remove a buffer we can just complelety erase it instead of just freeing
+        //  it for later
 		std::vector<buffer_node> buffers_;
         std::vector<std::pair<size_t, size_t>> priorities_;
+        std::vector<size_t> free_buffers_;
 
 		std::unique_ptr<renderer_context> context_;
 
