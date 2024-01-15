@@ -61,6 +61,7 @@ namespace renderer {
 
 	struct draw_command {
 		glm::vec4 clip_rect{};
+		D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		ID3D11ShaderResourceView* texture = nullptr;
 		int32_t vtx_offset = 0;
 		uint32_t idx_offset = 0;
@@ -112,6 +113,9 @@ namespace renderer {
 
 		[[nodiscard]] const glm::mat4x4& get_projection() const;
 		void set_projection(const glm::mat4x4& projection);
+
+		[[nodiscard]] D3D11_PRIMITIVE_TOPOLOGY get_topology() const;
+		void set_topology(D3D11_PRIMITIVE_TOPOLOGY topology);
 
 		void add_draw_cmd();
 
@@ -204,6 +208,7 @@ namespace renderer {
 		void draw_filled_plane(std::span<glm::vec3, 4> points, const color_rgba& col);
 		void draw_extents(std::span<glm::vec3, 8> points, const color_rgba& col);
 		void draw_filled_extents(std::span<glm::vec3, 8> points, const color_rgba& col);
+		void draw_sphere(const glm::vec3& center, float radius, glm::vec3 rotation, const color_rgba& col);
 
 		template<typename string_t>
 		void draw_text(const string_t& text,
@@ -415,6 +420,9 @@ namespace renderer {
 
 	private:
 		d3d11_renderer* dx11_;
+
+		// Ugly solution for line list when rendering in world lines
+		D3D11_PRIMITIVE_TOPOLOGY topology_ = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 		render_vector<vertex> vertices_;
 		render_vector<uint32_t> indices_;

@@ -1298,6 +1298,45 @@ void renderer::buffer::draw_filled_extents(std::span<glm::vec3, 8> points, const
 	index_current_ptr += 32;
 }
 
+void renderer::buffer::draw_sphere(const glm::vec3& center,
+								   float radius,
+								   glm::vec3 rotation,
+								   const renderer::color_rgba& col) {
+	constexpr size_t segments = 10;
+	static std::vector<glm::vec3> precomputed_points;
+	if (precomputed_points.empty()) {
+		for (size_t i = 0; i < segments; i++) {
+			const float theta = static_cast<float>(i) / static_cast<float>(segments) * M_PI * 2.0f;
+			const float st = std::sin(theta);
+			const float ct = cos_approximation(theta);
+
+			for (size_t j = 0; j < segments + 1; j++) {
+				const float phi = static_cast<float>(j) / static_cast<float>(segments) * M_PI;
+				const float sp = std::sin(phi);
+				const float cp = cos_approximation(phi);
+
+				precomputed_points.emplace_back(radius * sp * ct, radius * cp, radius * sp * st);
+			}
+		}
+	}
+
+	for (size_t i = 0; i < precomputed_points.size(); i++) {
+		const glm::vec3& current_point = precomputed_points[i];
+
+		// Calculate index of the next point
+		size_t next_index = (i + 1) % precomputed_points.size();
+		if ((i + 1) % (segments + 1) == 0) {
+			// Skip the last point of each segment's circle
+			continue;
+		}
+
+		const glm::vec3& next_point = precomputed_points[next_index];
+
+		// Draw the line between current_point and next_point
+		draw_line(center + current_point, center + next_point, col);
+	}
+}
+
 renderer::shared_data::shared_data() {
 	constexpr float pi_2_f = M_PI * 2.0;
 	for (size_t i = 0; i < arc_fast_vtx_size; i++) {
@@ -1412,6 +1451,14 @@ const glm::mat4x4& renderer::buffer::get_projection() const {
 
 void renderer::buffer::set_projection(const glm::mat4x4& projection) {
 	active_projection_ = projection;
+}
+
+D3D11_PRIMITIVE_TOPOLOGY renderer::buffer::get_topology() const {
+	return topology_;
+}
+
+void renderer::buffer::set_topology(D3D11_PRIMITIVE_TOPOLOGY topology) {
+	topology_ = topology;
 }
 
 void renderer::buffer::add_draw_cmd() {
