@@ -322,12 +322,12 @@ void renderer::d3d11_renderer::draw_batches() {
 	const auto context = context_->device_resources_->get_device_context();
 	const auto command_buffer = context_->device_resources_->get_command_buffer();
 
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	int32_t global_idx_offset = 0;
 	int32_t global_vtx_offset = 0;
 
     const auto draw_commands = [&](buffer* active) {
+		context->IASetPrimitiveTopology(active->get_topology());
+
         const auto& draw_cmds = active->get_draw_cmds();
 
         context_->device_resources_->set_command_buffer(active->get_active_command());

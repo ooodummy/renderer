@@ -18,6 +18,6 @@ SamplerState samplerState : SAMPLER : register(s0);
 
 // How can I stack color keys?
 float4 ps_main(VS_Output input) : SV_TARGET {
-	float4 out_col = input.color * active_texture.Sample(samplerState, input.uv);
-	return out_col;
+    float4 out_col = input.color * active_texture.Sample(samplerState, input.uv);
+    return out_col;
 }
