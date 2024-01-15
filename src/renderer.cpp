@@ -38,6 +38,7 @@ bool renderer::d3d11_renderer::initialize() {
 }
 
 bool renderer::d3d11_renderer::release() {
+	destroy_atlases();
 	return true;
 }
 
