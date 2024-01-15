@@ -1178,7 +1178,7 @@ void renderer::buffer::draw_filled_plane(const std::span<glm::vec3, 4> points, c
 	index_current_ptr += 6;
 }
 
-void renderer::buffer::draw_extents(const std::span<glm::vec3, 8> points, const color_rgba& col) {
+void renderer::buffer::draw_extents(std::span<glm::vec3, 8> points, const color_rgba& col) {
 	constexpr int ftl = 0;
 	constexpr int ftr = 1;
 	constexpr int fbl = 2;
@@ -1207,7 +1207,7 @@ void renderer::buffer::draw_extents(const std::span<glm::vec3, 8> points, const 
 	draw_line(points[fbl], points[ftl], col);
 }
 
-void renderer::buffer::draw_filled_extents(const std::span<glm::vec3, 8> points, const color_rgba& col) {
+void renderer::buffer::draw_filled_extents(std::span<glm::vec3, 8> points, const color_rgba& col) {
 	prim_reserve(36, 8);
 
 	constexpr int ftl = 0;
