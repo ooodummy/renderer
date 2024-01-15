@@ -135,7 +135,7 @@ void draw_test_primitives(renderer::buffer* buf) {
 	buf->draw_circle_filled({ 145.0f, 225.0f }, 30.0f, COLOR_GREEN.alpha(175), 32);
 
 	std::string demo_string = std::format("Hello World! {} {}", swap_counter.get_fps(), present_counter.get_fps());
-	buf->draw_text(demo_string, { 25.0f, 60.0f }, COLOR_RED);
+	buf->draw_text(demo_string, { 300.0f, 300.0f }, COLOR_RED, seguiemj, renderer::align_none);
 	buf->draw_text(U"Unicode example: \u26F0 \U0001F60E \u2603", { 25.0f, 105.0f });
 
 	/*for (auto i = 0; i < 5000; i++) {
@@ -147,8 +147,8 @@ void draw_test_primitives(renderer::buffer* buf) {
 	}*/
 
 	// TODO: Fix calc text size
-    const auto size = renderer::get_default_font()->calc_text_size(demo_string);
-	buf->draw_rect({25.0f, 60.0f}, {25.0f + size.x, 60.0f + size.y}, COLOR_RED);
+    const auto size = seguiemj->calc_text_size(demo_string);
+	buf->draw_rect({300.0f, 300.0f}, {300.0f + size.x, 300.0f + size.y}, COLOR_RED);
 }
 
 void draw_thread() {

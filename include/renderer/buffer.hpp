@@ -251,15 +251,15 @@ namespace renderer {
 					return;
 
 				if (flags & align_top)
-					pos.y += text_size.y;
+					pos.y -= text_size.y;
 				if (flags & align_left)
-					pos.x += text_size.x;
+					pos.x -= text_size.x;
 				if (flags & align_vertical)
 					pos.y -= text_size.y / 2.f;
 				if (flags & align_right)
-					pos.x -= text_size.x;
+					pos.x += text_size.x;
 				if (flags & align_bottom)
-					pos.y -= text_size.y;
+					pos.y += text_size.y;
 				if (flags & align_horizontal)
 					pos.x -= text_size.x / 2.f;
 
