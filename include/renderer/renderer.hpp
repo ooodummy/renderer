@@ -86,8 +86,10 @@ namespace renderer {
         std::vector<std::pair<size_t, size_t>> priorities_;
         std::vector<size_t> free_buffers_;
 
+	public:
 		std::unique_ptr<renderer_context> context_;
 
+	private:
 		bool msaa_enabled_;
 
 		int16_t target_sample_count_;
