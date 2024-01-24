@@ -109,6 +109,7 @@ namespace renderer {
 		align_bottom = 1 << 4,
 		align_horizontal = 1 << 5,
 		outline_text = 1 << 6,
+	    dropshadow_text = 1 << 7,
 		align_top_left = align_top | align_left,
 		align_top_right = align_top | align_right,
 		align_bottom_left = align_bottom | align_left,
