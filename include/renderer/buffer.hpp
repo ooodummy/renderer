@@ -239,6 +239,12 @@ namespace renderer {
 				draw_text(text, { pos.x, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
 			}
 
+		    if (flags & dropshadow_text) {
+				auto cleaned_flags = flags & ~dropshadow_text;
+
+				draw_text(text, { pos.x + 1, pos.y + 1 }, color_rgba(0, 0, 0, col.a), font, (text_flags)cleaned_flags);
+		    }
+
 			size_t vtx_count_max = text.size() * 4;
 			size_t idx_count_max = text.size() * 6;
 			size_t idx_expected_size = indices_.Size + idx_count_max;
