@@ -26,7 +26,7 @@ void renderer::device_resources::set_swap_chain(IDXGISwapChain* swap_chain) {
 
 	assert(swap_chain);
 
-	DXGI_SWAP_CHAIN_DESC swap_chain_description;
+	DXGI_SWAP_CHAIN_DESC swap_chain_description{};
 	auto hr = swap_chain->GetDesc(&swap_chain_description);
 	assert(SUCCEEDED(hr));
 

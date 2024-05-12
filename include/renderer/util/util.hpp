@@ -8,10 +8,12 @@
 #include <ostream>
 #include <format>
 
+#ifndef DPRINTF
 #ifdef _DEBUG
 #define DPRINTF(text, ...)
 #else
 #define DPRINTF(text, ...)
+#endif
 #endif
 
 namespace renderer {
